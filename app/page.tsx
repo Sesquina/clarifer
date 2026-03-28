@@ -66,8 +66,8 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Desktop nav */}
-          <div style={{ display: "flex", alignItems: "center", gap: 32 }} className="hidden md:flex">
+          {/* Desktop nav — hidden on mobile */}
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>
             {navLinks.map((link) => (
               <button
                 key={link.id}
@@ -105,10 +105,10 @@ export default function LandingPage() {
             >
               Sign in
             </Link>
-            {/* Mobile hamburger */}
+            {/* Mobile hamburger — visible only on mobile */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden"
+              className="block md:hidden"
               style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
             >
               {menuOpen ? <X size={24} color="#1A1A1A" /> : <Menu size={24} color="#1A1A1A" />}
@@ -119,13 +119,11 @@ export default function LandingPage() {
         {/* Mobile menu */}
         {menuOpen && (
           <div
-            className="md:hidden"
+            className="flex flex-col md:hidden"
             style={{
               backgroundColor: "#FFFFFF",
               borderTop: "1px solid #E8E2D9",
               padding: "16px 24px",
-              display: "flex",
-              flexDirection: "column",
               gap: 16,
             }}
           >
