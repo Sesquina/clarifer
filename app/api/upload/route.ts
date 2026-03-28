@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
 export async function POST(request: Request) {
+  try {
   // Auth check via the user's session
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,4 +80,11 @@ export async function POST(request: Request) {
     fileName: file.name,
     fileType: ext,
   });
+  } catch (err) {
+    console.error("Upload route error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Upload failed" },
+      { status: 500 }
+    );
+  }
 }
