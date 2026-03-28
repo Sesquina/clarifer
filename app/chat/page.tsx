@@ -125,6 +125,23 @@ export default function ChatPage() {
   const handleFileUpload = useCallback(async (file: File) => {
     if (!patientId || !userId) return;
 
+    // Read file immediately before any async ops (prevents stale file reference)
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    const fileData = btoa(binary);
+
+    // Also read text content now for text-based files
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    let fileContent = "";
+    if (["txt", "csv", "md"].includes(ext)) {
+      const decoder = new TextDecoder();
+      fileContent = decoder.decode(arrayBuffer);
+    } else {
+      fileContent = `[${ext.toUpperCase()} file: ${file.name}, ${(file.size / 1024).toFixed(1)}KB]`;
+    }
+
     const docMsgId = crypto.randomUUID();
     setMessages((prev) => [
       ...prev,
@@ -137,12 +154,7 @@ export default function ChatPage() {
     ]);
 
     try {
-      // Step 1: Convert file to base64 and upload via JSON
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-      );
-
+      // Step 1: Upload via JSON with base64 data
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -150,7 +162,7 @@ export default function ChatPage() {
           fileName: file.name,
           fileType: file.type || "application/octet-stream",
           fileSize: file.size,
-          fileData: base64,
+          fileData,
           patientId,
         }),
       });
@@ -169,13 +181,6 @@ export default function ChatPage() {
       setMessages((prev) =>
         prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded. Analyzing...` } : m)
       );
-
-      let fileContent = "";
-      if (["txt", "csv", "md"].includes(fileType)) {
-        fileContent = await file.text();
-      } else {
-        fileContent = `[${fileType.toUpperCase()} file: ${fileName}, ${(file.size / 1024).toFixed(1)}KB]`;
-      }
 
       const res = await fetch("/api/summarize", {
         method: "POST",
