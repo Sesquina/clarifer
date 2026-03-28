@@ -125,11 +125,6 @@ export default function ChatPage() {
   const handleFileUpload = useCallback(async (file: File) => {
     if (!patientId || !userId) return;
 
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${userId}/${patientId}/${timestamp}_${safeName}`;
-
-    // Show uploading message in chat
     const docMsgId = crypto.randomUUID();
     setMessages((prev) => [
       ...prev,
@@ -142,83 +137,45 @@ export default function ChatPage() {
     ]);
 
     try {
-      // Step 1: Upload to Supabase storage
-      console.log("[upload] Step 1: uploading to storage, path:", path);
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || "application/octet-stream",
-        });
-      console.log("[upload] Step 1 result:", uploadData, uploadError);
+      // Step 1: Upload via API route (server-side, uses service role key)
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("patientId", patientId);
 
-      if (uploadError) {
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({ error: `HTTP ${uploadRes.status}` }));
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Storage upload failed: ${uploadError.message}` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Upload failed: ${err.error}` } : m)
         );
         return;
       }
 
-      // Step 2: Get signed URL
-      console.log("[upload] Step 2: getting signed URL");
-      const { data: urlData, error: urlError } = await supabase.storage
-        .from("documents")
-        .createSignedUrl(path, 3600);
-      console.log("[upload] Step 2 result:", urlData ? "got URL" : "no URL", urlError);
+      const { documentId, fileName, fileType } = await uploadRes.json();
 
-      const fileUrl = urlData?.signedUrl || "";
-
-      // Step 3: Insert document record
-      const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      const category = ["pdf"].includes(ext) ? "lab_result" : "other";
-
-      console.log("[upload] Step 3: inserting document record");
-      const { data: doc, error: insertError } = await supabase
-        .from("documents")
-        .insert({
-          patient_id: patientId,
-          uploaded_by: userId,
-          file_url: fileUrl,
-          file_type: ext,
-          title: file.name,
-          document_category: category,
-        })
-        .select()
-        .single();
-      console.log("[upload] Step 3 result:", doc?.id, insertError);
-
-      if (insertError || !doc) {
-        setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ DB insert failed: ${insertError?.message}` } : m)
-        );
-        return;
-      }
-
-      // Step 4: Update message and prepare content
+      // Step 2: Analyze document
       setMessages((prev) =>
         prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded. Analyzing...` } : m)
       );
 
       let fileContent = "";
-      if (["txt", "csv", "md"].includes(ext)) {
+      if (["txt", "csv", "md"].includes(fileType)) {
         fileContent = await file.text();
       } else {
-        fileContent = `[${ext.toUpperCase()} file: ${file.name}, ${(file.size / 1024).toFixed(1)}KB]`;
+        fileContent = `[${fileType.toUpperCase()} file: ${fileName}, ${(file.size / 1024).toFixed(1)}KB]`;
       }
 
-      // Step 5: Call summarize API
-      console.log("[upload] Step 5: calling /api/summarize for doc:", doc.id);
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: doc.id, content: fileContent }),
+        body: JSON.stringify({ documentId, content: fileContent }),
       });
-      console.log("[upload] Step 5 response status:", res.status);
 
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("[upload] Step 5 error body:", errText);
         setMessages((prev) =>
           prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded (analysis failed: ${res.status})` } : m)
         );
@@ -226,7 +183,6 @@ export default function ChatPage() {
       }
 
       const summaryData = await res.json();
-      console.log("[upload] Step 5 summary received:", !!summaryData.summary);
 
       if (summaryData.error) {
         setMessages((prev) =>
