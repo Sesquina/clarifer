@@ -24,6 +24,13 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Ensure public.users row exists (may not if signup insert failed)
+    await supabase.from("users").upsert({
+      id: user.id,
+      email: user.email,
+      full_name: user.user_metadata?.full_name || null,
+    }, { onConflict: "id" });
+
     const { error: insertError } = await supabase.from("patients").insert({
       name,
       dob: dob || null,
