@@ -91,6 +91,37 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Language</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  height: 36,
+                  padding: "0 16px",
+                  borderRadius: 18,
+                  backgroundColor: "#2C5F4A",
+                  color: "#FFFFFF",
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
+                English
+              </span>
+              <span style={{ fontSize: 14, color: "#6B6B6B", opacity: 0.4, cursor: "default" }}>
+                Español (coming soon)
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 8 }}>
+              More languages coming soon. Spanish (Latin American) is next.
+            </p>
+          </CardContent>
+        </Card>
+
         <Button variant="outline" className="w-full text-destructive" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
