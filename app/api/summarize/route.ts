@@ -22,8 +22,19 @@ export async function POST(request: Request) {
     const completion = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: `You are a medical document analyzer. Summarize the following medical document clearly and concisely. Extract key findings as a JSON array of {label, value} objects. Return your response in this exact JSON format:
-{"summary": "...", "keyFindings": [{"label": "...", "value": "..."}]}`,
+      system: `You are a medical document analyzer. Analyze the following medical document and return a structured JSON response.
+
+Return ONLY valid JSON in this exact format:
+{
+  "headline": "One-line summary of the document",
+  "findings": [
+    {"label": "Finding name", "value": "Finding detail", "status": "normal"},
+    {"label": "Flagged item", "value": "Detail", "status": "flagged"}
+  ],
+  "fullSummary": "2-3 paragraph detailed summary"
+}
+
+Use "status": "flagged" for abnormal/concerning values and "status": "normal" for normal values.`,
       messages: [{ role: "user", content }],
     });
 
@@ -32,24 +43,46 @@ export async function POST(request: Request) {
       .map((block) => block.text)
       .join("");
 
-    let parsed: { summary: string; keyFindings: Array<{ label: string; value: string }> };
+    let parsed: {
+      headline?: string;
+      findings?: Array<{ label: string; value: string; status?: string }>;
+      fullSummary?: string;
+      summary?: string;
+      keyFindings?: Array<{ label: string; value: string; status?: string }>;
+    };
+
     try {
-      parsed = JSON.parse(responseText);
+      // Try to extract JSON from response (handle markdown code blocks)
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
     } catch {
-      parsed = { summary: responseText, keyFindings: [] };
+      parsed = {
+        headline: "Document analyzed",
+        findings: [],
+        fullSummary: responseText,
+      };
     }
+
+    // Normalize to consistent format
+    const summary = parsed.headline || parsed.summary || "Document analyzed";
+    const keyFindings = parsed.findings || parsed.keyFindings || [];
+    const fullSummary = parsed.fullSummary || parsed.summary || responseText;
 
     // Update document with summary
     await supabase
       .from("documents")
       .update({
-        summary: parsed.summary,
-        key_findings: parsed.keyFindings,
+        summary: fullSummary,
+        key_findings: keyFindings,
         analyzed_at: new Date().toISOString(),
       })
       .eq("id", documentId);
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({
+      summary: fullSummary,
+      headline: summary,
+      keyFindings,
+    });
   } catch (error) {
     console.error("Summarize error:", error);
     return NextResponse.json({ error: "Failed to summarize" }, { status: 500 });

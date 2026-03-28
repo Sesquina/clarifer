@@ -12,10 +12,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { message, patientId } = await request.json();
+  const { messages, patientId } = await request.json();
 
-  if (!message || !patientId) {
-    return NextResponse.json({ error: "Missing message or patientId" }, { status: 400 });
+  if (!messages || !patientId) {
+    return NextResponse.json({ error: "Missing messages or patientId" }, { status: 400 });
   }
 
   // Fetch patient context
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const patient = patientResult.data;
   const template = patient?.condition_templates;
 
-  const systemPrompt = `You are Medalyn, an AI health companion. You help patients and caregivers understand their health information, track symptoms, and navigate their care journey.
+  const systemPrompt = `You are Medalyn, a compassionate AI assistant supporting a caregiver. You help patients and caregivers understand their health information, track symptoms, and navigate their care journey.
 
 IMPORTANT RULES:
 - You are NOT a doctor. Always recommend consulting healthcare providers for medical decisions.
@@ -52,36 +52,60 @@ ${medsResult.data?.map((m) => `- ${m.name} ${m.dose || ""} ${m.frequency || ""}`
 RECENT DOCUMENTS:
 ${docsResult.data?.map((d) => `- ${d.title} (${d.document_category}): ${d.summary || "No summary"}`).join("\n") || "None uploaded"}`;
 
-  // Save user message
-  await supabase.from("chat_messages").insert({
-    user_id: user.id,
-    patient_id: patientId,
-    role: "user",
-    content: message,
-  });
-
-  try {
-    const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: message }],
-    });
-
-    const responseText = completion.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("");
-
-    // Save assistant message
+  // Save latest user message
+  const latestUserMsg = messages[messages.length - 1];
+  if (latestUserMsg?.role === "user") {
     await supabase.from("chat_messages").insert({
       user_id: user.id,
       patient_id: patientId,
-      role: "assistant",
-      content: responseText,
+      role: "user",
+      content: latestUserMsg.content,
+    });
+  }
+
+  // Build Anthropic messages from full history
+  const anthropicMessages = messages.map((m: { role: string; content: string }) => ({
+    role: m.role as "user" | "assistant",
+    content: m.content,
+  }));
+
+  try {
+    const stream = anthropic.messages.stream({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: anthropicMessages,
     });
 
-    return NextResponse.json({ response: responseText });
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        let fullText = "";
+        for await (const event of stream) {
+          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+            fullText += event.delta.text;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`));
+          }
+        }
+        // Save assistant response to DB
+        await supabase.from("chat_messages").insert({
+          user_id: user.id,
+          patient_id: patientId,
+          role: "assistant",
+          content: fullText,
+        });
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        controller.close();
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Chat API error:", error);
     return NextResponse.json({ error: "Failed to generate response" }, { status: 500 });
