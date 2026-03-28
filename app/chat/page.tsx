@@ -101,26 +101,11 @@ export default function ChatPage() {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.text) {
-                assistantContent += parsed.text;
-                const captured = assistantContent;
-                setMessages((prev) =>
-                  prev.map((m) => (m.id === assistantId ? { ...m, content: captured } : m))
-                );
-              }
-            } catch {
-              // skip malformed JSON
-            }
-          }
-        }
+        assistantContent += chunk;
+        const captured = assistantContent;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, content: captured } : m))
+        );
       }
     } catch {
       setMessages((prev) => [
