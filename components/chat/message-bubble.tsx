@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
+import ReactMarkdown from "react-markdown";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -24,7 +25,13 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
             : "rounded-tl-sm bg-muted"
         )}
       >
-        <p className="whitespace-pre-wrap">{content}</p>
+        {isUser ? (
+          <p className="whitespace-pre-wrap">{content}</p>
+        ) : (
+          <div className="medalyn-markdown">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
+        )}
         {timestamp && (
           <p className={cn("mt-1 text-[10px]", isUser ? "text-primary-foreground/60" : "text-muted-foreground")}>
             {new Date(timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
