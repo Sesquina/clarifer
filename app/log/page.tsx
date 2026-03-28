@@ -80,7 +80,7 @@ export default function LogPage() {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
             <span className="text-2xl">&#10003;</span>
           </div>
-          <h2 className="text-lg font-semibold">Logged successfully</h2>
+          <h2 className="text-lg font-semibold" style={{ fontFamily: "var(--font-playfair)" }}>Logged successfully</h2>
           <p className="text-sm text-muted-foreground">Redirecting to home...</p>
         </div>
       </PageContainer>
@@ -90,7 +90,7 @@ export default function LogPage() {
   return (
     <PageContainer>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold">Log Symptoms</h1>
+        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Log Symptoms</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Card>

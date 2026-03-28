@@ -77,7 +77,7 @@ export default function MedicationsPage() {
         </Link>
 
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Medications</h1>
+          <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Medications</h1>
           <Button size="sm" onClick={() => setShowAdd(true)}>
             <Plus className="mr-1 h-4 w-4" />
             Add

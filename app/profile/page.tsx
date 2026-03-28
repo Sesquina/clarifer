@@ -57,7 +57,7 @@ export default function ProfilePage() {
   return (
     <PageContainer>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold">Profile</h1>
+        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Profile</h1>
 
         <div className="flex items-center gap-4">
           <Avatar fallback={fullName || "U"} className="h-16 w-16 text-lg" />

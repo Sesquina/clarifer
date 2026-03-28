@@ -32,7 +32,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         </Link>
 
         <div>
-          <h1 className="text-xl font-bold">{doc.title || "Untitled"}</h1>
+          <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>{doc.title || "Untitled"}</h1>
           <div className="mt-1 flex items-center gap-2">
             {doc.document_category && <Badge variant="secondary">{doc.document_category}</Badge>}
             <span className="text-xs text-muted-foreground">{formatDate(doc.uploaded_at)}</span>

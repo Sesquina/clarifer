@@ -38,7 +38,7 @@ export default function ToolsPage() {
   return (
     <PageContainer>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold">Tools</h1>
+        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Tools</h1>
         <div className="space-y-2">
           {tools.map((tool) => (
             <Link key={tool.label} href={tool.href}>

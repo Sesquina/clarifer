@@ -55,7 +55,7 @@ export default function TrialsPage() {
           Tools
         </Link>
 
-        <h1 className="text-xl font-bold">Clinical Trials</h1>
+        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Clinical Trials</h1>
 
         <form onSubmit={handleSearch} className="space-y-3">
           <Input

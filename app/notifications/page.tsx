@@ -27,7 +27,7 @@ export default async function NotificationsPage() {
   return (
     <PageContainer>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold">Notifications</h1>
+        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Notifications</h1>
 
         {(!notifications || notifications.length === 0) ? (
           <Card>

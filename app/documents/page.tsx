@@ -31,7 +31,7 @@ export default async function DocumentsPage() {
     <PageContainer>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Documents</h1>
+          <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Documents</h1>
           <Link
             href="/documents/upload"
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"

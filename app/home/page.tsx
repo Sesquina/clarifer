@@ -39,7 +39,7 @@ export default async function HomePage() {
     <PageContainer>
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-bold">Welcome back</h1>
+          <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Welcome back</h1>
           <p className="text-sm text-muted-foreground">
             Managing care for {patient.name}
           </p>
