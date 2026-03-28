@@ -6,7 +6,6 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
-    // Auth check
     console.log("[upload] Starting upload handler");
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -16,14 +15,12 @@ export async function POST(request: Request) {
     }
     console.log("[upload] Authenticated user:", user.id);
 
-    // Parse FormData
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const patientId = formData.get("patientId") as string | null;
-    console.log("[upload] FormData parsed — file:", file?.name, "size:", file?.size, "patientId:", patientId);
+    // Parse JSON body with base64 file data
+    const { fileName, fileType, fileSize, fileData, patientId } = await request.json();
+    console.log("[upload] JSON parsed — fileName:", fileName, "size:", fileSize, "patientId:", patientId);
 
-    if (!file || !patientId) {
-      return NextResponse.json({ error: "Missing file or patientId" }, { status: 400 });
+    if (!fileData || !fileName || !patientId) {
+      return NextResponse.json({ error: "Missing fileData, fileName, or patientId" }, { status: 400 });
     }
 
     // Service role client for storage (bypasses RLS)
@@ -33,18 +30,19 @@ export async function POST(request: Request) {
     );
 
     const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${user.id}/${patientId}/${timestamp}_${safeName}`;
+
+    // Decode base64 to buffer
+    const buffer = Buffer.from(fileData, "base64");
+    console.log("[upload] Buffer created, size:", buffer.length);
 
     // Upload to storage
     console.log("[upload] Uploading to storage, path:", path);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    console.log("[upload] Buffer created, size:", buffer.length);
-
     const { error: uploadError } = await serviceClient.storage
       .from("documents")
       .upload(path, buffer, {
-        contentType: file.type || "application/octet-stream",
+        contentType: fileType || "application/octet-stream",
         cacheControl: "3600",
         upsert: false,
       });
@@ -64,7 +62,7 @@ export async function POST(request: Request) {
     const fileUrl = urlData?.signedUrl || "";
 
     // DB insert
-    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
     const category = ["pdf"].includes(ext) ? "lab_result" : "other";
 
     console.log("[upload] Inserting document record");
@@ -75,7 +73,7 @@ export async function POST(request: Request) {
         uploaded_by: user.id,
         file_url: fileUrl,
         file_type: ext,
-        title: file.name,
+        title: fileName,
         document_category: category,
       })
       .select()
@@ -90,7 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       documentId: doc.id,
       fileUrl,
-      fileName: file.name,
+      fileName,
       fileType: ext,
     });
   } catch (err) {

@@ -137,14 +137,22 @@ export default function ChatPage() {
     ]);
 
     try {
-      // Step 1: Upload via API route (server-side, uses service role key)
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("patientId", patientId);
+      // Step 1: Convert file to base64 and upload via JSON
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+      );
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type || "application/octet-stream",
+          fileSize: file.size,
+          fileData: base64,
+          patientId,
+        }),
       });
 
       if (!uploadRes.ok) {
