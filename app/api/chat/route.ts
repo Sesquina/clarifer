@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
-const anthropic = new Anthropic();
-
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -69,6 +67,10 @@ ${docsResult.data?.map((d) => `- ${d.title} (${d.document_category}): ${d.summar
     content: m.content,
   }));
 
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
   try {
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
@@ -78,24 +80,34 @@ ${docsResult.data?.map((d) => `- ${d.title} (${d.document_category}): ${d.summar
     });
 
     const encoder = new TextEncoder();
+    let fullText = "";
+
     const readable = new ReadableStream({
       async start(controller) {
-        let fullText = "";
-        for await (const event of stream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            fullText += event.delta.text;
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`));
-          }
+        try {
+          stream.on("text", (text) => {
+            fullText += text;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
+          });
+
+          await stream.finalMessage();
+
+          // Save assistant response to DB
+          await supabase.from("chat_messages").insert({
+            user_id: user.id,
+            patient_id: patientId,
+            role: "assistant",
+            content: fullText,
+          });
+
+          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controller.close();
+        } catch (err) {
+          console.error("Stream error:", err);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: "\n\nSorry, an error occurred." })}\n\n`));
+          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controller.close();
         }
-        // Save assistant response to DB
-        await supabase.from("chat_messages").insert({
-          user_id: user.id,
-          patient_id: patientId,
-          role: "assistant",
-          content: fullText,
-        });
-        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-        controller.close();
       },
     });
 
