@@ -125,7 +125,20 @@ export default function ChatPage() {
   const handleFileUpload = useCallback(async (payload: FilePayload) => {
     if (!patientId || !userId) return;
 
-    const { fileName: origName, fileType: origType, fileSize, fileData } = payload;
+    const { fileName: origName, fileType: origType, fileSize, fileData, error: fileError } = payload;
+
+    if (fileError) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: fileError,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
 
     const docMsgId = crypto.randomUUID();
     setMessages((prev) => [

@@ -8,6 +8,7 @@ export interface FilePayload {
   fileType: string;
   fileSize: number;
   fileData: string;
+  error?: string;
 }
 
 interface ChatInputProps {
@@ -51,13 +52,26 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask M
     if (!file || !onFileSelect) return;
 
     // Read file to base64 immediately, before any re-render can invalidate the reference
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    let fileData: string;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      fileData = btoa(binary);
+    } catch {
+      onFileSelect({
+        fileName: file.name,
+        fileType: "",
+        fileSize: 0,
+        fileData: "",
+        error: "This file could not be read. If it is stored in iCloud or Google Drive, please download it to your device first, then try uploading again.",
+      });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
-    const fileData = btoa(binary);
 
     onFileSelect({
       fileName: file.name,
