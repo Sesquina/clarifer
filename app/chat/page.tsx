@@ -126,7 +126,8 @@ export default function ChatPage() {
     if (!patientId || !userId) return;
 
     const timestamp = Date.now();
-    const path = `${userId}/${patientId}/${timestamp}_${file.name}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${userId}/${patientId}/${timestamp}_${safeName}`;
 
     // Show uploading message in chat
     const docMsgId = crypto.randomUUID();
@@ -147,6 +148,7 @@ export default function ChatPage() {
         .upload(path, file, {
           cacheControl: "3600",
           upsert: false,
+          contentType: file.type || "application/octet-stream",
         });
 
       if (uploadError) {
