@@ -144,7 +144,10 @@ export default function ChatPage() {
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from("documents")
-        .upload(path, file);
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
       if (uploadError) {
         setMessages((prev) =>
@@ -233,9 +236,11 @@ export default function ChatPage() {
           created_at: new Date().toISOString(),
         },
       ]);
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      console.error("Upload error:", err);
       setMessages((prev) =>
-        prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Upload failed unexpectedly` } : m)
+        prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Upload failed: ${msg}` } : m)
       );
     }
   }, [patientId, userId, supabase]);
