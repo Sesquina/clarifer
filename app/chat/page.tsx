@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ChatHistory } from "@/components/chat/chat-history";
-import { ChatInput } from "@/components/chat/chat-input";
+import { ChatInput, type FilePayload } from "@/components/chat/chat-input";
 
 interface Message {
   id: string;
@@ -122,25 +122,10 @@ export default function ChatPage() {
     }
   }, [patientId, messages]);
 
-  const handleFileUpload = useCallback(async (file: File) => {
+  const handleFileUpload = useCallback(async (payload: FilePayload) => {
     if (!patientId || !userId) return;
 
-    // Read file immediately before any async ops (prevents stale file reference)
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-    const fileData = btoa(binary);
-
-    // Also read text content now for text-based files
-    const ext = file.name.split(".").pop()?.toLowerCase() || "";
-    let fileContent = "";
-    if (["txt", "csv", "md"].includes(ext)) {
-      const decoder = new TextDecoder();
-      fileContent = decoder.decode(arrayBuffer);
-    } else {
-      fileContent = `[${ext.toUpperCase()} file: ${file.name}, ${(file.size / 1024).toFixed(1)}KB]`;
-    }
+    const { fileName: origName, fileType: origType, fileSize, fileData } = payload;
 
     const docMsgId = crypto.randomUUID();
     setMessages((prev) => [
@@ -148,20 +133,20 @@ export default function ChatPage() {
       {
         id: docMsgId,
         role: "user",
-        content: `📎 Uploading ${file.name}...`,
+        content: `📎 Uploading ${origName}...`,
         created_at: new Date().toISOString(),
       },
     ]);
 
     try {
-      // Step 1: Upload via JSON with base64 data
+      // Step 1: Upload via JSON with base64 data (already read in ChatInput)
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type || "application/octet-stream",
-          fileSize: file.size,
+          fileName: origName,
+          fileType: origType,
+          fileSize,
           fileData,
           patientId,
         }),
@@ -179,8 +164,18 @@ export default function ChatPage() {
 
       // Step 2: Analyze document
       setMessages((prev) =>
-        prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded. Analyzing...` } : m)
+        prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded. Analyzing...` } : m)
       );
+
+      // Prepare content for summarization
+      const ext = origName.split(".").pop()?.toLowerCase() || "";
+      let fileContent = "";
+      if (["txt", "csv", "md"].includes(ext)) {
+        const decoded = atob(fileData);
+        fileContent = decoded;
+      } else {
+        fileContent = `[${ext.toUpperCase()} file: ${origName}, ${(fileSize / 1024).toFixed(1)}KB]`;
+      }
 
       const res = await fetch("/api/summarize", {
         method: "POST",
@@ -190,7 +185,7 @@ export default function ChatPage() {
 
       if (!res.ok) {
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded (analysis failed: ${res.status})` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded (analysis failed: ${res.status})` } : m)
         );
         return;
       }
@@ -199,7 +194,7 @@ export default function ChatPage() {
 
       if (summaryData.error) {
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded (analysis error: ${summaryData.error})` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded (analysis error: ${summaryData.error})` } : m)
         );
         return;
       }
@@ -214,12 +209,12 @@ export default function ChatPage() {
 
       setMessages((prev) => [
         ...prev.map((m) =>
-          m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded & analyzed` } : m
+          m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded & analyzed` } : m
         ),
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `📋 **Document Summary: ${file.name}**\n\n${summaryData.summary || "No summary available."}\n\n${findingsText ? `**Key Findings:**\n${findingsText}` : ""}`,
+          content: `📋 **Document Summary: ${origName}**\n\n${summaryData.summary || "No summary available."}\n\n${findingsText ? `**Key Findings:**\n${findingsText}` : ""}`,
           created_at: new Date().toISOString(),
         },
       ]);

@@ -3,9 +3,16 @@
 import { useState, useRef } from "react";
 import { Send, Paperclip } from "lucide-react";
 
+export interface FilePayload {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileData: string;
+}
+
 interface ChatInputProps {
   onSend: (message: string) => void;
-  onFileSelect?: (file: File) => void;
+  onFileSelect?: (payload: FilePayload) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -39,11 +46,26 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask M
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file && onFileSelect) {
-      onFileSelect(file);
+    if (!file || !onFileSelect) return;
+
+    // Read file to base64 immediately, before any re-render can invalidate the reference
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
+    const fileData = btoa(binary);
+
+    onFileSelect({
+      fileName: file.name,
+      fileType: file.type || "application/octet-stream",
+      fileSize: file.size,
+      fileData,
+    });
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
