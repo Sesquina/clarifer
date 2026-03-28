@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
-const anthropic = new Anthropic();
-
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -19,6 +17,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY!,
+    });
+
     const completion = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
@@ -52,7 +54,6 @@ Use "status": "flagged" for abnormal/concerning values and "status": "normal" fo
     };
 
     try {
-      // Try to extract JSON from response (handle markdown code blocks)
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
     } catch {
@@ -63,12 +64,10 @@ Use "status": "flagged" for abnormal/concerning values and "status": "normal" fo
       };
     }
 
-    // Normalize to consistent format
     const summary = parsed.headline || parsed.summary || "Document analyzed";
     const keyFindings = parsed.findings || parsed.keyFindings || [];
     const fullSummary = parsed.fullSummary || parsed.summary || responseText;
 
-    // Update document with summary
     await supabase
       .from("documents")
       .update({

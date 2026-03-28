@@ -142,34 +142,38 @@ export default function ChatPage() {
     ]);
 
     try {
-      // Upload to Supabase storage
-      const { error: uploadError } = await supabase.storage
+      // Step 1: Upload to Supabase storage
+      console.log("[upload] Step 1: uploading to storage, path:", path);
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("documents")
         .upload(path, file, {
           cacheControl: "3600",
           upsert: false,
           contentType: file.type || "application/octet-stream",
         });
+      console.log("[upload] Step 1 result:", uploadData, uploadError);
 
       if (uploadError) {
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Upload failed: ${uploadError.message}` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Storage upload failed: ${uploadError.message}` } : m)
         );
         return;
       }
 
-      // Get signed URL
-      const { data: urlData } = await supabase.storage
+      // Step 2: Get signed URL
+      console.log("[upload] Step 2: getting signed URL");
+      const { data: urlData, error: urlError } = await supabase.storage
         .from("documents")
         .createSignedUrl(path, 3600);
+      console.log("[upload] Step 2 result:", urlData ? "got URL" : "no URL", urlError);
 
       const fileUrl = urlData?.signedUrl || "";
 
-      // Determine file type and category
+      // Step 3: Insert document record
       const ext = file.name.split(".").pop()?.toLowerCase() || "";
       const category = ["pdf"].includes(ext) ? "lab_result" : "other";
 
-      // Insert document record
+      console.log("[upload] Step 3: inserting document record");
       const { data: doc, error: insertError } = await supabase
         .from("documents")
         .insert({
@@ -182,20 +186,20 @@ export default function ChatPage() {
         })
         .select()
         .single();
+      console.log("[upload] Step 3 result:", doc?.id, insertError);
 
       if (insertError || !doc) {
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Failed to save document: ${insertError?.message}` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ DB insert failed: ${insertError?.message}` } : m)
         );
         return;
       }
 
-      // Update message to show uploaded
+      // Step 4: Update message and prepare content
       setMessages((prev) =>
         prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded. Analyzing...` } : m)
       );
 
-      // Read file content for text-based files
       let fileContent = "";
       if (["txt", "csv", "md"].includes(ext)) {
         fileContent = await file.text();
@@ -203,18 +207,30 @@ export default function ChatPage() {
         fileContent = `[${ext.toUpperCase()} file: ${file.name}, ${(file.size / 1024).toFixed(1)}KB]`;
       }
 
-      // Call summarize API
+      // Step 5: Call summarize API
+      console.log("[upload] Step 5: calling /api/summarize for doc:", doc.id);
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId: doc.id, content: fileContent }),
       });
+      console.log("[upload] Step 5 response status:", res.status);
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("[upload] Step 5 error body:", errText);
+        setMessages((prev) =>
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded (analysis failed: ${res.status})` } : m)
+        );
+        return;
+      }
 
       const summaryData = await res.json();
+      console.log("[upload] Step 5 summary received:", !!summaryData.summary);
 
       if (summaryData.error) {
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded (analysis failed)` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${file.name} — Uploaded (analysis error: ${summaryData.error})` } : m)
         );
         return;
       }
