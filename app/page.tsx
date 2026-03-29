@@ -604,10 +604,10 @@ export default function LandingPage() {
           </span>
         </div>
         <div style={{ display: "flex", gap: 24 }}>
-          <a href="#" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
+          <a href="/privacy" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
             Privacy Policy
           </a>
-          <a href="#" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
+          <a href="/terms" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
             Terms
           </a>
         </div>
