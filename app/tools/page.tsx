@@ -14,15 +14,16 @@ interface SavedTrial {
   status: string | null;
 }
 
-const tools = [
+const linkTools = [
   { href: "/tools/trials", icon: Search, label: "Clinical Trials", description: "Find relevant trials based on your condition", bg: "#FDF3EE", color: "#C4714A" },
   { href: "/tools/medications", icon: Pill, label: "Medications", description: "Track and manage current medications", bg: "#F0F5F2", color: "#2C5F4A" },
-  { href: "#", icon: FileDown, label: "Export Data", description: "Export health records as text file", bg: "#FDF3EE", color: "#C4714A" },
-  { href: "#", icon: Users, label: "Care Team", description: "Manage your care relationships", bg: "#F0F5F2", color: "#2C5F4A" },
+  { href: "/care-team", icon: Users, label: "Care Team", description: "Manage your care relationships", bg: "#F0F5F2", color: "#2C5F4A" },
 ];
 
 export default function ToolsPage() {
   const [savedTrials, setSavedTrials] = useState<SavedTrial[]>([]);
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -31,11 +32,35 @@ export default function ToolsPage() {
       if (!user) return;
       const { data: patient } = await supabase.from("patients").select("id").eq("created_by", user.id).limit(1).single();
       if (!patient) return;
+      setPatientId(patient.id);
       const { data } = await supabase.from("trial_saves").select("id, trial_id, trial_name, phase, status").eq("patient_id", patient.id).order("saved_at", { ascending: false });
       if (data) setSavedTrials(data);
     }
     load();
   }, [supabase]);
+
+  async function handleExport() {
+    if (!patientId || exporting) return;
+    setExporting(true);
+    try {
+      const res = await fetch("/api/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientId }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `medalyn-export-${Date.now()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silent fail
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function handleUnsave(id: string) {
     await supabase.from("trial_saves").delete().eq("id", id);
@@ -48,7 +73,7 @@ export default function ToolsPage() {
         <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Tools</h1>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {tools.map((tool) => (
+          {linkTools.map((tool) => (
             <Link key={tool.label} href={tool.href} style={{ textDecoration: "none", color: "#1A1A1A" }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: 16, backgroundColor: "#FFFFFF",
@@ -67,6 +92,28 @@ export default function ToolsPage() {
               </div>
             </Link>
           ))}
+          {/* Export Data — triggers download directly */}
+          <button
+            onClick={handleExport}
+            disabled={exporting || !patientId}
+            style={{ textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: exporting ? 0.5 : 1 }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", gap: 16, backgroundColor: "#FFFFFF",
+              borderRadius: 14, padding: "14px 16px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 12, backgroundColor: "#FDF3EE",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <FileDown size={24} color="#C4714A" />
+              </div>
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{exporting ? "Exporting..." : "Export Data"}</p>
+                <p style={{ fontSize: 13, color: "#6B6B6B" }}>Download health records as text file</p>
+              </div>
+            </div>
+          </button>
         </div>
 
         {/* Saved Trials */}

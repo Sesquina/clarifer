@@ -6,10 +6,9 @@ import { Avatar } from "@/components/ui/avatar";
 
 interface HeaderProps {
   userName?: string | null;
-  patientName?: string | null;
 }
 
-export function Header({ userName, patientName }: HeaderProps) {
+export function Header({ userName }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4">
@@ -17,12 +16,7 @@ export function Header({ userName, patientName }: HeaderProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">M</span>
           </div>
-          <div>
-            <p className="text-sm font-semibold">Medalyn</p>
-            {patientName && (
-              <p className="text-xs text-muted-foreground">{patientName}</p>
-            )}
-          </div>
+          <p className="text-sm font-semibold">Medalyn</p>
         </div>
         <div className="flex items-center gap-2">
           <Link

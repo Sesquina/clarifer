@@ -1,11 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,59 +19,118 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
 
   if (!doc) notFound();
 
-  const findings = doc.key_findings as Array<{ label: string; value: string }> | null;
+  const findings = doc.key_findings as Array<{ label: string; value: string; status?: string }> | null;
+
+  // Break summary into paragraphs (group sentences into 2-3 sentence chunks)
+  function formatSummary(text: string): string[] {
+    const sentences = text.split(/(?<=\.)\s+/);
+    const paragraphs: string[] = [];
+    for (let i = 0; i < sentences.length; i += 3) {
+      paragraphs.push(sentences.slice(i, i + 3).join(" "));
+    }
+    return paragraphs;
+  }
+
+  const summaryParagraphs = doc.summary ? formatSummary(doc.summary) : [];
 
   return (
     <PageContainer>
-      <div className="space-y-4">
-        <Link href="/documents" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
-          Back to documents
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <Link
+          href="/documents"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: "#6B6B6B", textDecoration: "none" }}
+        >
+          <ArrowLeft size={16} /> Back to documents
         </Link>
 
         <div>
-          <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>{doc.title || "Untitled"}</h1>
-          <div className="mt-1 flex items-center gap-2">
-            {doc.document_category && <Badge variant="secondary">{doc.document_category}</Badge>}
-            <span className="text-xs text-muted-foreground">{formatDate(doc.uploaded_at)}</span>
+          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 22, color: "#1A1A1A" }}>
+            {doc.title || "Untitled"}
+          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+            {doc.document_category && (
+              <span style={{
+                fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 8,
+                backgroundColor: "#F0F5F2", color: "#2C5F4A",
+              }}>
+                {doc.document_category}
+              </span>
+            )}
+            <span style={{ fontSize: 12, color: "#6B6B6B" }}>{formatDate(doc.uploaded_at)}</span>
           </div>
         </div>
 
-        {doc.summary && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">AI Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">{doc.summary}</p>
-            </CardContent>
-          </Card>
+        {/* AI Summary */}
+        {summaryParagraphs.length > 0 && (
+          <div style={{
+            backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+              AI Summary
+            </p>
+            {summaryParagraphs.map((p, i) => (
+              <p key={i} style={{ fontSize: 15, color: "#1A1A1A", lineHeight: 1.7, marginTop: i > 0 ? 12 : 0 }}>
+                {p}
+              </p>
+            ))}
+          </div>
         )}
 
+        {/* Divider */}
+        {summaryParagraphs.length > 0 && findings && findings.length > 0 && (
+          <div style={{ height: 1, backgroundColor: "#E8E2D9" }} />
+        )}
+
+        {/* Key Findings */}
         {findings && findings.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Key Findings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="space-y-2">
-                {findings.map((f, i) => (
-                  <div key={i}>
-                    <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
-                    <dd className="text-sm">{f.value}</dd>
+          <div style={{
+            backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>
+              Key Findings
+            </p>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {findings.map((f, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "12px 0",
+                    borderBottom: i < findings.length - 1 ? "1px solid #F0EBE3" : "none",
+                  }}
+                >
+                  <p style={{ fontSize: 12, color: "#6B6B6B", marginBottom: 3 }}>{f.label}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{f.value}</p>
+                    {f.status === "flagged" && (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 8,
+                        backgroundColor: "#FEF3C7", color: "#B45309",
+                      }}>
+                        <AlertTriangle size={11} /> Flagged
+                      </span>
+                    )}
                   </div>
-                ))}
-              </dl>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
+        {/* Original file */}
         {doc.file_url && (
           <a
             href={doc.file_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "12px 20px", borderRadius: 12, border: "1.5px solid #E8E2D9",
+              fontSize: 14, fontWeight: 500, color: "#1A1A1A", textDecoration: "none",
+              backgroundColor: "#FFFFFF",
+            }}
           >
             View original file
           </a>

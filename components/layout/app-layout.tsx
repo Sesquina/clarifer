@@ -15,16 +15,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq("id", user.id)
     .single();
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("name")
-    .eq("created_by", user.id)
-    .limit(1)
-    .single();
-
   return (
     <div className="flex min-h-full flex-col">
-      <Header userName={profile?.full_name} patientName={patient?.name} />
+      <Header userName={profile?.full_name} />
       <div className="flex-1">{children}</div>
       <BottomNav />
     </div>
