@@ -77,11 +77,18 @@ export default function TrialsPage() {
     setSavedIds((prev) => new Set([...prev, trial.nctId]));
   }
 
+  const PHASE_MAP: Record<string, string> = {
+    "Phase 1": "PHASE1", "Phase 2": "PHASE2", "Phase 3": "PHASE3",
+  };
+
   const filtered = activeFilter === "All"
     ? trials
     : activeFilter === "Recruiting"
-      ? trials.filter((t) => t.status === "Recruiting")
-      : trials.filter((t) => t.phase === activeFilter);
+      ? trials.filter((t) => t.status.toUpperCase() === "RECRUITING")
+      : trials.filter((t) => {
+          const target = PHASE_MAP[activeFilter];
+          return target ? t.phase.toUpperCase().includes(target) : t.phase === activeFilter;
+        });
 
   return (
     <PageContainer>

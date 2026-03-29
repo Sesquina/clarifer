@@ -388,44 +388,63 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
       {showUpdateModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onClick={() => { if (!updateLoading) setShowUpdateModal(false); }} />
-          <div style={{ position: "relative", backgroundColor: "#FFFFFF", borderRadius: 16, padding: 28, width: "100%", maxWidth: 480, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{
+            position: "relative", backgroundColor: "#FFFFFF", borderRadius: 16, width: "100%", maxWidth: 480,
+            maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+          }}>
+            {/* Sticky header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 28px 12px", flexShrink: 0 }}>
               <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: 20 }}>Family update</h3>
-              <button onClick={() => setShowUpdateModal(false)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+              <button onClick={() => setShowUpdateModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                 <X size={20} color="#6B6B6B" />
               </button>
             </div>
             {updateLoading ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "24px 0", justifyContent: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "24px 28px", justifyContent: "center" }}>
                 <Loader2 size={20} className="animate-spin" color="#2C5F4A" />
                 <span style={{ fontSize: 14, color: "#6B6B6B" }}>Writing update...</span>
               </div>
             ) : (
               <>
-                <p style={{ fontSize: 15, color: "#1A1A1A", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{updateText}</p>
-                <button
-                  onClick={handleCopy}
-                  style={{
-                    marginTop: 20,
-                    width: "100%",
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: copied ? "#22c55e" : "#2C5F4A",
-                    color: "#FFFFFF",
-                    border: "none",
-                    fontSize: 15,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    fontFamily: "var(--font-dm-sans)",
-                    transition: "background-color 0.2s",
-                  }}
-                >
+                {/* Scrollable content */}
+                <div style={{ flex: 1, overflowY: "auto", padding: "0 28px" }}>
+                  <textarea
+                    value={updateText}
+                    onChange={(e) => setUpdateText(e.target.value)}
+                    style={{
+                      width: "100%", minHeight: 180, border: "1.5px solid #E8E2D9", borderRadius: 12,
+                      padding: 16, fontSize: 15, color: "#1A1A1A", lineHeight: 1.7, resize: "vertical",
+                      fontFamily: "var(--font-dm-sans)", outline: "none", boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
+                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                  />
+                </div>
+                {/* Sticky footer */}
+                <div style={{ padding: "16px 28px 24px", flexShrink: 0 }}>
+                  <button
+                    onClick={handleCopy}
+                    style={{
+                      width: "100%",
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: copied ? "#22c55e" : "#2C5F4A",
+                      color: "#FFFFFF",
+                      border: "none",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      fontFamily: "var(--font-dm-sans)",
+                      transition: "background-color 0.2s",
+                    }}
+                  >
                   {copied ? <><Check size={18} /> Copied</> : <><Copy size={18} /> Copy to clipboard</>}
                 </button>
+                </div>
               </>
             )}
           </div>
