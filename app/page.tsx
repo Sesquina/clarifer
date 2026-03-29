@@ -20,30 +20,6 @@ function smoothScroll(id: string) {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [waitlistName, setWaitlistName] = useState("");
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-
-  async function handleWaitlist(e: React.FormEvent) {
-    e.preventDefault();
-    if (!waitlistEmail.includes("@")) return;
-    setWaitlistStatus("sending");
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: waitlistName, email: waitlistEmail }),
-      });
-      if (res.ok) {
-        setWaitlistStatus("success");
-      } else {
-        setWaitlistStatus("error");
-      }
-    } catch {
-      setWaitlistStatus("error");
-    }
-  }
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
@@ -127,6 +103,24 @@ export default function LandingPage() {
               }}
             >
               Sign in
+            </Link>
+            <Link
+              href="/login?mode=signup"
+              className="hidden md:flex"
+              style={{
+                height: 40,
+                padding: "0 20px",
+                borderRadius: 20,
+                backgroundColor: "#2C5F4A",
+                color: "#FFFFFF",
+                fontSize: 14,
+                fontWeight: 600,
+                alignItems: "center",
+                textDecoration: "none",
+                fontFamily: "var(--font-dm-sans)",
+              }}
+            >
+              Sign up free
             </Link>
             {/* Mobile hamburger — visible only on mobile */}
             <button
@@ -218,8 +212,8 @@ export default function LandingPage() {
             flexWrap: "wrap",
           }}
         >
-          <button
-            onClick={() => smoothScroll("waitlist")}
+          <Link
+            href="/login?mode=signup"
             style={{
               height: 52,
               padding: "0 32px",
@@ -229,14 +223,16 @@ export default function LandingPage() {
               border: "none",
               fontSize: 16,
               fontWeight: 600,
-              cursor: "pointer",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
               fontFamily: "var(--font-dm-sans)",
             }}
           >
-            Get early access
-          </button>
-          <button
-            onClick={() => smoothScroll("product")}
+            Sign up free
+          </Link>
+          <Link
+            href="/login"
             style={{
               height: 52,
               padding: "0 32px",
@@ -246,12 +242,14 @@ export default function LandingPage() {
               border: "1.5px solid #2C5F4A",
               fontSize: 16,
               fontWeight: 600,
-              cursor: "pointer",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
               fontFamily: "var(--font-dm-sans)",
             }}
           >
-            See how it works
-          </button>
+            Sign in
+          </Link>
         </div>
         <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 20 }}>
           Built by caregivers, for caregivers.
@@ -462,115 +460,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ SECTION 6: WAITLIST ═══ */}
-      <section id="waitlist" style={{ backgroundColor: "#F7F2EA", padding: "80px 24px" }}>
-        <div
-          style={{
-            maxWidth: 480,
-            margin: "0 auto",
-            backgroundColor: "#FFFFFF",
-            borderRadius: 16,
-            padding: 40,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          }}
-        >
+      {/* ═══ SECTION 6: GET IN TOUCH ═══ */}
+      <section id="contact" style={{ backgroundColor: "#F7F2EA", padding: "80px 24px" }}>
+        <div style={{ maxWidth: 540, margin: "0 auto", textAlign: "center" }}>
           <h2
             style={{
               fontFamily: "var(--font-playfair), serif",
-              fontSize: 28,
+              fontSize: 32,
               color: "#1A1A1A",
-              textAlign: "center",
             }}
           >
-            Join the families already using Medalyn.
+            Get in touch
           </h2>
           <p
             style={{
-              fontSize: 15,
+              fontSize: 17,
               color: "#6B6B6B",
-              textAlign: "center",
-              marginTop: 8,
+              lineHeight: 1.7,
+              marginTop: 16,
             }}
           >
-            We are inviting caregivers, patients, and care teams to try Medalyn early. No credit
-            card. No commitment.
+            Questions, feedback, or just want to talk about what you are going through. We are here.
           </p>
-
-          <div style={{ marginTop: 32 }}>
-            {waitlistStatus === "success" ? (
-              <div style={{ textAlign: "center", padding: "24px 0" }}>
-                <p style={{ fontSize: 18, fontWeight: 600, color: "#2C5F4A" }}>
-                  You are on the list.
-                </p>
-                <p style={{ fontSize: 15, color: "#6B6B6B", marginTop: 4 }}>
-                  We will be in touch.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleWaitlist} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <input
-                  type="text"
-                  placeholder="Your first name"
-                  value={waitlistName}
-                  onChange={(e) => setWaitlistName(e.target.value)}
-                  style={{
-                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
-                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, background: "white", width: "100%",
-                    boxSizing: "border-box", outline: "none",
-                  }}
-                />
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  required
-                  value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
-                  style={{
-                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
-                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, background: "white", width: "100%",
-                    boxSizing: "border-box", outline: "none",
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={waitlistStatus === "sending" || !waitlistEmail.includes("@")}
-                  style={{
-                    height: 52, borderRadius: 26, background: "#2C5F4A",
-                    color: "white", border: "none", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, fontWeight: 600, cursor: "pointer", width: "100%",
-                    opacity: waitlistStatus === "sending" ? 0.6 : 1,
-                  }}
-                >
-                  {waitlistStatus === "sending" ? "Submitting..." : "Get early access"}
-                </button>
-                {waitlistStatus === "error" && (
-                  <p style={{ fontSize: 14, color: "#C4714A", textAlign: "center" }}>
-                    Something went wrong. Please try again.
-                  </p>
-                )}
-              </form>
-            )}
-          </div>
-
-          <div
+          <a
+            href="mailto:samira@cassinidesigngroup.com"
             style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 24,
+              display: "inline-block",
               marginTop: 24,
-              flexWrap: "wrap",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#2C5F4A",
+              textDecoration: "none",
             }}
           >
-            {["Security-first infrastructure", "Research opt-in available"].map(
-              (badge) => (
-                <span key={badge} style={{ fontSize: 12, color: "#6B6B6B" }}>
-                  {badge}
-                </span>
-              )
-            )}
-          </div>
+            samira@cassinidesigngroup.com
+          </a>
         </div>
       </section>
 
