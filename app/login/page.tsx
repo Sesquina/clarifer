@@ -19,6 +19,23 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
+function friendlyLoginError(msg: string): string {
+  const lower = msg.toLowerCase();
+  if (lower.includes("invalid login credentials") || lower.includes("invalid credentials")) {
+    return "Incorrect email or password. Please try again.";
+  }
+  if (lower.includes("email not confirmed")) {
+    return "Your email has not been confirmed yet. Please check your inbox.";
+  }
+  if (lower.includes("rate limit") || lower.includes("too many")) {
+    return "Too many sign-in attempts. Please wait a minute and try again.";
+  }
+  if (lower.includes("network") || lower.includes("fetch") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+    return "Could not connect. Please check your internet connection and try again.";
+  }
+  return msg;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,19 +50,25 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(friendlyLoginError(error.message));
+        setLoading(false);
+        return;
+      }
+
+      router.push("/home");
+      router.refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(friendlyLoginError(msg));
       setLoading(false);
-      return;
     }
-
-    router.push("/home");
-    router.refresh();
   }
 
   return (

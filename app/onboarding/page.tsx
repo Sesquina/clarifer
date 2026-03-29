@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 
+function friendlyOnboardingError(msg: string): string {
+  const lower = msg.toLowerCase();
+  if (lower.includes("duplicate") || lower.includes("unique constraint") || lower.includes("already exists")) {
+    return "A profile already exists for this account. Try refreshing the page.";
+  }
+  if (lower.includes("network") || lower.includes("fetch") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+    return "Could not connect. Please check your internet connection and try again.";
+  }
+  return msg;
+}
+
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -21,34 +32,44 @@ export default function OnboardingPage() {
     setLoading(true);
     setError(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("You are not signed in. Please go back and sign up again.");
+        setLoading(false);
+        return;
+      }
 
-    // Ensure public.users row exists (may not if signup insert failed)
-    await supabase.from("users").upsert({
-      id: user.id,
-      email: user.email,
-      full_name: user.user_metadata?.full_name || null,
-    }, { onConflict: "id" });
+      // Ensure public.users row exists (may not if signup insert failed)
+      await supabase.from("users").upsert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || null,
+      }, { onConflict: "id" });
 
-    const { error: insertError } = await supabase.from("patients").insert({
-      name,
-      dob: dob || null,
-      sex: sex || null,
-      custom_diagnosis: diagnosis || null,
-      diagnosis_date: diagnosisDate || null,
-      created_by: user.id,
-      status: "active",
-    });
+      const { error: insertError } = await supabase.from("patients").insert({
+        name,
+        dob: dob || null,
+        sex: sex || null,
+        custom_diagnosis: diagnosis || null,
+        diagnosis_date: diagnosisDate || null,
+        created_by: user.id,
+        status: "active",
+      });
 
-    if (insertError) {
-      setError(insertError.message);
+      if (insertError) {
+        setError(friendlyOnboardingError(insertError.message));
+        setLoading(false);
+        return;
+      }
+
+      router.push("/home");
+      router.refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(friendlyOnboardingError(msg));
       setLoading(false);
-      return;
     }
-
-    router.push("/home");
-    router.refresh();
   }
 
   const inputStyle = {

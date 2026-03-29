@@ -19,6 +19,29 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
+function friendlySignupError(msg: string): string {
+  const lower = msg.toLowerCase();
+  if (lower.includes("already registered") || lower.includes("already been registered") || lower.includes("duplicate") || lower.includes("unique constraint")) {
+    return "An account with this email already exists. Try signing in instead.";
+  }
+  if (lower.includes("invalid email") || lower.includes("valid email")) {
+    return "Please enter a valid email address.";
+  }
+  if (lower.includes("password") && (lower.includes("short") || lower.includes("least") || lower.includes("characters") || lower.includes("weak"))) {
+    return "Your password needs to be at least 8 characters.";
+  }
+  if (lower.includes("rate limit") || lower.includes("too many")) {
+    return "Too many attempts. Please wait a minute and try again.";
+  }
+  if (lower.includes("network") || lower.includes("fetch") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+    return "Could not connect. Please check your internet connection and try again.";
+  }
+  if (lower.includes("signup is disabled") || lower.includes("signups not allowed")) {
+    return "Sign-ups are temporarily unavailable. Please try again later.";
+  }
+  return msg;
+}
+
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,31 +57,42 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-      return;
-    }
-
-    // Insert into public.users table immediately (no email confirmation)
-    if (data.user) {
-      await supabase.from("users").insert({
-        id: data.user.id,
-        email: email,
-        full_name: fullName,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+        },
       });
-    }
 
-    router.push("/onboarding");
-    router.refresh();
+      if (error) {
+        setError(friendlySignupError(error.message));
+        setLoading(false);
+        return;
+      }
+
+      // Insert into public.users table immediately (no email confirmation)
+      if (data.user) {
+        const { error: insertError } = await supabase.from("users").insert({
+          id: data.user.id,
+          email: email,
+          full_name: fullName,
+        });
+
+        if (insertError) {
+          console.error("[signup] users table insert error:", insertError.message);
+          // Don't block signup — onboarding will upsert the row
+        }
+      }
+
+      router.push("/onboarding");
+      router.refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(friendlySignupError(msg));
+      setLoading(false);
+    }
   }
 
   return (
