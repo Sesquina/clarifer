@@ -20,6 +20,29 @@ function smoothScroll(id: string) {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [waitlistName, setWaitlistName] = useState("");
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+
+  async function handleWaitlist(e: React.FormEvent) {
+    e.preventDefault();
+    if (!waitlistEmail.includes("@")) return;
+    setWaitlistStatus("sending");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: waitlistName, email: waitlistEmail }),
+      });
+      if (res.ok) {
+        setWaitlistStatus("success");
+      } else {
+        setWaitlistStatus("error");
+      }
+    } catch {
+      setWaitlistStatus("error");
+    }
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -473,58 +496,62 @@ export default function LandingPage() {
             card. No commitment.
           </p>
 
-          <div id="brevo-waitlist-form" style={{ marginTop: 32 }}>
-            {/* Brevo form will be embedded here */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <input
-                type="text"
-                placeholder="Your first name"
-                style={{
-                  height: 52,
-                  borderRadius: 12,
-                  border: "1.5px solid #E8E2D9",
-                  padding: "0 16px",
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 16,
-                  background: "white",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  outline: "none",
-                }}
-              />
-              <input
-                type="email"
-                placeholder="Your email"
-                style={{
-                  height: 52,
-                  borderRadius: 12,
-                  border: "1.5px solid #E8E2D9",
-                  padding: "0 16px",
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 16,
-                  background: "white",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  outline: "none",
-                }}
-              />
-              <button
-                style={{
-                  height: 52,
-                  borderRadius: 26,
-                  background: "#2C5F4A",
-                  color: "white",
-                  border: "none",
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  width: "100%",
-                }}
-              >
-                Get early access
-              </button>
-            </div>
+          <div style={{ marginTop: 32 }}>
+            {waitlistStatus === "success" ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <p style={{ fontSize: 18, fontWeight: 600, color: "#2C5F4A" }}>
+                  You are on the list.
+                </p>
+                <p style={{ fontSize: 15, color: "#6B6B6B", marginTop: 4 }}>
+                  We will be in touch.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlist} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <input
+                  type="text"
+                  placeholder="Your first name"
+                  value={waitlistName}
+                  onChange={(e) => setWaitlistName(e.target.value)}
+                  style={{
+                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
+                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, background: "white", width: "100%",
+                    boxSizing: "border-box", outline: "none",
+                  }}
+                />
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  required
+                  value={waitlistEmail}
+                  onChange={(e) => setWaitlistEmail(e.target.value)}
+                  style={{
+                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
+                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, background: "white", width: "100%",
+                    boxSizing: "border-box", outline: "none",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={waitlistStatus === "sending" || !waitlistEmail.includes("@")}
+                  style={{
+                    height: 52, borderRadius: 26, background: "#2C5F4A",
+                    color: "white", border: "none", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, fontWeight: 600, cursor: "pointer", width: "100%",
+                    opacity: waitlistStatus === "sending" ? 0.6 : 1,
+                  }}
+                >
+                  {waitlistStatus === "sending" ? "Submitting..." : "Get early access"}
+                </button>
+                {waitlistStatus === "error" && (
+                  <p style={{ fontSize: 14, color: "#C4714A", textAlign: "center" }}>
+                    Something went wrong. Please try again.
+                  </p>
+                )}
+              </form>
+            )}
           </div>
 
           <div
