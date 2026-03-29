@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const { patientId } = await request.json();
 
-    if (!patientId) {
+    if (!patientId || typeof patientId !== "string") {
       return NextResponse.json(
         { error: "patientId is required" },
         { status: 400 }

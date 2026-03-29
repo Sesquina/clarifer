@@ -1,9 +1,21 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 const anthropic = new Anthropic();
 
+function stripHtml(str: string): string {
+  return str.replace(/<[^>]*>/g, "");
+}
+
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { symptoms, severity, notes } = await request.json();
 
   if (!symptoms) {
@@ -18,7 +30,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Symptoms: ${symptoms}\nSeverity: ${severity}/10\nNotes: ${notes || "None"}`,
+          content: `Symptoms: ${stripHtml(String(symptoms))}\nSeverity: ${severity}/10\nNotes: ${stripHtml(String(notes || "None"))}`,
         },
       ],
     });

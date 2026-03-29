@@ -24,6 +24,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing documentId or content" }, { status: 400 });
   }
 
+  if (typeof content === "string" && content.length > 100000) {
+    return NextResponse.json({ error: "Content exceeds maximum length" }, { status: 400 });
+  }
+
+  // Strip HTML tags from content before processing
+  const sanitizedContent = typeof content === "string" ? content.replace(/<[^>]*>/g, "") : content;
+
   try {
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -48,7 +55,7 @@ Return ONLY valid JSON:
 }
 
 Use "flagged" for abnormal values, "normal" for normal values.`,
-      messages: [{ role: "user", content }],
+      messages: [{ role: "user", content: sanitizedContent }],
     });
 
     const responseText = completion.content

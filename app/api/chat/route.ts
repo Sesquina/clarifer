@@ -24,6 +24,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
     }
 
+    if (!messages || !Array.isArray(messages) || messages.length === 0 || !patientId) {
+      return NextResponse.json({ error: "Missing required fields: messages and patientId" }, { status: 400 });
+    }
+
+    const MAX_MESSAGE_LENGTH = 10000;
+    for (const m of messages) {
+      if (typeof m.content === "string" && m.content.length > MAX_MESSAGE_LENGTH) {
+        return NextResponse.json({ error: `Message exceeds ${MAX_MESSAGE_LENGTH} character limit` }, { status: 400 });
+      }
+    }
+
+    // Strip HTML from user messages
+    const sanitizedMessages = messages.map((m: { role: string; content: string }) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content.replace(/<[^>]*>/g, ""),
+    }));
+
     // Get patient and condition template
     const { data: patient } = await supabase
       .from("patients")
@@ -111,10 +128,7 @@ ${patient.condition_templates?.ai_context || ""}`
             model: "claude-sonnet-4-20250514",
             max_tokens: 1024,
             system: systemBlocks,
-            messages: messages.map((m: { role: string; content: string }) => ({
-              role: m.role,
-              content: m.content,
-            })),
+            messages: sanitizedMessages,
             stream: true,
           });
 
