@@ -51,7 +51,7 @@ async function getOrCreateList(): Promise<number> {
 
 export async function POST(request: Request) {
   try {
-    const { name, email } = await request.json();
+    const { name, email, message } = await request.json();
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email is required." }, { status: 400 });
@@ -84,8 +84,8 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         sender: { name: "Medalyn", email: "samira@cassinidesigngroup.com" },
         to: [{ email: "samira@cassinidesigngroup.com", name: "Samira" }],
-        subject: "New Medalyn waitlist signup",
-        textContent: `Name: ${name || "Not provided"}\nEmail: ${email}`,
+        subject: message ? "New Medalyn contact message" : "New Medalyn waitlist signup",
+        textContent: `Name: ${name || "Not provided"}\nEmail: ${email}${message ? `\nMessage: ${message}` : ""}`,
       }),
     });
 

@@ -20,6 +20,26 @@ function smoothScroll(id: string) {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactStatus, setContactStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+
+  async function handleContact(e: React.FormEvent) {
+    e.preventDefault();
+    if (!contactEmail.includes("@")) return;
+    setContactStatus("sending");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: contactName, email: contactEmail, message: contactMessage }),
+      });
+      setContactStatus(res.ok ? "success" : "error");
+    } catch {
+      setContactStatus("error");
+    }
+  }
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
@@ -462,39 +482,106 @@ export default function LandingPage() {
 
       {/* ═══ SECTION 6: GET IN TOUCH ═══ */}
       <section id="contact" style={{ backgroundColor: "#F7F2EA", padding: "80px 24px" }}>
-        <div style={{ maxWidth: 540, margin: "0 auto", textAlign: "center" }}>
+        <div
+          style={{
+            maxWidth: 480,
+            margin: "0 auto",
+            backgroundColor: "#FFFFFF",
+            borderRadius: 16,
+            padding: 40,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          }}
+        >
           <h2
             style={{
               fontFamily: "var(--font-playfair), serif",
-              fontSize: 32,
+              fontSize: 28,
               color: "#1A1A1A",
+              textAlign: "center",
             }}
           >
             Get in touch
           </h2>
           <p
             style={{
-              fontSize: 17,
+              fontSize: 15,
               color: "#6B6B6B",
-              lineHeight: 1.7,
-              marginTop: 16,
+              textAlign: "center",
+              marginTop: 8,
             }}
           >
-            Questions, feedback, or just want to talk about what you are going through. We are here.
+            Questions, feedback, or just want to share what you are going through. We would love to hear from you.
           </p>
-          <a
-            href="mailto:samira@cassinidesigngroup.com"
-            style={{
-              display: "inline-block",
-              marginTop: 24,
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#2C5F4A",
-              textDecoration: "none",
-            }}
-          >
-            samira@cassinidesigngroup.com
-          </a>
+
+          <div style={{ marginTop: 32 }}>
+            {contactStatus === "success" ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <p style={{ fontSize: 18, fontWeight: 600, color: "#2C5F4A" }}>
+                  Message sent.
+                </p>
+                <p style={{ fontSize: 15, color: "#6B6B6B", marginTop: 4 }}>
+                  We will be in touch.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleContact} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  style={{
+                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
+                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, background: "white", width: "100%",
+                    boxSizing: "border-box", outline: "none",
+                  }}
+                />
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  required
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  style={{
+                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
+                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, background: "white", width: "100%",
+                    boxSizing: "border-box", outline: "none",
+                  }}
+                />
+                <textarea
+                  placeholder="Your message (optional)"
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  rows={4}
+                  style={{
+                    borderRadius: 12, border: "1.5px solid #E8E2D9",
+                    padding: "12px 16px", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, background: "white", width: "100%",
+                    boxSizing: "border-box", outline: "none", resize: "vertical",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={contactStatus === "sending" || !contactEmail.includes("@")}
+                  style={{
+                    height: 52, borderRadius: 26, background: "#2C5F4A",
+                    color: "white", border: "none", fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 16, fontWeight: 600, cursor: "pointer", width: "100%",
+                    opacity: contactStatus === "sending" ? 0.6 : 1,
+                  }}
+                >
+                  {contactStatus === "sending" ? "Sending..." : "Send message"}
+                </button>
+                {contactStatus === "error" && (
+                  <p style={{ fontSize: 14, color: "#C4714A", textAlign: "center" }}>
+                    Something went wrong. Please try again.
+                  </p>
+                )}
+              </form>
+            )}
+          </div>
         </div>
       </section>
 
