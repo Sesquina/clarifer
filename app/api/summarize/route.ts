@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,22 +23,25 @@ export async function POST(request: Request) {
       apiKey: process.env.ANTHROPIC_API_KEY!,
     });
 
+    // Step 1: Summarize the document
     const completion = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: `You are a medical document analyzer. Analyze the following medical document and return a structured JSON response.
+      system: `You are helping a family caregiver understand a medical document about their loved one. Your job is to analyze the document and return structured JSON.
+
+Write the summary in plain, warm language a non-medical person can understand. Do not use medical jargon without immediately explaining it in parentheses. Write like you are a knowledgeable friend explaining results over the phone, clear, calm, and honest. Never use words like hepatocellular, cholestasis, transaminases, or other clinical terms without a plain-English explanation right after them in parentheses. Keep the summary to 3-4 sentences maximum. Start with the most important takeaway.
 
 Return ONLY valid JSON in this exact format:
 {
-  "headline": "One-line summary of the document",
+  "headline": "One-line plain-language takeaway",
   "findings": [
-    {"label": "Finding name", "value": "Finding detail", "status": "normal"},
-    {"label": "Flagged item", "value": "Detail", "status": "flagged"}
+    {"label": "Finding name", "value": "Plain-language explanation", "status": "normal"},
+    {"label": "Concerning item", "value": "Plain-language explanation", "status": "flagged"}
   ],
-  "fullSummary": "2-3 paragraph detailed summary"
+  "fullSummary": "3-4 sentence plain-language summary for a caregiver"
 }
 
-Use "status": "flagged" for abnormal/concerning values and "status": "normal" for normal values.`,
+Use "status": "flagged" for abnormal or concerning values and "status": "normal" for normal values. Explain every finding in plain language.`,
       messages: [{ role: "user", content }],
     });
 
@@ -64,23 +69,82 @@ Use "status": "flagged" for abnormal/concerning values and "status": "normal" fo
       };
     }
 
-    const summary = parsed.headline || parsed.summary || "Document analyzed";
+    const headline = parsed.headline || parsed.summary || "Document analyzed";
     const keyFindings = parsed.findings || parsed.keyFindings || [];
     const fullSummary = parsed.fullSummary || parsed.summary || responseText;
 
+    // Step 2: Get patient context for symptom connection
+    const { data: doc } = await supabase
+      .from("documents")
+      .select("patient_id")
+      .eq("id", documentId)
+      .single();
+
+    let symptomConnection: string | null = null;
+
+    if (doc?.patient_id) {
+      const [patientResult, logResult] = await Promise.all([
+        supabase.from("patients").select("name, custom_diagnosis").eq("id", doc.patient_id).single(),
+        supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary").eq("patient_id", doc.patient_id).order("created_at", { ascending: false }).limit(1).single(),
+      ]);
+
+      const patient = patientResult.data;
+      const recentLog = logResult.data;
+
+      if (patient?.custom_diagnosis && keyFindings.length > 0) {
+        const findingsText = keyFindings.map((f) => `${f.label}: ${f.value}`).join("; ");
+        const symptomsText = recentLog
+          ? `Recent symptoms: severity ${recentLog.overall_severity}/10. ${recentLog.ai_summary || JSON.stringify(recentLog.symptoms)}`
+          : "No recent symptom logs available.";
+
+        try {
+          const connectionResult = await anthropic.messages.create({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 300,
+            system: "You are a warm, knowledgeable medical assistant helping a family caregiver. Write in plain language. Be practical and caring.",
+            messages: [{
+              role: "user",
+              content: `Based on these lab findings: ${findingsText}
+
+And this patient's diagnosis of ${patient.custom_diagnosis}:
+
+${symptomsText}
+
+What symptoms might ${patient.name || "the patient"} be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
+            }],
+          });
+
+          symptomConnection = connectionResult.content
+            .filter((block): block is Anthropic.TextBlock => block.type === "text")
+            .map((block) => block.text)
+            .join("");
+        } catch (err) {
+          console.error("Symptom connection error:", err);
+        }
+      }
+    }
+
+    // Update document
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+      summary: fullSummary,
+      key_findings: keyFindings,
+      analyzed_at: new Date().toISOString(),
+    };
+    if (symptomConnection) {
+      updateData.symptom_connection = symptomConnection;
+    }
+
     await supabase
       .from("documents")
-      .update({
-        summary: fullSummary,
-        key_findings: keyFindings,
-        analyzed_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", documentId);
 
     return NextResponse.json({
       summary: fullSummary,
-      headline: summary,
+      headline,
       keyFindings,
+      symptomConnection,
     });
   } catch (error) {
     console.error("Summarize error:", error);

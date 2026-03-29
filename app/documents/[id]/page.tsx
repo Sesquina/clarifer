@@ -19,7 +19,8 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
 
   if (!doc) notFound();
 
-  const findings = doc.key_findings as Array<{ label: string; value: string; status?: string }> | null;
+  const findings = (doc.key_findings as Array<{ label: string; value: string; status?: string }>) || [];
+  const symptomConnection = (doc as Record<string, unknown>).symptom_connection as string | undefined;
 
   // Break summary into paragraphs (group sentences into 2-3 sentence chunks)
   function formatSummary(text: string): string[] {
@@ -78,12 +79,12 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         )}
 
         {/* Divider */}
-        {summaryParagraphs.length > 0 && findings && findings.length > 0 && (
+        {summaryParagraphs.length > 0 && findings.length > 0 && (
           <div style={{ height: 1, backgroundColor: "#E8E2D9" }} />
         )}
 
         {/* Key Findings */}
-        {findings && findings.length > 0 && (
+        {findings.length > 0 && (
           <div style={{
             backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
@@ -116,6 +117,22 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* What to watch for — symptom connection */}
+        {symptomConnection && (
+          <div style={{
+            backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            borderLeft: "3px solid #C4714A",
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#C4714A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+              What to watch for
+            </p>
+            <p style={{ fontSize: 15, color: "#1A1A1A", lineHeight: 1.7 }}>
+              {symptomConnection}
+            </p>
           </div>
         )}
 
