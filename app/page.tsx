@@ -78,12 +78,12 @@ export default function LandingPage() {
             justifyContent: "space-between",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <AnchorIcon size={28} />
             <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: 20, color: "#1A1A1A" }}>
               Medalyn
             </span>
-          </div>
+          </a>
 
           {/* Desktop nav — hidden on mobile */}
           <div className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>

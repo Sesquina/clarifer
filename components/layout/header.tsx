@@ -12,12 +12,12 @@ export function Header({ userName }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-3">
+        <Link href="/home" className="flex items-center gap-3 no-underline">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">M</span>
           </div>
           <p className="text-sm font-semibold">Medalyn</p>
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           <Link
             href="/notifications"

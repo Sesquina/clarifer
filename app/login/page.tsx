@@ -74,8 +74,22 @@ export default function LoginPage() {
   return (
     <div
       className={`${playfair.variable} ${dmSans.variable} flex min-h-screen items-center justify-center px-4`}
-      style={{ backgroundColor: "#F7F2EA" }}
+      style={{ backgroundColor: "#F7F2EA", position: "relative" }}
     >
+      <Link
+        href="/"
+        style={{
+          position: "absolute",
+          top: 24,
+          left: 24,
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: 14,
+          color: "#6B6B6B",
+          textDecoration: "none",
+        }}
+      >
+        &larr; Back
+      </Link>
       <div
         className="w-full"
         style={{
