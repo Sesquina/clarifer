@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { UploadCloud, Activity, Search, Menu, X } from "lucide-react";
+import { CookieBanner } from "@/components/cookie-banner";
 
 const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" width={size} height={size}>
@@ -50,6 +51,8 @@ export default function LandingPage() {
     { label: "How it works", id: "how-it-works" },
     { label: "Research", id: "research" },
     { label: "Our story", id: "our-story" },
+    { label: "About", href: "/about" },
+    { label: "Security", href: "/security" },
   ];
 
   return (
@@ -87,22 +90,37 @@ export default function LandingPage() {
 
           {/* Desktop nav — hidden on mobile */}
           <div className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => smoothScroll(link.id)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 15,
-                  color: "#1A1A1A",
-                  fontFamily: "var(--font-dm-sans)",
-                }}
-              >
-                {link.label}
-              </button>
-            ))}
+            {navLinks.map((link) =>
+              link.href ? (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  style={{
+                    fontSize: 15,
+                    color: "#1A1A1A",
+                    textDecoration: "none",
+                    fontFamily: "var(--font-dm-sans)",
+                  }}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <button
+                  key={link.id}
+                  onClick={() => smoothScroll(link.id!)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 15,
+                    color: "#1A1A1A",
+                    fontFamily: "var(--font-dm-sans)",
+                  }}
+                >
+                  {link.label}
+                </button>
+              )
+            )}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -164,26 +182,42 @@ export default function LandingPage() {
               gap: 16,
             }}
           >
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => {
-                  smoothScroll(link.id);
-                  setMenuOpen(false);
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 16,
-                  color: "#1A1A1A",
-                  textAlign: "left",
-                  fontFamily: "var(--font-dm-sans)",
-                }}
-              >
-                {link.label}
-              </button>
-            ))}
+            {navLinks.map((link) =>
+              link.href ? (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    fontSize: 16,
+                    color: "#1A1A1A",
+                    textDecoration: "none",
+                    fontFamily: "var(--font-dm-sans)",
+                  }}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <button
+                  key={link.id}
+                  onClick={() => {
+                    smoothScroll(link.id!);
+                    setMenuOpen(false);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    color: "#1A1A1A",
+                    textAlign: "left",
+                    fontFamily: "var(--font-dm-sans)",
+                  }}
+                >
+                  {link.label}
+                </button>
+              )
+            )}
           </div>
         )}
       </nav>
@@ -273,6 +307,11 @@ export default function LandingPage() {
         </div>
         <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 20 }}>
           Built by caregivers, for caregivers.
+        </p>
+        <p style={{ fontSize: 13, color: "#9A9A9A", marginTop: 12, maxWidth: 500, margin: "12px auto 0" }}>
+          <a href="/privacy" style={{ color: "#9A9A9A", textDecoration: "underline" }}>Privacy Policy</a>,{" "}
+          <a href="/terms" style={{ color: "#9A9A9A", textDecoration: "underline" }}>Terms of Service</a>, and{" "}
+          <a href="/security" style={{ color: "#9A9A9A", textDecoration: "underline" }}>Security</a> details linked in the footer. Your data is never sold.
         </p>
       </section>
 
@@ -603,15 +642,23 @@ export default function LandingPage() {
             Medalyn by Cassini Design Group
           </span>
         </div>
-        <div style={{ display: "flex", gap: 24 }}>
-          <a href="/privacy" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+          <a href="/about" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
+            About
+          </a>
+          <a href="/security" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
+            Security
+          </a>
+          <a href="/privacy" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
             Privacy Policy
           </a>
-          <a href="/terms" style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
+          <a href="/terms" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
             Terms
           </a>
         </div>
       </footer>
+
+      <CookieBanner />
     </div>
   );
 }

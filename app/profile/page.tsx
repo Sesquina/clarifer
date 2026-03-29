@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, Trash2, Download } from "lucide-react";
 
 export default function ProfilePage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -126,6 +128,73 @@ export default function ProfilePage() {
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
         </Button>
+
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="text-sm text-destructive">Danger zone</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Download all your data or permanently delete your account and all associated data.
+              This action cannot be undone.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                window.location.href = "/api/delete-account";
+              }}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download my data
+            </Button>
+            {!deleteConfirm ? (
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={() => setDeleteConfirm(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete my account
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-destructive text-center">
+                  Are you sure? All your data will be permanently deleted.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setDeleteConfirm(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      const res = await fetch("/api/delete-account", { method: "DELETE" });
+                      if (res.ok) {
+                        await supabase.auth.signOut();
+                        router.push("/login");
+                        router.refresh();
+                      } else {
+                        setDeleting(false);
+                        setDeleteConfirm(false);
+                      }
+                    }}
+                  >
+                    {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {deleting ? "Deleting..." : "Yes, delete everything"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </PageContainer>
   );
