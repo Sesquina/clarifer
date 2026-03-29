@@ -1,26 +1,41 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "txt", "csv", "md"];
 
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
-    console.log("[upload] Starting upload handler");
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("[upload] Authenticated user:", user.id);
 
-    // Parse JSON body with base64 file data
+    if (!checkRateLimit(user.id)) {
+      return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+    }
+
     const { fileName, fileType, fileSize, fileData, patientId } = await request.json();
-    console.log("[upload] JSON parsed — fileName:", fileName, "size:", fileSize, "patientId:", patientId);
 
     if (!fileData || !fileName || !patientId) {
       return NextResponse.json({ error: "Missing fileData, fileName, or patientId" }, { status: 400 });
+    }
+
+    // File size validation
+    if (fileSize > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "File is too large. Maximum size is 50MB." }, { status: 400 });
+    }
+
+    // File type validation
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      return NextResponse.json({ error: `File type .${ext} is not supported. Accepted: ${ALLOWED_EXTENSIONS.join(", ")}` }, { status: 400 });
     }
 
     // Service role client for storage (bypasses RLS)
@@ -62,7 +77,6 @@ export async function POST(request: Request) {
     const fileUrl = urlData?.signedUrl || "";
 
     // DB insert
-    const ext = fileName.split(".").pop()?.toLowerCase() || "";
     const category = ["pdf"].includes(ext) ? "lab_result" : "other";
 
     console.log("[upload] Inserting document record");

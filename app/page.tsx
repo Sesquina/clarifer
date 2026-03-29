@@ -536,7 +536,7 @@ export default function LandingPage() {
               flexWrap: "wrap",
             }}
           >
-            {["Powered by Claude AI", "HIPAA-eligible infrastructure", "Research opt-in available"].map(
+            {["Powered by Claude AI", "Security-first infrastructure", "Research opt-in available"].map(
               (badge) => (
                 <span key={badge} style={{ fontSize: 12, color: "#6B6B6B" }}>
                   {badge}
