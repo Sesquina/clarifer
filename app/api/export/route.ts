@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { checkOrigin } from "@/lib/cors";
 
 export async function POST(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

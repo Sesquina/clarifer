@@ -1,14 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkOrigin } from "@/lib/cors";
+import { stripHtml } from "@/lib/sanitize";
 
 const anthropic = new Anthropic();
 
-function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, "");
-}
-
 export async function POST(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -22,6 +23,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing symptoms" }, { status: 400 });
   }
 
+  const sanitizedSymptoms = stripHtml(String(symptoms));
+  const sanitizedNotes = stripHtml(String(notes || "None"));
+
+  if (sanitizedSymptoms.length > 50000) {
+    return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
+  }
+
   try {
     const completion = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
@@ -30,7 +38,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Symptoms: ${stripHtml(String(symptoms))}\nSeverity: ${severity}/10\nNotes: ${stripHtml(String(notes || "None"))}`,
+          content: `Symptoms: ${sanitizedSymptoms}\nSeverity: ${severity}/10\nNotes: ${sanitizedNotes}`,
         },
       ],
     });
@@ -41,8 +49,7 @@ export async function POST(request: Request) {
       .join("");
 
     return NextResponse.json({ summary });
-  } catch (error) {
-    console.error("Symptom summary error:", error);
+  } catch {
     return NextResponse.json({ summary: null });
   }
 }

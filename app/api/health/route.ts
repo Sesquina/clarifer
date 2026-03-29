@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkOrigin } from "@/lib/cors";
 
 export async function GET(req: NextRequest) {
+  const corsError = checkOrigin(req);
+  if (corsError) return corsError;
+
   const warmup = req.nextUrl.searchParams.get("warmup");
 
   if (warmup) {
-    // Ping chat and summarize routes to keep them warm
     const baseUrl = req.nextUrl.origin;
     const results: Record<string, string> = {};
-
     const endpoints = ["/api/chat", "/api/summarize"];
 
     await Promise.allSettled(

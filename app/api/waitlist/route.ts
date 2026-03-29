@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkOrigin } from "@/lib/cors";
+import { stripHtml } from "@/lib/sanitize";
 
 const BREVO_API = "https://api.brevo.com/v3";
 const MEDALYN_LIST_NAME = "Medalyn Waitlist";
 
-// Cache the list ID across invocations within the same instance
 let cachedListId: number | null = null;
 
 async function brevoFetch(path: string, options: RequestInit = {}) {
@@ -21,7 +22,6 @@ async function brevoFetch(path: string, options: RequestInit = {}) {
 async function getOrCreateList(): Promise<number> {
   if (cachedListId) return cachedListId;
 
-  // Check existing lists for Medalyn Waitlist
   const listsRes = await brevoFetch("/contacts/lists?limit=50");
   if (listsRes.ok) {
     const data = await listsRes.json();
@@ -32,7 +32,6 @@ async function getOrCreateList(): Promise<number> {
     }
   }
 
-  // Create new list
   const createRes = await brevoFetch("/contacts/lists", {
     method: "POST",
     body: JSON.stringify({ name: MEDALYN_LIST_NAME, folderId: 1 }),
@@ -44,12 +43,13 @@ async function getOrCreateList(): Promise<number> {
     return data.id;
   }
 
-  // Fallback — try list ID 2 if creation fails
-  console.error("Failed to create Brevo list:", await createRes.text());
   return 2;
 }
 
 export async function POST(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   try {
     const { name, email, message } = await request.json();
 
@@ -57,41 +57,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Valid email is required." }, { status: 400 });
     }
 
-    // 1. Save to Supabase waitlist (using anon key for pre-auth)
+    // Sanitize all inputs
+    const safeName = name ? stripHtml(String(name)).slice(0, 200) : null;
+    const safeEmail = stripHtml(String(email)).slice(0, 320);
+    const safeMessage = message ? stripHtml(String(message)).slice(0, 2000) : undefined;
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    await supabase.from("waitlist").insert({ name: name || null, email });
+    await supabase.from("waitlist").insert({ name: safeName, email: safeEmail });
 
-    // 2. Add contact to Brevo in Medalyn Waitlist
     const listId = await getOrCreateList();
 
     await brevoFetch("/contacts", {
       method: "POST",
       body: JSON.stringify({
-        email,
-        attributes: { FIRSTNAME: name || "" },
+        email: safeEmail,
+        attributes: { FIRSTNAME: safeName || "" },
         listIds: [listId],
         updateEnabled: true,
       }),
     });
 
-    // 3. Send notification email via Brevo transactional
     await brevoFetch("/smtp/email", {
       method: "POST",
       body: JSON.stringify({
         sender: { name: "Medalyn", email: "samira@cassinidesigngroup.com" },
         to: [{ email: "samira@cassinidesigngroup.com", name: "Samira" }],
-        subject: message ? "New Medalyn contact message" : "New Medalyn waitlist signup",
-        textContent: `Name: ${name || "Not provided"}\nEmail: ${email}${message ? `\nMessage: ${message}` : ""}`,
+        subject: safeMessage ? "New Medalyn contact message" : "New Medalyn waitlist signup",
+        textContent: `Name: ${safeName || "Not provided"}\nEmail: ${safeEmail}${safeMessage ? `\nMessage: ${safeMessage}` : ""}`,
       }),
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Waitlist error:", error);
+  } catch {
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

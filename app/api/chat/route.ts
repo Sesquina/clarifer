@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { chatLimiter } from "@/lib/ratelimit";
+import { checkOrigin } from "@/lib/cors";
+import { stripHtml } from "@/lib/sanitize";
+
+const MAX_MESSAGE_LENGTH = 10000;
+const MAX_TOTAL_CONTENT = 50000;
 
 export async function POST(req: NextRequest) {
+  const corsError = checkOrigin(req);
+  if (corsError) return corsError;
+
   try {
     const body = await req.json();
 
@@ -20,35 +28,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!checkRateLimit(user.id)) {
-      return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+    const { success } = await chatLimiter.limit(user.id);
+    if (!success) {
+      return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
     }
 
     if (!messages || !Array.isArray(messages) || messages.length === 0 || !patientId) {
       return NextResponse.json({ error: "Missing required fields: messages and patientId" }, { status: 400 });
     }
 
-    const MAX_MESSAGE_LENGTH = 10000;
+    // Validate and sanitize messages
+    let totalLength = 0;
     for (const m of messages) {
-      if (typeof m.content === "string" && m.content.length > MAX_MESSAGE_LENGTH) {
-        return NextResponse.json({ error: `Message exceeds ${MAX_MESSAGE_LENGTH} character limit` }, { status: 400 });
+      if (typeof m.content === "string") {
+        if (m.content.length > MAX_MESSAGE_LENGTH) {
+          return NextResponse.json({ error: `Message exceeds ${MAX_MESSAGE_LENGTH} character limit` }, { status: 400 });
+        }
+        totalLength += m.content.length;
       }
     }
 
-    // Strip HTML from user messages
+    if (totalLength > MAX_TOTAL_CONTENT) {
+      return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
+    }
+
     const sanitizedMessages = messages.map((m: { role: string; content: string }) => ({
       role: m.role as "user" | "assistant",
-      content: m.content.replace(/<[^>]*>/g, ""),
+      content: stripHtml(m.content),
     }));
 
-    // Get patient and condition template
     const { data: patient } = await supabase
       .from("patients")
       .select("*, condition_templates(*)")
       .eq("id", patientId)
       .single();
 
-    // Static knowledge base + guardrails — cached across all conversations
     const knowledgeBase = `You are Medalyn, a caregiver and patient support assistant. You help people understand medical information related to their loved one or their own care. You must follow these rules without exception:
 
 NEVER diagnose. Never tell a user they have or do not have a condition.
@@ -97,7 +111,6 @@ Caregiver common questions: What do these lab values mean? Is this level normal?
 
 --- END REFERENCE ---`;
 
-    // Patient-specific context
     const patientContext = patient
       ? `The person you are speaking with is caring for ${patient.name}, who has been diagnosed with ${patient.custom_diagnosis || patient.condition_templates?.name || "a serious illness"}.
 
@@ -141,11 +154,8 @@ ${patient.condition_templates?.ai_context || ""}`
             }
           }
           controller.close();
-        } catch (err) {
-          console.error("Stream error:", err);
-          controller.enqueue(
-            encoder.encode("Sorry, something went wrong.")
-          );
+        } catch {
+          controller.enqueue(encoder.encode("Sorry, something went wrong."));
           controller.close();
         }
       },
@@ -157,8 +167,7 @@ ${patient.condition_templates?.ai_context || ""}`
         "Transfer-Encoding": "chunked",
       },
     });
-  } catch (err) {
-    console.error("Chat API error:", err);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

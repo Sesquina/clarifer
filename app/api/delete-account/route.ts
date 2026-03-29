@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { checkOrigin } from "@/lib/cors";
 
 function getAdmin() {
   return createServiceClient(
@@ -9,7 +10,10 @@ function getAdmin() {
   );
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -70,7 +74,10 @@ export async function DELETE() {
   return NextResponse.json({ success: true });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

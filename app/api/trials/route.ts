@@ -1,10 +1,12 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-const anthropic = new Anthropic();
+import { checkOrigin } from "@/lib/cors";
+import { stripHtml } from "@/lib/sanitize";
 
 export async function POST(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -18,17 +20,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing query" }, { status: 400 });
   }
 
+  const sanitizedQuery = stripHtml(String(query));
+
   try {
-    // Search ClinicalTrials.gov API
     const params = new URLSearchParams({
-      "query.cond": query,
+      "query.cond": sanitizedQuery,
       pageSize: "10",
       "filter.overallStatus": "RECRUITING",
       format: "json",
     });
 
     if (location) {
-      params.set("query.locn", location);
+      params.set("query.locn", stripHtml(String(location)));
     }
 
     const ctRes = await fetch(
@@ -65,8 +68,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ trials });
-  } catch (error) {
-    console.error("Trials search error:", error);
+  } catch {
     return NextResponse.json({ trials: [] });
   }
 }

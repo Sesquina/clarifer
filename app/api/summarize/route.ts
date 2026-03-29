@@ -1,10 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { summarizeLimiter } from "@/lib/ratelimit";
+import { checkOrigin } from "@/lib/cors";
+import { stripHtml } from "@/lib/sanitize";
 
 export const maxDuration = 60;
 
+const MAX_CONTENT_LENGTH = 50000;
+
 export async function POST(request: Request) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
   const body = await request.json();
 
   if (body.warmup) {
@@ -18,25 +26,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { success } = await summarizeLimiter.limit(user.id);
+  if (!success) {
+    return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
+  }
+
   const { documentId, content } = body;
 
   if (!documentId || !content) {
     return NextResponse.json({ error: "Missing documentId or content" }, { status: 400 });
   }
 
-  if (typeof content === "string" && content.length > 100000) {
-    return NextResponse.json({ error: "Content exceeds maximum length" }, { status: 400 });
+  if (typeof content === "string" && content.length > MAX_CONTENT_LENGTH) {
+    return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
   }
 
-  // Strip HTML tags from content before processing
-  const sanitizedContent = typeof content === "string" ? content.replace(/<[^>]*>/g, "") : content;
+  const sanitizedContent = typeof content === "string" ? stripHtml(content) : content;
 
   try {
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY!,
     });
 
-    // Step 1: Summarize the document
     const completion = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 800,
@@ -86,7 +97,6 @@ Use "flagged" for abnormal values, "normal" for normal values.`,
     const keyFindings = parsed.findings || parsed.keyFindings || [];
     const fullSummary = parsed.fullSummary || parsed.summary || responseText;
 
-    // Step 2: Get patient context for symptom connection
     const { data: doc } = await supabase
       .from("documents")
       .select("patient_id")
@@ -131,13 +141,12 @@ What symptoms might ${patient.name || "the patient"} be experiencing that are co
             .filter((block): block is Anthropic.TextBlock => block.type === "text")
             .map((block) => block.text)
             .join("");
-        } catch (err) {
-          console.error("Symptom connection error:", err);
+        } catch {
+          // Non-critical — continue without symptom connection
         }
       }
     }
 
-    // Update document
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {
       summary: fullSummary,
@@ -159,8 +168,7 @@ What symptoms might ${patient.name || "the patient"} be experiencing that are co
       keyFindings,
       symptomConnection,
     });
-  } catch (error) {
-    console.error("Summarize error:", error);
+  } catch {
     return NextResponse.json({ error: "Failed to summarize" }, { status: 500 });
   }
 }
