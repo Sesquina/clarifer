@@ -200,8 +200,8 @@ export default function LandingPage() {
             lineHeight: 1.6,
           }}
         >
-          Medalyn helps caregivers understand medical documents, track symptoms, find clinical
-          trials, and communicate with care teams. In plain language. At any hour.
+          Medalyn helps patients and caregivers understand medical documents, track symptoms, find
+          clinical trials, and stay connected with their care team. In plain language. At any hour.
         </p>
         <div
           style={{
