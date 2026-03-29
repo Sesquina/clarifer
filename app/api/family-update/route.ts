@@ -63,66 +63,53 @@ export async function POST(request: Request) {
     const recentSymptom = symptomResult.data;
     const medications = medicationsResult.data;
 
-    // Build user message with available context, omitting missing sections
-    const contextParts: string[] = [];
+    // Build concise context for the prompt
+    const symptomSummary = recentSymptom?.ai_summary
+      || (recentSymptom?.symptoms ? JSON.stringify(recentSymptom.symptoms) : "None logged recently");
 
-    contextParts.push(`Patient name: ${patient.name}`);
+    const medList = medications && medications.length > 0
+      ? medications.map((m) => [m.name, m.dose, m.frequency].filter(Boolean).join(" ")).join(", ")
+      : "None listed";
 
-    if (patient.custom_diagnosis) {
-      contextParts.push(`Diagnosis: ${patient.custom_diagnosis}`);
-    }
-
-    if (recentSymptom) {
-      const symptomLines: string[] = ["Recent symptom log:"];
-      if (recentSymptom.created_at) {
-        symptomLines.push(`  Date: ${recentSymptom.created_at}`);
-      }
-      if (recentSymptom.overall_severity != null) {
-        symptomLines.push(`  Overall severity: ${recentSymptom.overall_severity}/10`);
-      }
-      if (recentSymptom.symptoms) {
-        symptomLines.push(`  Symptoms: ${JSON.stringify(recentSymptom.symptoms)}`);
-      }
-      if (recentSymptom.ai_summary) {
-        symptomLines.push(`  Summary: ${recentSymptom.ai_summary}`);
-      }
-      contextParts.push(symptomLines.join("\n"));
-    }
-
-    if (medications && medications.length > 0) {
-      const medLines = medications.map((med) => {
-        const parts = [med.name];
-        if (med.dose) parts.push(med.dose);
-        if (med.frequency) parts.push(med.frequency);
-        if (med.indication) parts.push(`for ${med.indication}`);
-        return `  - ${parts.join(", ")}`;
-      });
-      contextParts.push(`Active medications:\n${medLines.join("\n")}`);
-    }
-
-    const userMessage = contextParts.join("\n\n");
+    const userMessage = `Patient name: ${patient.name}. Diagnosis: ${patient.custom_diagnosis || "Not specified"}. Recent symptoms: ${symptomSummary}. Current medications: ${medList}.`;
 
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY!,
     });
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system:
-        "You are writing a warm, plain-language family update message on behalf of a caregiver. Write in first person as if the caregiver is sending this to family members. Be honest but gentle. Keep it under 200 words. Do not use medical jargon without explaining it.",
-      messages: [
-        {
-          role: "user",
-          content: userMessage,
-        },
-      ],
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const response = await anthropic.messages.create({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 300,
+            system: [{ type: "text", text: "Write a warm, plain-language family update from a caregiver's perspective in under 150 words. Keep it conversational, hopeful where honest, and end with an invitation for family to reach out with questions.", cache_control: { type: "ephemeral" } }],
+            messages: [{ role: "user", content: userMessage }],
+            stream: true,
+          });
+
+          for await (const event of response) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+          controller.close();
+        } catch (err) {
+          console.error("Family update stream error:", err);
+          controller.enqueue(encoder.encode("Sorry, something went wrong generating the update."));
+          controller.close();
+        }
+      },
     });
 
-    const responseText =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    return NextResponse.json({ message: responseText });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (error) {
     console.error("Family update error:", error);
     return NextResponse.json(

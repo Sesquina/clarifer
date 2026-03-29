@@ -77,11 +77,33 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patientId: patient.id }),
       });
-      const data = await res.json();
-      setUpdateText(data.message || "Could not generate update. Please try again.");
+
+      if (!res.ok) {
+        setUpdateText("Could not generate update. Please try again.");
+        setUpdateLoading(false);
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setUpdateText("Could not generate update. Please try again.");
+        setUpdateLoading(false);
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let text = "";
+      setUpdateLoading(false);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+        const captured = text;
+        setUpdateText(captured);
+      }
     } catch {
       setUpdateText("Something went wrong. Please try again.");
-    } finally {
       setUpdateLoading(false);
     }
   }
