@@ -5,7 +5,13 @@ import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, patientId } = await req.json();
+    const body = await req.json();
+
+    if (body.warmup) {
+      return NextResponse.json({ status: "warm" });
+    }
+
+    const { messages, patientId } = body;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -53,7 +59,7 @@ Important: End your responses naturally. Do not add generic offers like "let me 
           const response = await anthropic.messages.create({
             model: "claude-sonnet-4-20250514",
             max_tokens: 1024,
-            system: systemPrompt,
+            system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
             messages: messages.map((m: { role: string; content: string }) => ({
               role: m.role,
               content: m.content,

@@ -5,6 +5,12 @@ import { NextResponse } from "next/server";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  const body = await request.json();
+
+  if (body.warmup) {
+    return NextResponse.json({ status: "warm" });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -12,7 +18,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { documentId, content } = await request.json();
+  const { documentId, content } = body;
 
   if (!documentId || !content) {
     return NextResponse.json({ error: "Missing documentId or content" }, { status: 400 });
