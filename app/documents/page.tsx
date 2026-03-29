@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Upload } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { DeleteDocumentButton } from "@/components/delete-document-button";
 
 export default async function DocumentsPage() {
   const supabase = await createClient();
@@ -57,9 +58,12 @@ export default async function DocumentsPage() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm">{doc.title || "Untitled"}</CardTitle>
-                      {doc.document_category && (
-                        <Badge variant="secondary">{doc.document_category}</Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {doc.document_category && (
+                          <Badge variant="secondary">{doc.document_category}</Badge>
+                        )}
+                        <DeleteDocumentButton documentId={doc.id} variant="icon" />
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>

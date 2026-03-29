@@ -4,6 +4,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { DeleteDocumentButton } from "@/components/delete-document-button";
 
 export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -152,6 +153,8 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
             View original file
           </a>
         )}
+
+        <DeleteDocumentButton documentId={doc.id} redirectTo="/documents" />
       </div>
     </PageContainer>
   );
