@@ -180,6 +180,18 @@ export default function ChatPage() {
         prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded. Analyzing...` } : m)
       );
 
+      // Show immediate feedback
+      const analyzingMsgId = crypto.randomUUID();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: analyzingMsgId,
+          role: "assistant",
+          content: "Analyzing your document... This may take a moment.",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
       // Prepare content for summarization
       const ext = origName.split(".").pop()?.toLowerCase() || "";
       let fileContent = "";
@@ -221,9 +233,11 @@ export default function ChatPage() {
         .join("\n");
 
       setMessages((prev) => [
-        ...prev.map((m) =>
-          m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded & analyzed` } : m
-        ),
+        ...prev
+          .filter((m) => m.id !== analyzingMsgId)
+          .map((m) =>
+            m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded & analyzed` } : m
+          ),
         {
           id: crypto.randomUUID(),
           role: "assistant",
@@ -241,7 +255,7 @@ export default function ChatPage() {
   }, [patientId, userId, supabase]);
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] flex-col">
+    <div className="flex flex-col" style={{ height: "calc(100vh - 7.5rem)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
       <ChatHistory messages={messages} isLoading={isLoading} />
       <ChatInput
         onSend={handleSend}

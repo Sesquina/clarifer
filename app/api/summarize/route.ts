@@ -26,12 +26,12 @@ export async function POST(request: Request) {
     // Step 1: Summarize the document
     const completion = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: `You are helping a family caregiver understand a medical document about their loved one. Your job is to analyze the document and return structured JSON.
+      max_tokens: 800,
+      system: `Be concise. 3-4 sentences for the summary maximum. Key findings only.
 
-Write the summary in plain, warm language a non-medical person can understand. Do not use medical jargon without immediately explaining it in parentheses. Write like you are a knowledgeable friend explaining results over the phone, clear, calm, and honest. Never use words like hepatocellular, cholestasis, transaminases, or other clinical terms without a plain-English explanation right after them in parentheses. Keep the summary to 3-4 sentences maximum. Start with the most important takeaway.
+You are helping a family caregiver understand a medical document. Analyze and return structured JSON. Use plain, warm language — no jargon without a parenthetical explanation. Start with the most important takeaway.
 
-Return ONLY valid JSON in this exact format:
+Return ONLY valid JSON:
 {
   "headline": "One-line plain-language takeaway",
   "findings": [
@@ -41,7 +41,7 @@ Return ONLY valid JSON in this exact format:
   "fullSummary": "3-4 sentence plain-language summary for a caregiver"
 }
 
-Use "status": "flagged" for abnormal or concerning values and "status": "normal" for normal values. Explain every finding in plain language.`,
+Use "flagged" for abnormal values, "normal" for normal values.`,
       messages: [{ role: "user", content }],
     });
 
