@@ -140,9 +140,9 @@ export async function POST(request: Request) {
   const documentType = doc.document_category ?? "medical document";
 
   // 7. Stream analysis via Vercel AI SDK
-  // Model: claude-haiku-4-5-20251001 per CLAUDE.md Section 2 (Samira: confirm claude-opus-4-5 ID before upgrading)
+  // Model: claude-opus-4-6 -- document analysis (complex task, highest accuracy required)
   const result = streamText({
-    model: anthropic("claude-haiku-4-5-20251001"),
+    model: anthropic("claude-opus-4-6"),
     system: buildSystemPrompt(conditionContext, documentType, language),
     messages: [
       {

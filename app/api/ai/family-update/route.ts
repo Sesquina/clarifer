@@ -169,7 +169,7 @@ export async function POST(request: Request) {
     : "No recent documents";
 
   // 7. Stream family update via Vercel AI SDK
-  // Model: claude-haiku-4-5-20251001 per CLAUDE.md Section 2 (fast tasks)
+  // Model: claude-haiku-4-5-20251001 -- family update (fast task, sufficient accuracy)
   const result = streamText({
     model: anthropic("claude-haiku-4-5-20251001"),
     system: buildSystemPrompt(language, symptomSummary, medicationList, documentHighlights),

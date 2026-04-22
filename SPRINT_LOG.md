@@ -61,3 +61,34 @@ All routes: NEVER diagnose, NEVER recommend treatment changes, NEVER speculate o
 All stub prompts marked with console.warn per spec.
 Blocking items for Samira: (1) confirm claude-opus-4-5 model ID, (2) confirm ai@3.x vs ai@6.x, (3) npm audit findings, (4) DECISION REQUIRED on Jest vs Vitest.
 STOP. Awaiting Samira end-of-day review.
+
+---
+
+[2026-04-22T16:20:00Z] TASK COMPLETE: Blocking Item 1 — Model routing corrected.
+app/api/ai/analyze-document/route.ts: claude-haiku-4-5-20251001 → claude-opus-4-6 (confirmed by Samira).
+family-update and trial-summary remain on claude-haiku-4-5-20251001 (confirmed correct for fast tasks).
+
+[2026-04-22T16:20:00Z] TASK COMPLETE: Blocking Item 2 — Vercel AI SDK version confirmed.
+ai@6.0.168 confirmed acceptable (Samira). docs/CLAUDE.md Section 2 updated: "Vercel AI SDK: 3.x" → "Vercel AI SDK: 6.x (streaming, toTextStreamResponse())". Routes use toTextStreamResponse() per ai@6.x API.
+
+[2026-04-22T16:20:00Z] TASK COMPLETE: Blocking Item 3 — npm audit vulnerabilities resolved.
+Ran: npm audit fix --force. Upgraded: next 16.2.1 → 16.2.4 (HIGH DoS fix), @anthropic-ai/sdk 0.80.0 → 0.90.0 (memory tool sandbox escape fix). Result: 0 vulnerabilities. No breaking changes observed.
+
+[2026-04-22T16:20:00Z] TASK COMPLETE: Blocking Item 4 — Test framework confirmed.
+Vitest 4.x retained (Samira confirmed). docs/CLAUDE.md Section 2 updated: "Jest: 29.x" → "Vitest: 4.x (Jest-compatible API, faster execution -- replaces Jest 29.x)".
+
+[2026-04-22T16:20:00Z] tsc --noEmit: CLEAN. Zero TypeScript errors across full codebase after all blocking item changes.
+
+[2026-04-22T16:20:00Z] npm audit: 0 vulnerabilities (post npm audit fix --force).
+
+[2026-04-22T16:20:00Z] TEST PASSING: Full suite 19/19 passing (7 test files). Duration 4.90s. All Sprint 1 and Sprint 2 tests green after blocking item changes.
+
+[2026-04-22T16:20:00Z] SPRINT COMPLETE: Sprint 2 — Streaming AI Implementation (Blocking Items Resolved)
+Branch: sprint-2-streaming-typescript
+Tests: 19/19 passing
+TypeScript: CLEAN
+npm audit: 0 vulnerabilities
+Model routing: claude-opus-4-6 (analyze-document), claude-haiku-4-5-20251001 (family-update, trial-summary)
+SDK: ai@6.0.168 (toTextStreamResponse())
+Test framework: Vitest 4.x
+All four blocking items resolved. Samira: ready to merge to main.

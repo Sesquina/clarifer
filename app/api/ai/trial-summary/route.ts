@@ -163,7 +163,7 @@ export async function POST(request: Request) {
     .join("\n");
 
   // 6. Stream trial summary via Vercel AI SDK
-  // Model: claude-haiku-4-5-20251001 per CLAUDE.md Section 2 (fast tasks)
+  // Model: claude-haiku-4-5-20251001 -- trial summary (fast task, sufficient accuracy)
   const result = streamText({
     model: anthropic("claude-haiku-4-5-20251001"),
     system: buildSystemPrompt(conditionContext, language),
