@@ -54,3 +54,24 @@ export const summarizeLimiter = new Ratelimit({
   limiter: Ratelimit.slidingWindow(10, "1 h"),
   prefix: "rl:summarize",
 });
+
+// AI document analysis: 10 per user per hour
+export const analyzeLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "1 h"),
+  prefix: "rl:analyze",
+});
+
+// AI family update (streaming): 20 per user per hour
+export const familyUpdateStreamLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "1 h"),
+  prefix: "rl:family-update-stream",
+});
+
+// AI trial summary (streaming): 30 per user per hour
+export const trialSummaryLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "1 h"),
+  prefix: "rl:trial-summary",
+});

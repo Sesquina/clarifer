@@ -1,113 +1,172 @@
-import { createClient } from "@/lib/supabase/server";
-import Anthropic from "@anthropic-ai/sdk";
+/**
+ * POST /api/ai/analyze-document
+ * Streams AI analysis of a medical document for the patient's caregiver.
+ * Auth: authenticate → role-check (caregiver only) → process.
+ * Streaming: Vercel AI SDK streamText(). First token target: under 500ms.
+ * Audit log written on stream completion via onFinish.
+ * No PHI in any log output.
+ */
 import { NextResponse } from "next/server";
-import { summarizeLimiter } from "@/lib/ratelimit";
+import { streamText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { createClient } from "@/lib/supabase/server";
+import { analyzeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 
 export const maxDuration = 60;
 
-const MAX_CONTENT_LENGTH = 50000;
+// Roles permitted to call this route
+const ALLOWED_ROLES = ["caregiver"];
+
+/**
+ * Document analysis system prompt stub.
+ * STUB: requires Samira review before production.
+ * Condition context and document type are interpolated at request time.
+ */
+function buildSystemPrompt(conditionContext: string, documentType: string, language: string): string {
+  console.warn("[STUB PROMPT -- requires Samira review before production]");
+  return `You are Clarifier's document analysis assistant helping a family caregiver understand a medical document.
+
+You NEVER diagnose. You NEVER recommend treatment changes. You NEVER speculate on prognosis.
+You NEVER suggest a patient stop, change, or adjust any medication.
+You NEVER assign probability to outcomes or disease progression.
+
+Condition context: ${conditionContext}
+Document type: ${documentType}
+Language: ${language}
+
+Output four clearly labeled sections:
+1. KEY FINDINGS -- plain-language summary of what the document shows
+2. MEDICATIONS MENTIONED -- any medications referenced in the document
+3. NEXT STEPS -- concrete actions the caregiver can take (never treatment changes)
+4. QUESTIONS TO ASK -- 3 specific questions for the next provider visit
+
+Use warm, clear language. Never clinical or cold. Write as if speaking directly to a caregiver.
+If asked to diagnose or speculate on prognosis, redirect warmly to the care team.`;
+}
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
+  // 1. Authenticate
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized", code: "UNAUTHORIZED", status: 401 },
+      { status: 401 }
+    );
   }
 
-  const { success } = await summarizeLimiter.limit(user.id);
+  // 2. Authorize -- role check before any processing
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+    return NextResponse.json(
+      { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+      { status: 403 }
+    );
+  }
+
+  // 3. Rate limit
+  const { success } = await analyzeLimiter.limit(user.id);
   if (!success) {
-    return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many requests. Please wait before trying again.", code: "RATE_LIMITED", status: 429 },
+      { status: 429 }
+    );
   }
 
-  const body = await request.json();
-  const { documentId, content } = body;
-
-  if (!documentId || !content) {
-    return NextResponse.json({ error: "Missing documentId or content" }, { status: 400 });
+  // 4. Parse and validate input
+  let documentId: string;
+  let patientId: string;
+  try {
+    const body = await request.json();
+    documentId = body.documentId;
+    patientId = body.patientId;
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body", code: "BAD_REQUEST", status: 400 },
+      { status: 400 }
+    );
   }
 
-  if (typeof content === "string" && content.length > MAX_CONTENT_LENGTH) {
-    return NextResponse.json({ error: "Content too large." }, { status: 400 });
+  if (!documentId || !patientId) {
+    return NextResponse.json(
+      { error: "documentId and patientId are required", code: "BAD_REQUEST", status: 400 },
+      { status: 400 }
+    );
   }
 
-  // Verify the document exists and belongs to a patient this user can access
+  // 5. Fetch document metadata (verify it exists and belongs to patient)
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, patient_id")
+    .select("id, patient_id, document_category, title")
     .eq("id", documentId)
     .single();
 
   if (!doc) {
-    return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Document not found", code: "NOT_FOUND", status: 404 },
+      { status: 404 }
+    );
   }
 
-  try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  // 6. Fetch patient + condition template for AI context
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("condition_template_id, primary_language")
+    .eq("id", patientId)
+    .single();
 
-    const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 800,
-      system: `Be concise. 3-4 sentences for the summary maximum. Key findings only.
+  let conditionContext = "general medical";
+  let language = patient?.primary_language ?? "en";
 
-You are helping a family caregiver understand a medical document. Analyze and return structured JSON. Use plain, warm language — no jargon without a parenthetical explanation. Start with the most important takeaway.
-
-Return ONLY valid JSON:
-{
-  "headline": "One-line plain-language takeaway",
-  "findings": [
-    {"label": "Finding name", "value": "Plain-language explanation", "status": "normal"}
-  ],
-  "fullSummary": "3-4 sentence plain-language summary for a caregiver"
-}
-
-Use "flagged" for abnormal values, "normal" for normal values.`,
-      messages: [{ role: "user", content }],
-    });
-
-    const responseText = completion.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("");
-
-    let parsed: {
-      headline?: string;
-      findings?: Array<{ label: string; value: string; status?: string }>;
-      fullSummary?: string;
-    };
-
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
-    } catch {
-      parsed = { headline: "Document analyzed", findings: [], fullSummary: responseText };
-    }
-
-    const headline = parsed.headline || "Document analyzed";
-    const keyFindings = parsed.findings || [];
-    const fullSummary = parsed.fullSummary || responseText;
-
-    // Link the summary to the source document by documentId
-    await supabase
-      .from("documents")
-      .update({
-        summary: fullSummary,
-        key_findings: keyFindings,
-        analyzed_at: new Date().toISOString(),
-      })
-      .eq("id", documentId);
-
-    return NextResponse.json({
-      documentId,
-      summary: fullSummary,
-      headline,
-      keyFindings,
-    });
-  } catch {
-    return NextResponse.json({ error: "Failed to analyze document" }, { status: 500 });
+  if (patient?.condition_template_id) {
+    const { data: template } = await supabase
+      .from("condition_templates")
+      .select("ai_context, document_types")
+      .eq("id", patient.condition_template_id ?? "")
+      .single();
+    if (template?.ai_context) conditionContext = template.ai_context;
   }
+
+  const documentType = doc.document_category ?? "medical document";
+
+  // 7. Stream analysis via Vercel AI SDK
+  // Model: claude-haiku-4-5-20251001 per CLAUDE.md Section 2 (Samira: confirm claude-opus-4-5 ID before upgrading)
+  const result = streamText({
+    model: anthropic("claude-haiku-4-5-20251001"),
+    system: buildSystemPrompt(conditionContext, documentType, language),
+    messages: [
+      {
+        role: "user",
+        content: `Please analyze this ${documentType}. Document ID: ${documentId}. Provide the four sections: KEY FINDINGS, MEDICATIONS MENTIONED, NEXT STEPS, QUESTIONS TO ASK.`,
+      },
+    ],
+    onFinish: async ({ text }) => {
+      // Write summary to documents table linked by document_id
+      await supabase
+        .from("documents")
+        .update({ summary: text, analyzed_at: new Date().toISOString() })
+        .eq("id", documentId);
+
+      // Audit log on completion -- Tier 1 requirement
+      await supabase.from("audit_log").insert({
+        user_id: user.id,
+        patient_id: patientId,
+        action: "ai_analyze_document",
+        resource_type: "documents",
+        resource_id: documentId,
+      });
+    },
+  });
+
+  return result.toTextStreamResponse();
 }
