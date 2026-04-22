@@ -135,3 +135,39 @@ New files:
 Audit log: every symptom_log write includes audit_log entry (action=symptom_logged, user_id, patient_id, resource_type=symptom_logs, resource_id).
 Guardrails: ai_context explicitly states does not assess cognitive stage, does not recommend medication changes, does not speculate on progression.
 Samira: ready to merge to main.
+
+---
+
+[2026-04-22T16:51:00Z] TASK STARTED: Sprint 2B — Alzheimer's Condition Template
+Branch: sprint-2b-alzheimers
+Persona: elderly parent caregiver (distinct from dementia — adds word_finding_difficulty and mood_changes fields)
+
+[2026-04-22T16:51:00Z] FILE MODIFIED: supabase/migrations/20260422000002_alzheimers_condition_template.sql (NEW)
+Alzheimer's condition_template row: id=alzheimers, category=neurology, 7 symptom_questions (5 scales + 2 checkbox groups), 9 symptom_vocabulary terms, common_medications list, guardrails in ai_context. ON CONFLICT DO UPDATE for idempotent re-runs.
+
+[2026-04-22T16:51:00Z] FILE MODIFIED: components/symptoms/AlzheimersSymptomForm.tsx (NEW)
+React component: 5 scale sliders (memory_loss, word_finding_difficulty, confusion, sleep_disruption, caregiver_stress) + 2 checkbox groups (mood_changes: depression/anxiety/irritability/apathy; behavioral_changes: aggression/wandering/repetition/agitation). POSTs to /api/symptoms/log with conditionTemplateId=alzheimers. All fields on single screen — completable under 60 seconds. Web + mobile responsive via Tailwind.
+
+[2026-04-22T16:51:00Z] TEST WRITTEN: tests/api/alzheimers-condition-template.test.ts — 2 API tests.
+Test 1: GET /api/condition-templates/alzheimers returns full template; verifies word_finding_difficulty and mood_changes keys present (Alzheimer's-specific markers vs generic dementia).
+Test 3: POST /api/symptoms/log inserts with condition_context=alzheimers; audit_log written with action=symptom_logged.
+
+[2026-04-22T16:51:00Z] TEST WRITTEN: tests/alzheimers-symptom-form.test.tsx — 1 UI test.
+Test 2: AlzheimersSymptomForm renders all required fields including word-finding difficulty scale and mood changes checkboxes.
+
+[2026-04-22T16:51:00Z] tsc --noEmit: CLEAN. Zero TypeScript errors.
+
+[2026-04-22T16:51:00Z] TEST PASSING: Full suite 26/26 passing (11 test files). Sprint 2B tests: 3/3 green.
+
+[2026-04-22T16:51:00Z] SPRINT 2B COMPLETE: Alzheimer's Condition Template
+Branch: sprint-2b-alzheimers
+Tests: 26/26 passing (3 new tests this sprint)
+TypeScript: CLEAN
+New files:
+  - supabase/migrations/20260422000002_alzheimers_condition_template.sql
+  - components/symptoms/AlzheimersSymptomForm.tsx
+Routes reused from Sprint 2A: GET /api/condition-templates/[id], POST /api/symptoms/log
+Audit log: every symptom_log write includes audit_log entry (action=symptom_logged, user_id, patient_id, resource_type=symptom_logs, resource_id).
+Distinguishing features vs dementia template: word_finding_difficulty scale, mood_changes checkbox group (depression/anxiety/irritability/apathy).
+Guardrails: ai_context explicitly states does not assess disease stage, does not recommend medication changes, does not speculate on progression timeline.
+Samira: ready to merge to main.
