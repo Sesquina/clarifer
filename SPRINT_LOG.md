@@ -92,3 +92,46 @@ Model routing: claude-opus-4-6 (analyze-document), claude-haiku-4-5-20251001 (fa
 SDK: ai@6.0.168 (toTextStreamResponse())
 Test framework: Vitest 4.x
 All four blocking items resolved. Samira: ready to merge to main.
+
+---
+
+[2026-04-22T16:42:00Z] TASK STARTED: Sprint 2A — Dementia Condition Template
+Branch: sprint-2a-dementia
+Persona: elderly parent caregiver
+
+[2026-04-22T16:42:00Z] FILE MODIFIED: supabase/migrations/20260422000001_dementia_condition_template.sql (NEW)
+Dementia condition_template row: id=dementia, category=neurology, 6 symptom_questions (4 scales + 2 checkbox groups), 9 symptom_vocabulary terms, common_medications list, guardrails in ai_context. ON CONFLICT DO UPDATE for idempotent re-runs.
+
+[2026-04-22T16:42:00Z] FILE MODIFIED: app/api/condition-templates/[id]/route.ts (NEW)
+GET endpoint: auth → fetch condition_templates by id → 404 with code=NOT_FOUND if missing → 200 with template JSON. No PHI.
+
+[2026-04-22T16:42:00Z] FILE MODIFIED: app/api/symptoms/log/route.ts (NEW)
+POST endpoint: auth → role-check (caregiver only) → parse body (patientId, conditionTemplateId, responses, overallSeverity) → insert symptom_logs with condition_context=conditionTemplateId → audit_log insert (action=symptom_logged). HIPAA Tier 1 audit coverage confirmed.
+
+[2026-04-22T16:42:00Z] FILE MODIFIED: components/symptoms/DementiaSymptomForm.tsx (NEW)
+React component: 4 scale sliders (memory_loss, confusion, sleep_disruption, caregiver_stress) + 2 checkbox groups (behavioral_changes: aggression/wandering/repetition/agitation; eating_hygiene: refuses food/forgets to eat/hygiene neglect). POSTs to /api/symptoms/log with conditionTemplateId=dementia. All fields on single screen — completable under 60 seconds. Web + mobile responsive via Tailwind.
+
+[2026-04-22T16:42:00Z] TEST WRITTEN: tests/api/dementia-condition-template.test.ts — 3 API tests.
+Test 1a: GET /api/condition-templates/dementia returns full template with all 6 field keys including caregiver_stress (elderly parent persona marker).
+Test 1b: GET /api/condition-templates/unknown returns 404 with code=NOT_FOUND.
+Test 3: POST /api/symptoms/log inserts with condition_context=dementia, verifies audit_log written with action=symptom_logged.
+
+[2026-04-22T16:42:00Z] TEST WRITTEN: tests/dementia-symptom-form.test.tsx — 1 UI test.
+Test 2: DementiaSymptomForm renders all required fields: memory loss scale, confusion scale, sleep disruption scale, caregiver stress scale, behavioral_changes checkboxes (aggression, wandering, repetition, agitation), eating_hygiene checkboxes (refuses food, forgets to eat, hygiene neglect), Save log button.
+
+[2026-04-22T16:42:00Z] tsc --noEmit: CLEAN. Zero TypeScript errors. Fixed: responses typed as Json via import from lib/supabase/types.
+
+[2026-04-22T16:42:00Z] TEST PASSING: Full suite 23/23 passing (9 test files). Sprint 2A tests: 4/4 green.
+
+[2026-04-22T16:42:00Z] SPRINT 2A COMPLETE: Dementia Condition Template
+Branch: sprint-2a-dementia
+Tests: 23/23 passing (4 new tests this sprint)
+TypeScript: CLEAN
+New files:
+  - supabase/migrations/20260422000001_dementia_condition_template.sql
+  - app/api/condition-templates/[id]/route.ts
+  - app/api/symptoms/log/route.ts
+  - components/symptoms/DementiaSymptomForm.tsx
+Audit log: every symptom_log write includes audit_log entry (action=symptom_logged, user_id, patient_id, resource_type=symptom_logs, resource_id).
+Guardrails: ai_context explicitly states does not assess cognitive stage, does not recommend medication changes, does not speculate on progression.
+Samira: ready to merge to main.
