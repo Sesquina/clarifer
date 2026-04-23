@@ -383,3 +383,17 @@ Architecture notes:
 
 WAITING FOR SAMIRA: Run migration 20260423000001_create_documents_bucket.sql in Supabase dashboard.
   This creates the private documents storage bucket with org-folder-scoped RLS policies.
+
+---
+
+[2026-04-23] SPRINT 5 — npm audit results
+
+Root project (clarifier/): 0 vulnerabilities ✅
+
+apps/mobile/: 10 moderate severity vulnerabilities
+  Package: uuid < 14.0.0
+  Source:  Expo internal dependency chain (expo → @expo/cli → @expo/config-plugins → xcode → uuid)
+  Fix available but requires downgrading to Expo 46 (breaking change — DO NOT RUN)
+  Decision: Accept risk. These are Expo's internal deps, not application code.
+            Expo will patch in a future SDK release. Monitor with each sprint.
+  Action:  Re-run npm audit at start of every sprint. Escalate if severity increases to high/critical.
