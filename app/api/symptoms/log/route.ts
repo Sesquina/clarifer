@@ -34,12 +34,14 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
     return NextResponse.json(
       { error: "Forbidden", code: "FORBIDDEN" },
       { status: 403 }
     );
   }
+
+  const organizationId = userRecord.organization_id;
 
   // 3. Parse input
   let patientId: string;
@@ -76,6 +78,7 @@ export async function POST(request: Request) {
       condition_context: conditionTemplateId,
       responses: responses as unknown as Json,
       overall_severity: overallSeverity,
+      organization_id: organizationId,
     })
     .select()
     .single();
@@ -94,6 +97,7 @@ export async function POST(request: Request) {
     action: "symptom_logged",
     resource_type: "symptom_logs",
     resource_id: log.id,
+    organization_id: organizationId,
   });
 
   return NextResponse.json({ id: log.id }, { status: 201 });

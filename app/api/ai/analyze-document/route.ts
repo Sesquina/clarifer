@@ -67,12 +67,14 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
     return NextResponse.json(
       { error: "Forbidden", code: "FORBIDDEN", status: 403 },
       { status: 403 }
     );
   }
+
+  const organizationId = userRecord.organization_id;
 
   // 3. Rate limit
   const { success } = await analyzeLimiter.limit(user.id);
@@ -104,11 +106,12 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. Fetch document metadata (verify it exists and belongs to patient)
+  // 5. Fetch document metadata (verify it exists and belongs to org)
   const { data: doc } = await supabase
     .from("documents")
     .select("id, patient_id, document_category, title")
     .eq("id", documentId)
+    .eq("organization_id", organizationId)
     .single();
 
   if (!doc) {
@@ -123,6 +126,7 @@ export async function POST(request: Request) {
     .from("patients")
     .select("condition_template_id, primary_language")
     .eq("id", patientId)
+    .eq("organization_id", organizationId)
     .single();
 
   let conditionContext = "general medical";
@@ -164,6 +168,7 @@ export async function POST(request: Request) {
         action: "ai_analyze_document",
         resource_type: "documents",
         resource_id: documentId,
+        organization_id: organizationId,
       });
     },
   });

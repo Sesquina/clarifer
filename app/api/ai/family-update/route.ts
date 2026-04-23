@@ -71,12 +71,14 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
     return NextResponse.json(
       { error: "Forbidden", code: "FORBIDDEN", status: 403 },
       { status: 403 }
     );
   }
+
+  const organizationId = userRecord.organization_id;
 
   // 3. Rate limit
   const { success } = await familyUpdateStreamLimiter.limit(user.id);
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
     .from("patients")
     .select("primary_language, custom_diagnosis")
     .eq("id", patientId)
+    .eq("organization_id", organizationId)
     .single();
 
   if (!patient) {
@@ -133,6 +136,7 @@ export async function POST(request: Request) {
       .from("symptom_logs")
       .select("overall_severity, ai_summary, created_at")
       .eq("patient_id", patientId)
+      .eq("organization_id", organizationId)
       .gte("created_at", sevenDaysAgo)
       .order("created_at", { ascending: false })
       .limit(7),
@@ -140,11 +144,13 @@ export async function POST(request: Request) {
       .from("medications")
       .select("name, dose, frequency")
       .eq("patient_id", patientId)
+      .eq("organization_id", organizationId)
       .eq("is_active", true),
     supabase
       .from("documents")
       .select("title, document_category, uploaded_at")
       .eq("patient_id", patientId)
+      .eq("organization_id", organizationId)
       .order("uploaded_at", { ascending: false })
       .limit(3),
   ]);
@@ -187,6 +193,7 @@ export async function POST(request: Request) {
         action: "ai_family_update",
         resource_type: "patients",
         resource_id: patientId,
+        organization_id: organizationId,
       });
     },
   });

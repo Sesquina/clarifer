@@ -36,6 +36,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const organizationId = userRecord.organization_id;
+
     const { success } = await uploadLimiter.limit(user.id);
     if (!success) {
       return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
@@ -100,6 +112,7 @@ export async function POST(request: Request) {
         file_type: ext,
         title: fileName,
         document_category: category,
+        organization_id: organizationId,
       })
       .select()
       .single();

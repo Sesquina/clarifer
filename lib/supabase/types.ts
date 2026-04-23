@@ -21,6 +21,7 @@ export type Database = {
           exported_at: string | null
           fields_included: Json | null
           id: string
+          organization_id: string | null
           patient_id: string | null
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           exported_at?: string | null
           fields_included?: Json | null
           id?: string
+          organization_id?: string | null
           patient_id?: string | null
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           exported_at?: string | null
           fields_included?: Json | null
           id?: string
+          organization_id?: string | null
           patient_id?: string | null
         }
         Relationships: [
@@ -57,6 +60,7 @@ export type Database = {
           datetime: string | null
           duration_minutes: number | null
           id: string
+          organization_id: string | null
           location: string | null
           notes: string | null
           patient_id: string | null
@@ -73,6 +77,7 @@ export type Database = {
           datetime?: string | null
           duration_minutes?: number | null
           id?: string
+          organization_id?: string | null
           location?: string | null
           notes?: string | null
           patient_id?: string | null
@@ -89,6 +94,7 @@ export type Database = {
           datetime?: string | null
           duration_minutes?: number | null
           id?: string
+          organization_id?: string | null
           location?: string | null
           notes?: string | null
           patient_id?: string | null
@@ -120,6 +126,7 @@ export type Database = {
           action: string | null
           created_at: string | null
           id: string
+          organization_id: string | null
           ip_address: string | null
           patient_id: string | null
           resource_id: string | null
@@ -131,6 +138,7 @@ export type Database = {
           action?: string | null
           created_at?: string | null
           id?: string
+          organization_id?: string | null
           ip_address?: string | null
           patient_id?: string | null
           resource_id?: string | null
@@ -142,6 +150,7 @@ export type Database = {
           action?: string | null
           created_at?: string | null
           id?: string
+          organization_id?: string | null
           ip_address?: string | null
           patient_id?: string | null
           resource_id?: string | null
@@ -171,6 +180,7 @@ export type Database = {
           access_token: string | null
           connected_at: string | null
           id: string
+          organization_id: string | null
           last_synced_at: string | null
           provider: string | null
           refresh_token: string | null
@@ -180,6 +190,7 @@ export type Database = {
           access_token?: string | null
           connected_at?: string | null
           id?: string
+          organization_id?: string | null
           last_synced_at?: string | null
           provider?: string | null
           refresh_token?: string | null
@@ -189,6 +200,7 @@ export type Database = {
           access_token?: string | null
           connected_at?: string | null
           id?: string
+          organization_id?: string | null
           last_synced_at?: string | null
           provider?: string | null
           refresh_token?: string | null
@@ -287,6 +299,7 @@ export type Database = {
           created_at: string | null
           document_id: string | null
           id: string
+          organization_id: string | null
           patient_id: string | null
           role: string
           user_id: string | null
@@ -296,6 +309,7 @@ export type Database = {
           created_at?: string | null
           document_id?: string | null
           id?: string
+          organization_id?: string | null
           patient_id?: string | null
           role: string
           user_id?: string | null
@@ -305,6 +319,7 @@ export type Database = {
           created_at?: string | null
           document_id?: string | null
           id?: string
+          organization_id?: string | null
           patient_id?: string | null
           role?: string
           user_id?: string | null
@@ -387,6 +402,7 @@ export type Database = {
           file_url: string | null
           flagged: boolean | null
           id: string
+          organization_id: string | null
           key_findings: Json | null
           patient_id: string | null
           share_research: boolean | null
@@ -404,6 +420,7 @@ export type Database = {
           file_url?: string | null
           flagged?: boolean | null
           id?: string
+          organization_id?: string | null
           key_findings?: Json | null
           patient_id?: string | null
           share_research?: boolean | null
@@ -421,6 +438,7 @@ export type Database = {
           file_url?: string | null
           flagged?: boolean | null
           id?: string
+          organization_id?: string | null
           key_findings?: Json | null
           patient_id?: string | null
           share_research?: boolean | null
@@ -456,6 +474,7 @@ export type Database = {
           frequency: string | null
           generic_name: string | null
           id: string
+          organization_id: string | null
           indication: string | null
           is_active: boolean | null
           name: string
@@ -474,6 +493,7 @@ export type Database = {
           frequency?: string | null
           generic_name?: string | null
           id?: string
+          organization_id?: string | null
           indication?: string | null
           is_active?: boolean | null
           name: string
@@ -492,6 +512,7 @@ export type Database = {
           frequency?: string | null
           generic_name?: string | null
           id?: string
+          organization_id?: string | null
           indication?: string | null
           is_active?: boolean | null
           name?: string
@@ -524,6 +545,7 @@ export type Database = {
           action_url: string | null
           created_at: string | null
           id: string
+          organization_id: string | null
           message: string | null
           patient_id: string | null
           read: boolean | null
@@ -535,6 +557,7 @@ export type Database = {
           action_url?: string | null
           created_at?: string | null
           id?: string
+          organization_id?: string | null
           message?: string | null
           patient_id?: string | null
           read?: boolean | null
@@ -546,6 +569,7 @@ export type Database = {
           action_url?: string | null
           created_at?: string | null
           id?: string
+          organization_id?: string | null
           message?: string | null
           patient_id?: string | null
           read?: boolean | null
@@ -658,6 +682,7 @@ export type Database = {
           diagnosis_date: string | null
           dob: string | null
           id: string
+          organization_id: string | null
           name: string
           notes: string | null
           photo_url: string | null
@@ -673,6 +698,7 @@ export type Database = {
           diagnosis_date?: string | null
           dob?: string | null
           id?: string
+          organization_id?: string | null
           name: string
           notes?: string | null
           photo_url?: string | null
@@ -688,6 +714,7 @@ export type Database = {
           diagnosis_date?: string | null
           dob?: string | null
           id?: string
+          organization_id?: string | null
           name?: string
           notes?: string | null
           photo_url?: string | null
@@ -717,6 +744,7 @@ export type Database = {
           consent_version: string | null
           consented_at: string | null
           id: string
+          organization_id: string | null
           opted_in: boolean | null
           patient_id: string | null
           revoked_at: string | null
@@ -730,6 +758,7 @@ export type Database = {
           consent_version?: string | null
           consented_at?: string | null
           id?: string
+          organization_id?: string | null
           opted_in?: boolean | null
           patient_id?: string | null
           revoked_at?: string | null
@@ -743,6 +772,7 @@ export type Database = {
           consent_version?: string | null
           consented_at?: string | null
           id?: string
+          organization_id?: string | null
           opted_in?: boolean | null
           patient_id?: string | null
           revoked_at?: string | null
@@ -776,6 +806,7 @@ export type Database = {
           alert_type: string | null
           data: Json | null
           id: string
+          organization_id: string | null
           message: string | null
           patient_id: string | null
           severity: string | null
@@ -787,6 +818,7 @@ export type Database = {
           alert_type?: string | null
           data?: Json | null
           id?: string
+          organization_id?: string | null
           message?: string | null
           patient_id?: string | null
           severity?: string | null
@@ -798,6 +830,7 @@ export type Database = {
           alert_type?: string | null
           data?: Json | null
           id?: string
+          organization_id?: string | null
           message?: string | null
           patient_id?: string | null
           severity?: string | null
@@ -828,6 +861,7 @@ export type Database = {
           doctor_statement: string | null
           flagged: boolean | null
           id: string
+          organization_id: string | null
           logged_by: string | null
           overall_severity: number | null
           patient_id: string | null
@@ -841,6 +875,7 @@ export type Database = {
           doctor_statement?: string | null
           flagged?: boolean | null
           id?: string
+          organization_id?: string | null
           logged_by?: string | null
           overall_severity?: number | null
           patient_id?: string | null
@@ -854,6 +889,7 @@ export type Database = {
           doctor_statement?: string | null
           flagged?: boolean | null
           id?: string
+          organization_id?: string | null
           logged_by?: string | null
           overall_severity?: number | null
           patient_id?: string | null
@@ -881,6 +917,7 @@ export type Database = {
         Row: {
           distance_miles: number | null
           id: string
+          organization_id: string | null
           location: string | null
           match_criteria: Json | null
           patient_id: string | null
@@ -894,6 +931,7 @@ export type Database = {
         Insert: {
           distance_miles?: number | null
           id?: string
+          organization_id?: string | null
           location?: string | null
           match_criteria?: Json | null
           patient_id?: string | null
@@ -907,6 +945,7 @@ export type Database = {
         Update: {
           distance_miles?: number | null
           id?: string
+          organization_id?: string | null
           location?: string | null
           match_criteria?: Json | null
           patient_id?: string | null

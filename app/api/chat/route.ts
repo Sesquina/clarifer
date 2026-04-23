@@ -28,6 +28,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const organizationId = userRecord.organization_id;
+
     const { success } = await chatLimiter.limit(user.id);
     if (!success) {
       return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
@@ -61,6 +73,7 @@ export async function POST(req: NextRequest) {
       .from("patients")
       .select("*, condition_templates(*)")
       .eq("id", patientId)
+      .eq("organization_id", organizationId)
       .single();
 
     const knowledgeBase = `You are Medalyn, a caregiver and patient support assistant. You help people understand medical information related to their loved one or their own care. You must follow these rules without exception:

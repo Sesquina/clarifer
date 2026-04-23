@@ -14,6 +14,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const organizationId = userRecord.organization_id;
+
     const body = await request.json();
     const { patientId, title, datetime, providerName, providerSpecialty, location, notes } = body;
 
@@ -33,6 +45,7 @@ export async function POST(request: Request) {
         location: location || null,
         notes: notes || null,
         source: "manual",
+        organization_id: organizationId,
       })
       .select()
       .single();
@@ -47,6 +60,7 @@ export async function POST(request: Request) {
       action: "create_appointment",
       resource_type: "appointments",
       resource_id: appointment.id,
+      organization_id: organizationId,
     });
 
     return NextResponse.json({ id: appointment.id }, { status: 201 });

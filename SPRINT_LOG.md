@@ -171,3 +171,85 @@ Audit log: every symptom_log write includes audit_log entry (action=symptom_logg
 Distinguishing features vs dementia template: word_finding_difficulty scale, mood_changes checkbox group (depression/anxiety/irritability/apathy).
 Guardrails: ai_context explicitly states does not assess disease stage, does not recommend medication changes, does not speculate on progression timeline.
 Samira: ready to merge to main.
+
+---
+
+[2026-04-22T17:11:00Z] TASK STARTED: Sprint 3 — Multi-tenancy Migration
+Branch: sprint-3-multi-tenancy
+
+[2026-04-22T17:11:00Z] DISCOVERY: organizations table ALREADY EXISTS in schema (id, name, max_patients, subscription_status, subscription_tier, type, created_at). Missing white-label columns: slug, logo_url, primary_color, updated_at. users, care_relationships, organization_patients already have organization_id. 13 tables need organization_id added.
+
+[2026-04-22T17:11:00Z] DISCOVERY: Tables in sprint spec that do NOT exist in schema — skipped in migrations: trial_cache, medical_disclaimer_acceptances, ai_analysis_consents. Action required: create these tables in a future sprint before adding organization_id to them.
+
+[2026-04-22T17:11:00Z] MIGRATION REQUIRED: supabase/migrations/20260422000003_create_organizations_table.sql
+-- Adds slug (UNIQUE), logo_url, primary_color, updated_at columns to existing organizations table.
+-- Creates organizations_slug_idx unique index for subdomain routing.
+-- Enables RLS with organizations_select_own policy.
+-- DO NOT RUN — Samira runs manually in Supabase dashboard.
+
+[2026-04-22T17:11:00Z] MIGRATION REQUIRED: supabase/migrations/20260422000004_add_tenant_id_to_all_tables.sql
+-- Adds organization_id UUID FK to 13 tables:
+--   patients, appointments, documents, chat_messages, symptom_logs, medications,
+--   trial_saves, audit_log, research_consent, notifications, calendar_connections,
+--   symptom_alerts, anonymized_exports
+-- Step 1: ADD COLUMN (nullable). Step 2: UPDATE all existing rows to SAMIRA_DEFAULT_ORG_UUID.
+-- Step 3: ALTER COLUMN SET NOT NULL. Step 4: CREATE INDEX per table. Step 5: GRANT permissions.
+-- IMPORTANT: Replace SAMIRA_DEFAULT_ORG_UUID with actual org UUID before running.
+-- DO NOT RUN — Samira runs manually in Supabase dashboard.
+
+[2026-04-22T17:11:00Z] MIGRATION REQUIRED: supabase/migrations/20260422000005_update_rls_for_multi_tenancy.sql
+-- Drops ALL existing RLS policies across 16 tables (replaces migration 20250328000002_fix_rls.sql).
+-- Creates org-scoped policies for every table using:
+--   (organization_id = (SELECT organization_id FROM users WHERE id = auth.uid()))
+-- Every SELECT, INSERT, UPDATE, DELETE is covered.
+-- Tables covered: patients, appointments, documents, chat_messages, symptom_logs, medications,
+--   trial_saves, audit_log, research_consent, notifications, calendar_connections,
+--   symptom_alerts, anonymized_exports, users, care_relationships, organizations
+-- DO NOT RUN — Samira runs manually in Supabase dashboard.
+
+[2026-04-22T17:11:00Z] TASK COMPLETE: lib/supabase/types.ts updated.
+Added organization_id: string | null to Row, Insert, Update for all 13 affected tables.
+39 insertions total (13 tables × 3 sections). TypeScript now reflects the post-migration schema.
+
+[2026-04-22T17:11:00Z] TASK COMPLETE: 12 API routes updated with organization_id scoping.
+Routes updated:
+  - POST /api/ai/analyze-document: org_id guard on documents, patients queries; org_id in audit_log insert
+  - POST /api/ai/family-update (streaming): org_id guard on patients, symptom_logs, medications, documents; org_id in audit_log
+  - POST /api/ai/trial-summary: org_id guard on trial_saves, patients; org_id in audit_log
+  - POST /api/appointments/create: added userRecord fetch; org_id in appointments and audit_log inserts
+  - DELETE /api/documents/[id]: added userRecord fetch; org_id filter on documents query
+  - POST /api/export: added userRecord fetch; org_id on all 5 table queries + anonymized_exports insert
+  - POST /api/family-update (non-AI): added userRecord fetch; org_id on patients, symptom_logs, medications
+  - POST /api/symptoms/log: org_id in symptom_logs and audit_log inserts
+  - POST /api/summarize: added userRecord fetch; org_id on documents, patients, symptom_logs
+  - POST /api/upload: added userRecord fetch; org_id in documents insert
+  - POST /api/chat: added userRecord fetch; org_id on patients query
+  - GET /api/condition-templates/[id]: no change (global config table, not org-scoped data)
+Routes NOT needing org scoping (no user-data table queries): /api/health, /api/waitlist, /api/trials, /api/symptom-summary
+Pattern: every route extracts organizationId = userRecord.organization_id and applies .eq('organization_id', organizationId) to every SELECT, INSERT, UPDATE, DELETE on user-facing tables.
+
+[2026-04-22T17:11:00Z] TASK COMPLETE: Cross-tenant rejection test suite: 8/8 passing.
+Test file: tests/api/cross-tenant-isolation.test.ts
+Test 1: User from org A cannot read patient data from org B (family-update → 404)
+Test 2: User from org A INSERT carries org A's org_id, not org B's (RLS rejects at DB)
+Test 3: User from org A cannot analyze document from org B (analyze-document → 404)
+Test 4: User from org A cannot delete document from org B (documents/[id] DELETE → 404)
+Test 5: User from org B cannot access org A document (analyze-document → 404)
+Test 6: User from org B cannot read org A patient (family-update → 404)
+Test 7: RLS safety net — org_id filter in code mirrors what RLS does at DB level (trial-summary → 404)
+Test 8: Appointment insert always carries caller's org_id; RLS rejects cross-tenant at DB
+
+[2026-04-22T17:11:00Z] tsc --noEmit: CLEAN. Zero TypeScript errors across all 12 updated routes.
+
+[2026-04-22T17:11:00Z] TEST PASSING: Full suite 34/34 passing (12 test files). 8 new tests this sprint.
+
+[2026-04-22T17:11:00Z] SPRINT 3 COMPLETE: Multi-tenancy foundation
+Branch: sprint-3-multi-tenancy
+Tests: 34/34 passing (8 new cross-tenant isolation tests)
+TypeScript: CLEAN
+SQL migrations written (NOT executed — Samira runs manually):
+  - 20260422000003_create_organizations_table.sql
+  - 20260422000004_add_tenant_id_to_all_tables.sql
+  - 20260422000005_update_rls_for_multi_tenancy.sql
+API routes updated: 12 routes, all user-facing tables now org-scoped.
+WAITING FOR SAMIRA: Run 3 SQL migrations in Supabase dashboard. Replace SAMIRA_DEFAULT_ORG_UUID with actual org UUID before running migration 4.

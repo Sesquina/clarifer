@@ -26,6 +26,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const organizationId = userRecord.organization_id;
+
   const { success } = await summarizeLimiter.limit(user.id);
   if (!success) {
     return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
@@ -101,14 +113,15 @@ Use "flagged" for abnormal values, "normal" for normal values.`,
       .from("documents")
       .select("patient_id")
       .eq("id", documentId)
+      .eq("organization_id", organizationId)
       .single();
 
     let symptomConnection: string | null = null;
 
     if (doc?.patient_id) {
       const [patientResult, logResult] = await Promise.all([
-        supabase.from("patients").select("name, custom_diagnosis").eq("id", doc.patient_id).single(),
-        supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary").eq("patient_id", doc.patient_id).order("created_at", { ascending: false }).limit(1).single(),
+        supabase.from("patients").select("name, custom_diagnosis").eq("id", doc.patient_id).eq("organization_id", organizationId).single(),
+        supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary").eq("patient_id", doc.patient_id).eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(1).single(),
       ]);
 
       const patient = patientResult.data;

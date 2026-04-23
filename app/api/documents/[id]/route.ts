@@ -18,11 +18,24 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch the document to get the file path
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const organizationId = userRecord.organization_id;
+
+  // Fetch document — must belong to user's org
   const { data: doc } = await supabase
     .from("documents")
     .select("id, file_url, uploaded_by, patient_id")
     .eq("id", id)
+    .eq("organization_id", organizationId)
     .single();
 
   if (!doc) {

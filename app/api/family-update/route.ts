@@ -20,6 +20,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const organizationId = userRecord.organization_id;
+
     const { success } = await familyUpdateLimiter.limit(user.id);
     if (!success) {
       return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
@@ -32,9 +44,9 @@ export async function POST(request: Request) {
     }
 
     const [patientResult, symptomResult, medicationsResult] = await Promise.all([
-      supabase.from("patients").select("name, custom_diagnosis").eq("id", patientId).single(),
-      supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary, created_at").eq("patient_id", patientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("medications").select("name, dose, frequency, indication").eq("patient_id", patientId).eq("is_active", true),
+      supabase.from("patients").select("name, custom_diagnosis").eq("id", patientId).eq("organization_id", organizationId).single(),
+      supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary, created_at").eq("patient_id", patientId).eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("medications").select("name, dose, frequency, indication").eq("patient_id", patientId).eq("organization_id", organizationId).eq("is_active", true),
     ]);
 
     if (patientResult.error || !patientResult.data) {

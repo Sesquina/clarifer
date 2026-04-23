@@ -13,6 +13,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const organizationId = userRecord.organization_id;
+
   const { patientId } = await request.json();
 
   if (!patientId) {
@@ -20,25 +32,29 @@ export async function POST(request: Request) {
   }
 
   const [patientResult, logsResult, medsResult, docsResult, trialsResult] = await Promise.all([
-    supabase.from("patients").select("*").eq("id", patientId).single(),
+    supabase.from("patients").select("*").eq("id", patientId).eq("organization_id", organizationId).single(),
     supabase
       .from("symptom_logs")
       .select("created_at, overall_severity, symptoms, ai_summary")
       .eq("patient_id", patientId)
+      .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
       .from("medications")
       .select("name, dose, frequency")
-      .eq("patient_id", patientId),
+      .eq("patient_id", patientId)
+      .eq("organization_id", organizationId),
     supabase
       .from("documents")
       .select("title, document_category, summary")
-      .eq("patient_id", patientId),
+      .eq("patient_id", patientId)
+      .eq("organization_id", organizationId),
     supabase
       .from("trial_saves")
       .select("trial_name, phase, status, trial_id")
-      .eq("patient_id", patientId),
+      .eq("patient_id", patientId)
+      .eq("organization_id", organizationId),
   ]);
 
   const patient = patientResult.data;
@@ -149,6 +165,7 @@ export async function POST(request: Request) {
     await supabase.from("anonymized_exports").insert({
       patient_id: patientId,
       fields_included: ["patient", "symptomLogs", "medications", "documents", "trials"],
+      organization_id: organizationId,
     });
   } catch {
     // Silently ignore if anonymized_exports table doesn't exist

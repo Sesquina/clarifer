@@ -72,12 +72,14 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
     return NextResponse.json(
       { error: "Forbidden", code: "FORBIDDEN", status: 403 },
       { status: 403 }
     );
   }
+
+  const organizationId = userRecord.organization_id;
 
   // 3. Rate limit
   const { success } = await trialSummaryLimiter.limit(user.id);
@@ -117,11 +119,13 @@ export async function POST(request: Request) {
       .from("trial_saves")
       .select("trial_id, trial_name, phase, location, status, match_criteria")
       .eq("id", trialId)
+      .eq("organization_id", organizationId)
       .single(),
     supabase
       .from("patients")
       .select("condition_template_id, primary_language")
       .eq("id", patientId)
+      .eq("organization_id", organizationId)
       .single(),
   ]);
 
@@ -181,6 +185,7 @@ export async function POST(request: Request) {
         action: "ai_trial_summary",
         resource_type: "trial_saves",
         resource_id: trialId,
+        organization_id: organizationId,
       });
     },
   });
