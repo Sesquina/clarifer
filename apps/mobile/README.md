@@ -2,6 +2,17 @@
 
 Expo SDK 55 app targeting iOS, Android, and Web simultaneously.
 
+## Local Development Setup
+
+### Supabase Auth Configuration (required for local testing)
+1. Go to https://supabase.com → open Clarifer project
+2. Go to Authentication → URL Configuration
+3. Set Site URL to: http://localhost:8081
+4. Add to Redirect URLs: http://localhost:8081
+5. Save
+
+This must be done manually by Samira before email confirmation works locally.
+
 ## Setup
 
 ```bash
