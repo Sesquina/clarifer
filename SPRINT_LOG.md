@@ -512,3 +512,27 @@ Branch: sprint-6-enterprise-hardening
 [2026-04-23] npm audit (root, --audit-level=high): 0 vulnerabilities.
 
 [2026-04-23] SPRINT 6 COMPLETE
+
+---
+
+[2026-04-23] MANUAL REQUIRED: Link Supabase CLI to production
+Run: supabase link --project-ref lrhwgswbsctfqtvdjntr
+Enter database password when prompted.
+After linking, use: supabase db push
+to run all pending migrations in one command.
+
+Wrapper scripts available once linked:
+- Windows:  .\scripts\run-migrations.ps1
+- Mac/Linux: bash scripts/run-migrations.sh
+Both scripts list pending migrations, wait for Enter confirmation, then call
+`npx supabase db push` against the linked production project.
+
+Pending migrations from Sprint 6 that will be applied on the next push:
+- 20260423000002_add_missing_tables.sql        (ai_analysis_consents + RLS)
+- 20260423000003_enable_rls_missing_tables.sql (RLS on condition_templates, trial_cache)
+- 20260423000004_cholangiocarcinoma_template.sql (CCF demo condition seed)
+- 20260423000005_audit_log_forensic_columns.sql (ip_address, user_agent, status)
+
+Claude Code will not run `supabase link` or `supabase db push`. Both require
+Samira's interactive credentials and both are explicit hard stops in the
+autonomous-execution memory.

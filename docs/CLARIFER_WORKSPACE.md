@@ -34,48 +34,40 @@ git pull origin main
 7. If green: git push origin main
 8. Start next sprint
 
-## Running Migrations
+## Running Database Migrations
 
-All SQL migrations live in supabase/migrations/ and are applied via the Supabase CLI.
-Samira runs these commands. Claude Code never runs them.
+NEVER run migrations automatically. Always review first.
 
-### One-time setup (per machine)
-Required the first time on a new machine — installs the CLI, authenticates with
-supabase.com, and links this working tree to the Clarifer production project.
+### Setup (one time only)
+1. Install Supabase CLI: already installed (devDependency, invoke via `npx supabase`)
+2. Authenticate:
+   npx supabase login
+   (opens a browser — sign in with the account that owns the Clarifer project)
+3. Link to production project:
+   npx supabase link --project-ref lrhwgswbsctfqtvdjntr
+   (enter database password when prompted)
 
-1. cd C:\Users\esqui\clarifier
-2. npm install (supabase is already listed in devDependencies)
-3. npx supabase login
-   (opens a browser; sign in to the Supabase account that owns the Clarifer project)
-4. npx supabase link --project-ref <CLARIFER_PROD_PROJECT_REF>
-   (project ref is in the Supabase dashboard → Project Settings → General)
-   (this will prompt for the database password — use the one from the vault)
+### Running migrations (every sprint)
+After Claude Code writes new migration files:
 
-### Running pending migrations against production
+Option A — PowerShell (Windows HP):
+   cd C:\Users\esqui\clarifier
+   .\scripts\run-migrations.ps1
 
-npx supabase db push
+Option B — Terminal (MacBook):
+   cd ~/Desktop/clarifier
+   bash scripts/run-migrations.sh
 
-This runs all pending migrations in supabase/migrations/ in order against the
-linked production database. The CLI shows a diff and asks for confirmation
-before applying.
+Option C — Manual (Supabase dashboard):
+   Open supabase.com → SQL Editor → New query
+   Paste migration file → Run → confirm success
 
-Samira runs this command. Claude Code never runs this command.
+### Which migrations are pending?
+Check SPRINT_LOG.md for lines starting with:
+   MIGRATION REQUIRED:
 
-### Inspecting before running
-Before every push, verify what will run:
-
-npx supabase migration list           # shows applied vs pending migrations
-npx supabase db diff                  # shows the SQL about to be applied
-
-### Rollback
-Supabase migrations are forward-only. There is no `db pull --reverse`.
-If a migration fails, write a NEW migration that reverses it and run `db push` again.
-
-### Local development database (optional)
-To test migrations against a local Postgres before pushing to prod:
-
-npx supabase start                    # boots local stack in Docker
-npx supabase db reset                 # applies every migration from scratch
-npx supabase stop                     # shuts it down
-
-Requires Docker Desktop running.
+### Rules
+- NEVER run migrations on staging data with real patient names
+- ALWAYS run migrations on staging before production
+- ALWAYS verify success before starting next sprint
+- Database password: stored in your password manager (NOT in git)
