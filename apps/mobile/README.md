@@ -13,6 +13,30 @@ Expo SDK 55 app targeting iOS, Android, and Web simultaneously.
 
 This must be done manually by Samira before email confirmation works locally.
 
+## Building for Physical Device (SDK 55)
+
+Expo Go on App Store does not support SDK 55 yet.
+Use EAS Build to create a development build:
+
+### iOS (requires Apple Developer account)
+Run from `apps/mobile/`:
+```bash
+eas build --platform ios --profile development
+```
+Install the resulting `.ipa` on your iPhone via TestFlight or direct install.
+
+### iOS Simulator (Mac only — fastest option)
+```bash
+eas build --platform ios --profile simulator --local
+```
+Then drag the `.tar.gz` onto your Simulator.
+
+### Android
+```bash
+eas build --platform android --profile development
+```
+Install the resulting `.apk` on your Android device.
+
 ## Setup
 
 ```bash
