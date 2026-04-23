@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { checkOrigin } from "@/lib/cors";
 
+const ALLOWED_ROLES = ["caregiver", "admin"];
+
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
@@ -15,11 +17,14 @@ export async function POST(request: Request) {
 
   const { data: userRecord } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("role, organization_id")
     .eq("id", user.id)
     .single();
 
   if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -63,7 +68,6 @@ export async function POST(request: Request) {
   const docs = docsResult.data || [];
   const trials = trialsResult.data || [];
 
-  // Build readable text export
   const lines: string[] = [];
 
   lines.push("========================================");
@@ -72,7 +76,6 @@ export async function POST(request: Request) {
   lines.push(`Exported: ${new Date().toISOString()}`);
   lines.push("");
 
-  // Patient info
   lines.push("----------------------------------------");
   lines.push("PATIENT INFORMATION");
   lines.push("----------------------------------------");
@@ -84,7 +87,6 @@ export async function POST(request: Request) {
   }
   lines.push("");
 
-  // Medications
   lines.push("----------------------------------------");
   lines.push("CURRENT MEDICATIONS");
   lines.push("----------------------------------------");
@@ -99,7 +101,6 @@ export async function POST(request: Request) {
   }
   lines.push("");
 
-  // Symptom logs
   lines.push("----------------------------------------");
   lines.push("SYMPTOM LOGS (Last 10)");
   lines.push("----------------------------------------");
@@ -123,7 +124,6 @@ export async function POST(request: Request) {
   }
   lines.push("");
 
-  // Documents
   lines.push("----------------------------------------");
   lines.push("UPLOADED DOCUMENTS");
   lines.push("----------------------------------------");
@@ -139,7 +139,6 @@ export async function POST(request: Request) {
   }
   lines.push("");
 
-  // Saved clinical trials
   lines.push("----------------------------------------");
   lines.push("SAVED CLINICAL TRIALS");
   lines.push("----------------------------------------");
@@ -160,7 +159,6 @@ export async function POST(request: Request) {
 
   const textContent = lines.join("\n");
 
-  // Log the export (non-blocking, safe if table doesn't exist)
   try {
     await supabase.from("anonymized_exports").insert({
       patient_id: patientId,
@@ -168,8 +166,20 @@ export async function POST(request: Request) {
       organization_id: organizationId,
     });
   } catch {
-    // Silently ignore if anonymized_exports table doesn't exist
+    // non-critical
   }
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: patientId,
+    action: "EXPORT",
+    resource_type: "patient_export",
+    resource_id: patientId,
+    organization_id: organizationId,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  });
 
   return new Response(textContent, {
     headers: {

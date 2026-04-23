@@ -38,11 +38,14 @@ export async function POST(request: Request) {
 
     const { data: userRecord } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("role, organization_id")
       .eq("id", user.id)
       .single();
 
     if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!["caregiver", "provider"].includes(userRecord.role ?? "")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

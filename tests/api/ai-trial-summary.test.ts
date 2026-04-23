@@ -129,7 +129,7 @@ describe("POST /api/ai/trial-summary", () => {
     expect(callArgs.system).toMatch(/disqualif/i);
     expect(callArgs.system).toMatch(/eligibility/i);
     expect(callArgs.system).toMatch(/plain language/i);
-    // Guardrail: must not recommend enrolling or not enrolling
-    expect(callArgs.system).toMatch(/never recommend/i);
+    // Guardrail: must not recommend enrolling in any specific trial
+    expect(callArgs.system).toMatch(/do not recommend enrolling/i);
   });
 });

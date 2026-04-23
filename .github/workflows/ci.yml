@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm audit --audit-level=high
+
+  mobile-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd apps/mobile && npm ci --legacy-peer-deps
+      - run: cd apps/mobile && npm test
+      - run: cd apps/mobile && npx tsc --noEmit

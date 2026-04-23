@@ -4,6 +4,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+const ALLOWED_ROLES = ["caregiver", "provider"];
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -18,11 +20,14 @@ export async function GET(
 
   const { data: userRecord } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("role, organization_id")
     .eq("id", user.id)
     .single();
 
   if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -47,6 +52,18 @@ export async function GET(
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: document.patient_id,
+    action: "SELECT",
+    resource_type: "document_summaries",
+    resource_id: id,
+    organization_id: organizationId,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  });
 
   return NextResponse.json({ summary: summary ?? null });
 }

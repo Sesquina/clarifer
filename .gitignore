@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -16,6 +17,16 @@
 # next.js
 /.next/
 /out/
+
+# expo / mobile build artifacts
+apps/mobile/.expo/
+apps/mobile/test-results/
+apps/mobile/dist/
+apps/mobile/web-build/
+
+# local editor / agent state
+.vscode/
+.claude/
 
 # production
 /build

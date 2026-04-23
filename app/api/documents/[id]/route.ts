@@ -6,6 +6,9 @@ import { generateSignedUrl } from "@/lib/documents/storage";
 
 export const runtime = "nodejs";
 
+const GET_ROLES = ["caregiver", "provider", "admin"];
+const DELETE_ROLES = ["caregiver", "provider"];
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,11 +23,14 @@ export async function GET(
 
   const { data: userRecord } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("role, organization_id")
     .eq("id", user.id)
     .single();
 
   if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!GET_ROLES.includes(userRecord.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -47,6 +53,20 @@ export async function GET(
 
   const signedUrl = await generateSignedUrl(document.file_path);
 
+  const ipAddress = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip");
+  const userAgent = request.headers.get("user-agent");
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: document.patient_id,
+    action: "SELECT",
+    resource_type: "documents",
+    resource_id: id,
+    organization_id: organizationId,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    status: "success",
+  });
   await supabase.from("audit_log").insert({
     user_id: user.id,
     patient_id: document.patient_id,
@@ -54,16 +74,19 @@ export async function GET(
     resource_type: "documents",
     resource_id: id,
     organization_id: organizationId,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    status: "success",
   });
 
   return NextResponse.json({ document, signedUrl });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const corsError = checkOrigin(_request);
+  const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
   const { id } = await params;
@@ -76,17 +99,19 @@ export async function DELETE(
 
   const { data: userRecord } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("role, organization_id")
     .eq("id", user.id)
     .single();
 
   if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!DELETE_ROLES.includes(userRecord.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const organizationId = userRecord.organization_id;
 
-  // Fetch document — must belong to user's org
   const { data: doc } = await supabase
     .from("documents")
     .select("id, file_url, uploaded_by, patient_id")
@@ -102,13 +127,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Delete file from storage using service role client
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Extract storage path from the signed URL
   if (doc.file_url) {
     const url = doc.file_url as string;
     const match = url.match(/\/documents\/(.+?)(?:\?|$)/);
@@ -118,12 +141,23 @@ export async function DELETE(
     }
   }
 
-  // Delete the database row
   const { error } = await supabase.from("documents").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: doc.patient_id,
+    action: "DELETE",
+    resource_type: "documents",
+    resource_id: id,
+    organization_id: organizationId,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  });
 
   return NextResponse.json({ success: true });
 }

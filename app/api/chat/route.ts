@@ -30,11 +30,14 @@ export async function POST(req: NextRequest) {
 
     const { data: userRecord } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("role, organization_id")
       .eq("id", user.id)
       .single();
 
     if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (userRecord.role !== "caregiver") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -75,6 +78,18 @@ export async function POST(req: NextRequest) {
       .eq("id", patientId)
       .eq("organization_id", organizationId)
       .single();
+
+    await supabase.from("audit_log").insert({
+      user_id: user.id,
+      patient_id: patientId,
+      action: "SELECT",
+      resource_type: "chat",
+      resource_id: patientId,
+      organization_id: organizationId,
+      ip_address: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+      user_agent: req.headers.get("user-agent"),
+      status: "success",
+    });
 
     const knowledgeBase = `You are Clarifer, a caregiver and patient support assistant. You help people understand medical information related to their loved one or their own care. You must follow these rules without exception:
 

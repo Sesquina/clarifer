@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase-client";
 import {
@@ -7,6 +8,10 @@ import {
   extractRoleFromUserRecord,
   shouldShowDisclaimer,
 } from "./auth-logic";
+
+// 30 minutes of inactivity ends the session.
+const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
+const INACTIVITY_CHECK_INTERVAL_MS = 30 * 1000;
 
 interface AuthState {
   session: Session | null;
@@ -22,6 +27,8 @@ interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
   setRole: (role: UserRole) => Promise<{ error: string | null }>;
   acceptDisclaimer: () => Promise<{ error: string | null }>;
+  /** Reset the inactivity timer — call from root gesture/scroll handlers. */
+  markActivity: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -34,6 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     disclaimerAccepted: false,
     loading: true,
   });
+
+  const lastActivityRef = useRef<number>(Date.now());
+  const markActivity = () => {
+    lastActivityRef.current = Date.now();
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (_event, session) => {
         if (session?.user) {
           loadUserData(session);
+          lastActivityRef.current = Date.now();
         } else {
           setState({
             session: null,
@@ -62,6 +75,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Inactivity sign-out: periodic check + app-foreground check.
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      if (!state.session) return;
+      if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT_MS) {
+        await supabase.auth.signOut();
+      }
+    }, INACTIVITY_CHECK_INTERVAL_MS);
+
+    const onAppStateChange = async (next: AppStateStatus) => {
+      if (next === "active") {
+        if (
+          state.session &&
+          Date.now() - lastActivityRef.current > INACTIVITY_LIMIT_MS
+        ) {
+          await supabase.auth.signOut();
+        } else {
+          lastActivityRef.current = Date.now();
+        }
+      }
+    };
+
+    const appStateSub = AppState.addEventListener("change", onAppStateChange);
+
+    return () => {
+      clearInterval(intervalId);
+      appStateSub.remove();
+    };
+  }, [state.session]);
 
   async function loadUserData(session: Session) {
     const userId = session.user.id;
@@ -126,7 +169,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...state, signIn, signUp, signOut, setRole, acceptDisclaimer }}>
+    <AuthContext.Provider
+      value={{
+        ...state,
+        signIn,
+        signUp,
+        signOut,
+        setRole,
+        acceptDisclaimer,
+        markActivity,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

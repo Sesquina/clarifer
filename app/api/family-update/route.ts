@@ -22,11 +22,14 @@ export async function POST(request: Request) {
 
     const { data: userRecord } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("role, organization_id")
       .eq("id", user.id)
       .single();
 
     if (!userRecord?.organization_id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (userRecord.role !== "caregiver") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -56,6 +59,18 @@ export async function POST(request: Request) {
     const patient = patientResult.data;
     const recentSymptom = symptomResult.data;
     const medications = medicationsResult.data;
+
+    await supabase.from("audit_log").insert({
+      user_id: user.id,
+      patient_id: patientId,
+      action: "SELECT",
+      resource_type: "family_update",
+      resource_id: patientId,
+      organization_id: organizationId,
+      ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+      user_agent: request.headers.get("user-agent"),
+      status: "success",
+    });
 
     const symptomSummary = recentSymptom?.ai_summary
       || (recentSymptom?.symptoms ? JSON.stringify(recentSymptom.symptoms) : "None logged recently");

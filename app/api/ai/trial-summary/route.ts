@@ -2,10 +2,8 @@
  * POST /api/ai/trial-summary
  * Streams a plain-language clinical trial eligibility summary for a caregiver.
  * Fetches trial data from trial_saves and patient condition template.
- * Auth: authenticate → role-check (caregiver only) → process.
- * Output: 5 eligibility requirements in plain language, disqualifying criteria flagged.
+ * Auth → role-check (caregiver only) → rate limit → fetch → stream.
  * Audit log written on completion via onFinish.
- * No PHI in any log output.
  */
 import { NextResponse } from "next/server";
 import { streamText } from "ai";
@@ -18,43 +16,33 @@ export const maxDuration = 60;
 
 const ALLOWED_ROLES = ["caregiver"];
 
-/**
- * Trial eligibility summary system prompt stub.
- * STUB: requires Samira review before production.
- */
-function buildSystemPrompt(conditionContext: string, language: string): string {
-  console.warn("[STUB PROMPT -- requires Samira review before production]");
+function buildSystemPrompt(): string {
+  return `You are a clinical trial coordinator for Clarifer, helping caregivers understand whether a clinical trial might be worth discussing with their care team.
 
-  const langInstruction = language === "es"
-    ? "Write entirely in Spanish."
-    : "Write entirely in English.";
+For each trial, summarize in plain language:
+1. What is being tested (one sentence, no jargon)
+2. Who this trial is looking for (in plain terms)
+3. Key eligibility requirements (3-5 bullet points maximum)
+4. Any criteria that might DISQUALIFY this patient (flag clearly)
+5. Location and what participation involves
+6. Next step if interested
 
-  return `You translate clinical trial eligibility criteria into plain language for a family caregiver.
+Always end with: "Please discuss this trial with [patient name]'s oncologist before taking any action. Only your care team can confirm eligibility."
 
-${langInstruction}
+TONE: Helpful and informative. Not promotional. Not discouraging.
 
-Rules:
-- Write in plain language. No medical jargon without explanation.
-- Never recommend enrolling or not enrolling in any trial.
-- Never make promises about trial outcomes or efficacy.
-- Always remind the caregiver to discuss eligibility with their oncologist or care team.
-
-Condition context: ${conditionContext}
-
-Output format:
-1. TRIAL NAME -- one sentence description of what the trial is studying
-2. TOP 5 ELIGIBILITY REQUIREMENTS -- plain-language list of the 5 most important requirements
-3. LIKELY DISQUALIFYING CRITERIA -- clearly flag any criteria that may disqualify this patient
-4. NEXT STEP -- one action the caregiver can take (always: talk to care team or call trial coordinator)
-
-Flag disqualifying criteria clearly. Be honest but warm. This is critical information for a family.`;
+GUARDRAILS (non-negotiable):
+- Do NOT recommend enrolling in any specific trial
+- Do NOT speculate on trial outcomes or effectiveness
+- Do NOT replace the eligibility assessment by the trial sponsor
+- Always recommend consulting the oncologist before pursuing enrollment
+- If a trial seems clearly inappropriate, say so clearly and explain why`;
 }
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  // 1. Authenticate
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -65,7 +53,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Authorize
   const { data: userRecord } = await supabase
     .from("users")
     .select("role, organization_id")
@@ -81,7 +68,6 @@ export async function POST(request: Request) {
 
   const organizationId = userRecord.organization_id;
 
-  // 3. Rate limit
   const { success } = await trialSummaryLimiter.limit(user.id);
   if (!success) {
     return NextResponse.json(
@@ -90,7 +76,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 4. Parse input
   let trialId: string;
   let patientId: string;
   let trialDataOverride: Record<string, unknown> | undefined;
@@ -98,7 +83,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     trialId = body.trialId;
     patientId = body.patientId;
-    trialDataOverride = body.trialData; // Optional: client can pass raw trial data
+    trialDataOverride = body.trialData;
   } catch {
     return NextResponse.json(
       { error: "Invalid request body", code: "BAD_REQUEST", status: 400 },
@@ -113,7 +98,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. Fetch trial data from trial_saves and patient condition template
   const [trialResult, patientResult] = await Promise.all([
     supabase
       .from("trial_saves")
@@ -123,7 +107,7 @@ export async function POST(request: Request) {
       .single(),
     supabase
       .from("patients")
-      .select("condition_template_id, primary_language")
+      .select("name, condition_template_id, primary_language, custom_diagnosis")
       .eq("id", patientId)
       .eq("organization_id", organizationId)
       .single(),
@@ -139,20 +123,17 @@ export async function POST(request: Request) {
     );
   }
 
-  // Fetch condition template for AI context
-  let conditionContext = "general oncology";
-  const language = patient?.primary_language ?? "en";
+  let conditionContext = patient?.custom_diagnosis ?? "general oncology";
 
   if (patient?.condition_template_id) {
     const { data: template } = await supabase
       .from("condition_templates")
-      .select("ai_context, trial_filters")
+      .select("ai_context")
       .eq("id", patient.condition_template_id ?? "")
       .single();
     if (template?.ai_context) conditionContext = template.ai_context;
   }
 
-  // Build the trial context string for the prompt
   const trialData = trialDataOverride ?? trialSave;
   const trialContext = [
     `Trial name: ${trialData?.trial_name ?? "Unknown trial"}`,
@@ -166,19 +147,19 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join("\n");
 
-  // 6. Stream trial summary via Vercel AI SDK
-  // Model: claude-haiku-4-5-20251001 -- trial summary (fast task, sufficient accuracy)
+  const userMessage = `Patient name: ${patient?.name ?? "the patient"}
+Patient condition: ${conditionContext}
+
+Trial:
+${trialContext}
+
+Please summarize eligibility for this trial using the format in the system prompt.`;
+
   const result = streamText({
     model: anthropic("claude-haiku-4-5-20251001"),
-    system: buildSystemPrompt(conditionContext, language),
-    messages: [
-      {
-        role: "user",
-        content: `Please summarize the eligibility for this clinical trial:\n\n${trialContext}`,
-      },
-    ],
+    system: buildSystemPrompt(),
+    messages: [{ role: "user", content: userMessage }],
     onFinish: async () => {
-      // Audit log on completion
       await supabase.from("audit_log").insert({
         user_id: user.id,
         patient_id: patientId,
@@ -186,6 +167,9 @@ export async function POST(request: Request) {
         resource_type: "trial_saves",
         resource_id: trialId,
         organization_id: organizationId,
+        ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+        user_agent: request.headers.get("user-agent"),
+        status: "success",
       });
     },
   });

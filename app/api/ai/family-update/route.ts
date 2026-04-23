@@ -2,10 +2,8 @@
  * POST /api/ai/family-update
  * Streams a plain-language family update for a patient's caregiver.
  * Fetches last 7 days of symptom logs, active medications, and recent documents.
- * Auth: authenticate → role-check (caregiver only) → process.
- * Language: uses request body language param, falls back to patient.language.
+ * Auth → role-check (caregiver only) → rate limit → fetch → stream.
  * Audit log written on completion via onFinish.
- * No PHI in any log output.
  */
 import { NextResponse } from "next/server";
 import { streamText } from "ai";
@@ -18,42 +16,36 @@ export const maxDuration = 60;
 
 const ALLOWED_ROLES = ["caregiver"];
 
-/**
- * Family update system prompt stub.
- * STUB: requires Samira review before production (especially Spanish output).
- * Language and context are interpolated at request time.
- */
-function buildSystemPrompt(language: string, symptomSummary: string, medicationList: string, documentHighlights: string): string {
-  console.warn("[STUB PROMPT -- requires Samira review before production]");
+function buildSystemPrompt(language: string): string {
+  return `You are a care coordinator for Clarifer, helping caregivers communicate health updates to family members in plain language.
 
-  const langInstruction = language === "es"
-    ? "Write entirely in Spanish. Use warm, conversational Spanish appropriate for a family member."
-    : "Write entirely in English. Use warm, conversational English appropriate for a family member.";
+Generate a warm, clear family update based on the patient data provided.
 
-  return `You help a caregiver write a plain-language family update about a patient's recent health status.
+FORMAT:
+- Opening: one sentence on how the patient is doing overall
+- Recent changes: 2-3 bullet points on what has changed
+- What is helping: 1-2 things that are working
+- What to watch for: 1-2 things to monitor
+- Next steps: upcoming appointments or plans
+- Closing: one warm, hopeful sentence
 
-${langInstruction}
+TONE: Write as if you are a trusted friend who happens to know medicine. Warm, human, never clinical. The reader may be opening this at 2am worried about someone they love.
 
-Rules:
-- No medical jargon without a plain-language explanation in parentheses.
-- No prognosis speculation. Never estimate how long or how severe.
-- No treatment recommendations. Never suggest changing medications.
-- Keep it under 200 words.
-- Warm, hopeful where honest, never alarming.
-- End with an invitation for family to reach out with questions.
-- Write from the caregiver's perspective (first person plural: "we", "our").
+LANGUAGE: Respond in ${language === "es" ? "Spanish" : "English"}.
 
-Current data:
-Symptoms (last 7 days): ${symptomSummary}
-Medications: ${medicationList}
-Recent documents: ${documentHighlights}`;
+GUARDRAILS (non-negotiable):
+- Do NOT speculate on prognosis or life expectancy
+- Do NOT recommend medication changes
+- Do NOT diagnose or suggest diagnoses
+- Do NOT include specific lab values or medical jargon
+- Keep it under 200 words
+- End with something that acknowledges the caregiver's effort`;
 }
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  // 1. Authenticate
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -64,7 +56,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Authorize
   const { data: userRecord } = await supabase
     .from("users")
     .select("role, organization_id")
@@ -80,7 +71,6 @@ export async function POST(request: Request) {
 
   const organizationId = userRecord.organization_id;
 
-  // 3. Rate limit
   const { success } = await familyUpdateStreamLimiter.limit(user.id);
   if (!success) {
     return NextResponse.json(
@@ -89,7 +79,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 4. Parse input
   let patientId: string;
   let requestedLanguage: string | undefined;
   try {
@@ -110,7 +99,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. Fetch patient (for language preference fallback)
   const { data: patient } = await supabase
     .from("patients")
     .select("primary_language, custom_diagnosis")
@@ -125,10 +113,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Respect patient language preference if no explicit language provided
   const language = requestedLanguage ?? patient.primary_language ?? "en";
-
-  // 6. Fetch last 7 days of symptom logs, active medications, recent documents
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const [symptomResult, medicationResult, documentResult] = await Promise.all([
@@ -155,7 +140,6 @@ export async function POST(request: Request) {
       .limit(3),
   ]);
 
-  // Build context strings -- no PHI beyond what is necessary
   const symptomSummary = symptomResult.data && symptomResult.data.length > 0
     ? symptomResult.data
         .map((s) => s.ai_summary ?? `Severity ${s.overall_severity}/10`)
@@ -174,19 +158,18 @@ export async function POST(request: Request) {
         .join("; ")
     : "No recent documents";
 
-  // 7. Stream family update via Vercel AI SDK
-  // Model: claude-haiku-4-5-20251001 -- family update (fast task, sufficient accuracy)
+  const userMessage = `Patient context (last 7 days):
+Symptoms: ${symptomSummary}
+Active medications: ${medicationList}
+Recent documents: ${documentHighlights}
+
+Please write the family update now.`;
+
   const result = streamText({
     model: anthropic("claude-haiku-4-5-20251001"),
-    system: buildSystemPrompt(language, symptomSummary, medicationList, documentHighlights),
-    messages: [
-      {
-        role: "user",
-        content: `Please write the family update now.`,
-      },
-    ],
+    system: buildSystemPrompt(language),
+    messages: [{ role: "user", content: userMessage }],
     onFinish: async () => {
-      // Audit log on completion
       await supabase.from("audit_log").insert({
         user_id: user.id,
         patient_id: patientId,
@@ -194,6 +177,9 @@ export async function POST(request: Request) {
         resource_type: "patients",
         resource_id: patientId,
         organization_id: organizationId,
+        ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+        user_agent: request.headers.get("user-agent"),
+        status: "success",
       });
     },
   });

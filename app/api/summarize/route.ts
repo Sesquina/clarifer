@@ -28,11 +28,14 @@ export async function POST(request: Request) {
 
   const { data: userRecord } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("role, organization_id")
     .eq("id", user.id)
     .single();
 
   if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!["caregiver", "provider"].includes(userRecord.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -174,6 +177,18 @@ What symptoms might ${patient.name || "the patient"} be experiencing that are co
       .from("documents")
       .update(updateData)
       .eq("id", documentId);
+
+    await supabase.from("audit_log").insert({
+      user_id: user.id,
+      patient_id: doc?.patient_id ?? null,
+      action: "SELECT",
+      resource_type: "document_summary",
+      resource_id: documentId,
+      organization_id: organizationId,
+      ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+      user_agent: request.headers.get("user-agent"),
+      status: "success",
+    });
 
     return NextResponse.json({
       summary: fullSummary,

@@ -397,3 +397,118 @@ apps/mobile/: 10 moderate severity vulnerabilities
   Decision: Accept risk. These are Expo's internal deps, not application code.
             Expo will patch in a future SDK release. Monitor with each sprint.
   Action:  Re-run npm audit at start of every sprint. Escalate if severity increases to high/critical.
+
+---
+
+[2026-04-23] TASK STARTED: Sprint 6 — Enterprise Hardening
+Branch: sprint-6-enterprise-hardening
+
+[2026-04-23] KNOWN-ISSUES SCAN (pre-work):
+  - Next.js 16: middleware.ts renamed to proxy.ts (repo already on proxy.ts).
+    CVE-2025-29927 warns middleware-only auth is bypassable via x-middleware-subrequest
+    header spoofing; route-level auth remains the backstop.
+  - Supabase RLS: index columns referenced in policies (org_id already indexed sprint 3).
+    Realtime subscriptions incompatible with RLS-protected tables — no realtime in repo yet.
+  - Upstash Redis: Next.js edge middleware + sliding window is standard pattern for auth
+    rate limiting; loginLimiter (5/15min) + signupLimiter (3/hr) pre-exist in lib/ratelimit.ts.
+  - Zod: direct parse in lib/env.ts preferred over T3 Env wrapper — fewer dependencies.
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260423000002_add_missing_tables.sql
+  Creates public.ai_analysis_consents table with org-isolation RLS policy.
+  Required before the AI analysis consent flow can be enabled in production.
+  DO NOT EXECUTE: apply via Supabase dashboard or migration pipeline.
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260423000003_enable_rls_missing_tables.sql
+  Enables RLS on public.condition_templates (authenticated-read policy, global)
+  and public.trial_cache (org-isolation policy). Closes two gaps flagged in the April 23 audit.
+  DO NOT EXECUTE manually.
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260423000004_cholangiocarcinoma_template.sql
+  Seeds the Cholangiocarcinoma condition template — primary condition for the CCF demo.
+  Idempotent (ON CONFLICT DO UPDATE). DO NOT EXECUTE manually.
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260423000005_audit_log_forensic_columns.sql
+  Adds ip_address, user_agent, status columns to audit_log to support the new
+  forensic-audit pattern used in every route updated this sprint. ADD COLUMN IF NOT EXISTS
+  is safe if the columns already exist. DO NOT EXECUTE manually.
+
+[2026-04-23] MANUAL REQUIRED: Supabase JWT expiry
+  Set Authentication → Configuration → JWT expiry to 1800 seconds (30 minutes).
+  Matches the proxy.ts + apps/mobile/lib/auth-context.tsx inactivity enforcement
+  added this sprint (30-min rolling window on web cookie + mobile AppState timer).
+
+[2026-04-23] FILE MODIFIED: app/api/documents/[id]/route.ts — added role checks
+  (GET: caregiver/provider/admin; DELETE: caregiver/provider) and DELETE audit_log.
+  Also writes SELECT audit in addition to the existing DOWNLOAD audit on GET.
+
+[2026-04-23] FILE MODIFIED: app/api/documents/[id]/summary/route.ts — added role check
+  (caregiver/provider) and SELECT audit_log write.
+
+[2026-04-23] FILE MODIFIED: app/api/export/route.ts — added role check (caregiver/admin)
+  and EXPORT audit_log write.
+
+[2026-04-23] FILE MODIFIED: app/api/chat/route.ts — added caregiver-only role check
+  and SELECT audit_log write before streaming begins.
+
+[2026-04-23] FILE MODIFIED: app/api/summarize/route.ts — added role check
+  (caregiver/provider) and SELECT audit_log write on completion.
+
+[2026-04-23] FILE MODIFIED: app/api/family-update/route.ts — added caregiver-only
+  role check and SELECT audit_log write.
+
+[2026-04-23] FILE MODIFIED: app/api/upload/route.ts — added role check (caregiver/provider).
+
+[2026-04-23] FILE MODIFIED: app/api/condition-templates/[id]/route.ts — added org-membership
+  check (user must belong to an organization; templates remain globally readable).
+
+[2026-04-23] FILE MODIFIED: app/api/ai/family-update/route.ts — replaced stub prompt
+  with production version. Removed console.warn.
+
+[2026-04-23] FILE MODIFIED: app/api/ai/trial-summary/route.ts — replaced stub prompt
+  with production version. Removed console.warn.
+
+[2026-04-23] FILE MODIFIED: proxy.ts — added IP-based rate limiting on POST /login
+  (5 per 15 min via loginLimiter) and POST /signup (3 per hour via signupLimiter);
+  added 30-min inactivity session timeout via rolling HTTP-only cookie cf_last_activity.
+  Matcher now includes /login and /signup (previously excluded).
+
+[2026-04-23] FILE MODIFIED: apps/mobile/lib/auth-context.tsx — added 30-min inactivity
+  sign-out timer with AppState foreground check and a markActivity() function exposed
+  from useAuth() for screens to reset on user interaction.
+
+[2026-04-23] FILE CREATED: lib/env.ts — Zod schema validating required env vars
+  at startup (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY; Upstash vars optional).
+  Installed zod@^4.3.6.
+
+[2026-04-23] FILE CREATED: .github/workflows/ci.yml — CI pipeline runs npm ci,
+  npm test, tsc --noEmit, npm audit --audit-level=high on push to main/staging
+  and on PRs to main; separate mobile-test job runs the same on apps/mobile with
+  --legacy-peer-deps.
+
+[2026-04-23] FILES CREATED: docs/legal/PRIVACY_POLICY.md, TERMS_OF_SERVICE.md,
+  MEDICAL_DISCLAIMER.md — canonical versions of legal docs (v1.0, effective 2026-04-23).
+
+[2026-04-23] TESTS WRITTEN: 18 new tests across 5 files
+  - tests/api/audit-log-coverage.test.ts (4) — DELETE/documents, GET/summary,
+    POST/export, POST/chat all write audit_log entries.
+  - tests/api/role-checks-complete.test.ts (5) — patient/admin/provider role
+    denials + unauthenticated 401.
+  - tests/api/rate-limiting-auth.test.ts (2) — 6th login attempt returns 429 with
+    Retry-After header.
+  - tests/api/ai-prompts-production.test.ts (4) — no stub console.warn in
+    family-update or trial-summary, GUARDRAILS present, oncologist recommendation present.
+  - tests/lib/env-validation.test.ts (3) — missing ANTHROPIC_API_KEY, invalid URL,
+    all-vars-present.
+
+[2026-04-23] TESTS UPDATED (expected-behavior regressions from this sprint):
+  - tests/api/documents-download.test.ts — role field added to user mock; audit
+    assertion now accepts either of the two inserts (SELECT or DOWNLOAD).
+  - tests/api/ai-trial-summary.test.ts — guardrail regex updated from
+    /never recommend/ to /do not recommend enrolling/ to match new prompt wording.
+
+[2026-04-23] npm test: 79/79 passing (22 files, 61 pre-existing + 18 new).
+[2026-04-23] tsc --noEmit: 0 errors.
+[2026-04-23] npm audit (root, --audit-level=high): 0 vulnerabilities.
+
+[2026-04-23] SPRINT 6 COMPLETE

@@ -25,6 +25,19 @@ export async function GET(
     );
   }
 
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userRecord?.organization_id) {
+    return NextResponse.json(
+      { error: "Unauthorized", code: "UNAUTHORIZED" },
+      { status: 401 }
+    );
+  }
+
   const { id } = await params;
 
   const { data: template } = await supabase
