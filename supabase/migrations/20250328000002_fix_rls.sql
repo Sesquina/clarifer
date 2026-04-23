@@ -1,6 +1,6 @@
 -- ============================================
 -- Fix table permissions and RLS policies
--- for all Medalyn tables
+-- for all Clarifer tables
 -- ============================================
 
 -- 1. GRANT table privileges to authenticated and anon roles

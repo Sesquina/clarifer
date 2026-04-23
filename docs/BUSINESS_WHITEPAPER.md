@@ -197,7 +197,7 @@ This founding story is the most defensible asset the company has. Every competit
 
 ## CURRENT STATUS AND NEAR-TERM MILESTONES
 
-**Platform:** Live at clarifier.com. Next.js web application with core caregiver features operational. Deployed on Vercel.
+**Platform:** Live at clarifer.com. Next.js web application with core caregiver features operational. Deployed on Vercel.
 
 **Mobile:** Expo React Native application in active development, building simultaneously with web.
 
@@ -228,4 +228,4 @@ The founding story is true. The market is 53 million caregivers. The business mo
 ---
 
 *Clarifer is a product of Clarifer Corp (Delaware C-Corp, incorporated April 22, 2026).*
-*For partnership inquiries: clarifier.com*
+*For partnership inquiries: clarifer.com*

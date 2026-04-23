@@ -67,7 +67,7 @@ export async function POST(request: Request) {
   const lines: string[] = [];
 
   lines.push("========================================");
-  lines.push("        MEDALYN PATIENT EXPORT");
+  lines.push("        CLARIFER PATIENT EXPORT");
   lines.push("========================================");
   lines.push(`Exported: ${new Date().toISOString()}`);
   lines.push("");
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
   return new Response(textContent, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Content-Disposition": `attachment; filename="medalyn-export-${Date.now()}.txt"`,
+      "Content-Disposition": `attachment; filename="clarifer-export-${Date.now()}.txt"`,
     },
   });
 }

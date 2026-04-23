@@ -65,51 +65,51 @@ body {
 }
 
 /* Markdown in chat bubbles */
-.medalyn-markdown h1,
-.medalyn-markdown h2,
-.medalyn-markdown h3 {
+.clarifer-markdown h1,
+.clarifer-markdown h2,
+.clarifer-markdown h3 {
   font-family: var(--font-playfair), serif;
   color: #1A1A1A;
   margin: 0.5em 0 0.25em;
   line-height: 1.3;
 }
-.medalyn-markdown h1 { font-size: 1.125rem; }
-.medalyn-markdown h2 { font-size: 1rem; }
-.medalyn-markdown h3 { font-size: 0.9375rem; }
-.medalyn-markdown p {
+.clarifer-markdown h1 { font-size: 1.125rem; }
+.clarifer-markdown h2 { font-size: 1rem; }
+.clarifer-markdown h3 { font-size: 0.9375rem; }
+.clarifer-markdown p {
   margin: 0.25em 0;
 }
-.medalyn-markdown strong {
+.clarifer-markdown strong {
   font-weight: 600;
 }
-.medalyn-markdown ul,
-.medalyn-markdown ol {
+.clarifer-markdown ul,
+.clarifer-markdown ol {
   margin: 0.25em 0;
   padding-left: 1.25em;
 }
-.medalyn-markdown li {
+.clarifer-markdown li {
   margin: 0.125em 0;
 }
-.medalyn-markdown code {
+.clarifer-markdown code {
   background: rgba(0, 0, 0, 0.06);
   padding: 0.1em 0.3em;
   border-radius: 4px;
   font-size: 0.85em;
 }
-.medalyn-markdown pre {
+.clarifer-markdown pre {
   background: rgba(0, 0, 0, 0.06);
   padding: 0.5em 0.75em;
   border-radius: 8px;
   overflow-x: auto;
   margin: 0.375em 0;
 }
-.medalyn-markdown pre code {
+.clarifer-markdown pre code {
   background: none;
   padding: 0;
 }
-.medalyn-markdown > *:first-child {
+.clarifer-markdown > *:first-child {
   margin-top: 0;
 }
-.medalyn-markdown > *:last-child {
+.clarifer-markdown > *:last-child {
   margin-bottom: 0;
 }

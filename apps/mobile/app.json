@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "Clarifer",
-    "slug": "clarifier",
+    "slug": "clarifer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "clarifier",
+    "scheme": "clarifer",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
@@ -15,7 +15,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.clarifier.app",
+      "bundleIdentifier": "com.clarifer.app",
       "buildNumber": "1"
     },
     "android": {
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2C5F4A"
       },
-      "package": "com.clarifier.app",
+      "package": "com.clarifer.app",
       "versionCode": 1
     },
     "web": {
@@ -37,7 +37,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "clarifier-mobile"
+        "projectId": "clarifer-mobile"
       }
     }
   }

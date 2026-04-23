@@ -127,7 +127,7 @@ export async function GET(request: Request) {
   return new Response(JSON.stringify(exportData, null, 2), {
     headers: {
       "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="medalyn-data-export-${Date.now()}.json"`,
+      "Content-Disposition": `attachment; filename="clarifer-data-export-${Date.now()}.json"`,
     },
   });
 }

@@ -18,7 +18,7 @@ interface ChatInputProps {
   placeholder?: string;
 }
 
-export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask Medalyn anything..." }: ChatInputProps) {
+export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask Clarifer anything..." }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

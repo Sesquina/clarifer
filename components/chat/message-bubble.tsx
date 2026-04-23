@@ -28,7 +28,7 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
         {isUser ? (
           <p className="whitespace-pre-wrap">{content}</p>
         ) : (
-          <div className="medalyn-markdown">
+          <div className="clarifer-markdown">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}

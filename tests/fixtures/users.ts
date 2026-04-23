@@ -1,6 +1,6 @@
 export const TEST_CAREGIVER = {
   id: "test-user-caregiver-1",
-  email: "caregiver@clarifier-test.com",
+  email: "caregiver@clarifer-test.com",
   role: "caregiver",
   organization_id: "test-org-ccf-demo",
   full_name: "Ana Rivera",
@@ -8,7 +8,7 @@ export const TEST_CAREGIVER = {
 
 export const TEST_PROVIDER = {
   id: "test-user-provider-1",
-  email: "provider@clarifier-test.com",
+  email: "provider@clarifer-test.com",
   role: "provider",
   organization_id: "test-org-ccf-demo",
   full_name: "Dr. Melissa Torres",

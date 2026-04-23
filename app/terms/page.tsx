@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Terms of Service – Medalyn",
-  description: "Medalyn terms of service — rules and guidelines for using our platform.",
+  title: "Terms of Service – Clarifer",
+  description: "Clarifer terms of service — rules and guidelines for using our platform.",
 };
 
 const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
@@ -17,15 +17,15 @@ const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: s
 const sections = [
   {
     heading: "1. Acceptance of Terms",
-    body: 'By accessing or using Medalyn (the "Service"), operated by Cassini Design Group, you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.',
+    body: 'By accessing or using Clarifer (the "Service"), operated by Cassini Design Group, you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.',
   },
   {
     heading: "2. Description of Service",
-    body: "Medalyn is an AI-powered health companion designed to help users manage chronic conditions. The Service provides tools for symptom tracking, medication management, health logging, and AI-generated insights.",
+    body: "Clarifer is an AI-powered health companion designed to help users manage chronic conditions. The Service provides tools for symptom tracking, medication management, health logging, and AI-generated insights.",
   },
   {
     heading: "3. Medical Disclaimer",
-    body: "Medalyn is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions regarding a medical condition. Never disregard professional medical advice or delay seeking it because of information provided by the Service.",
+    body: "Clarifer is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions regarding a medical condition. Never disregard professional medical advice or delay seeking it because of information provided by the Service.",
     bold: true,
   },
   {
@@ -126,7 +126,7 @@ export default function TermsPage() {
       <footer style={{ backgroundColor: "#1A1A1A", padding: "40px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <AnchorIcon size={24} color="#FFFFFF" />
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Medalyn by Cassini Design Group</span>
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Clarifer by Cassini Design Group</span>
         </div>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <a href="/about" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>About</a>

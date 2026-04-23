@@ -16,7 +16,7 @@ export function Header({ userName }: HeaderProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">M</span>
           </div>
-          <p className="text-sm font-semibold">Medalyn</p>
+          <p className="text-sm font-semibold">Clarifer</p>
         </Link>
         <div className="flex items-center gap-2">
           <Link

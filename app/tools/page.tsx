@@ -52,7 +52,7 @@ export default function ToolsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `medalyn-export-${Date.now()}.txt`;
+      a.download = `clarifer-export-${Date.now()}.txt`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {

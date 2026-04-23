@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy – Medalyn",
-  description: "Medalyn privacy policy — how we collect, use, and protect your data.",
+  title: "Privacy Policy – Clarifer",
+  description: "Clarifer privacy policy — how we collect, use, and protect your data.",
 };
 
 const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
           <section>
             <h2 style={{ fontFamily: "var(--font-playfair), serif", fontSize: 22, color: "#2C5F4A", marginBottom: 8 }}>1. Introduction</h2>
             <p>
-              Medalyn (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is operated by Cassini Design Group. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application and related services (collectively, the &quot;Service&quot;).
+              Clarifer (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is operated by Cassini Design Group. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application and related services (collectively, the &quot;Service&quot;).
             </p>
           </section>
 
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
           <section>
             <h2 style={{ fontFamily: "var(--font-playfair), serif", fontSize: 22, color: "#2C5F4A", marginBottom: 8 }}>9. Cookie Policy</h2>
             <p>
-              Medalyn uses only essential cookies required for authentication and session management. We do not use tracking cookies, advertising cookies, or third-party analytics cookies. No consent is required for essential cookies under GDPR, but we inform you of their use via a banner on first visit.
+              Clarifer uses only essential cookies required for authentication and session management. We do not use tracking cookies, advertising cookies, or third-party analytics cookies. No consent is required for essential cookies under GDPR, but we inform you of their use via a banner on first visit.
             </p>
           </section>
 
@@ -140,7 +140,7 @@ export default function PrivacyPage() {
     <footer style={{ backgroundColor: "#1A1A1A", padding: "40px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <AnchorIcon size={24} color="#FFFFFF" />
-        <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Medalyn by Cassini Design Group</span>
+        <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Clarifer by Cassini Design Group</span>
       </div>
       <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
         <a href="/about" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>About</a>

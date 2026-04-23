@@ -84,7 +84,7 @@ export default function LandingPage() {
           <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <AnchorIcon size={28} />
             <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: 20, color: "#1A1A1A" }}>
-              Medalyn
+              Clarifer
             </span>
           </a>
 
@@ -254,7 +254,7 @@ export default function LandingPage() {
             lineHeight: 1.6,
           }}
         >
-          Medalyn helps patients and caregivers understand medical documents, track symptoms, find
+          Clarifer helps patients and caregivers understand medical documents, track symptoms, find
           clinical trials, and stay connected with their care team. In plain language. At any hour.
         </p>
         <div
@@ -352,7 +352,7 @@ export default function LandingPage() {
               change weekly.
             </p>
             <p style={{ marginTop: 16 }}>
-              Caregivers do their best with what they have. Medalyn gives them more.
+              Caregivers do their best with what they have. Clarifer gives them more.
             </p>
           </div>
         </div>
@@ -369,7 +369,7 @@ export default function LandingPage() {
               letterSpacing: "0.08em",
             }}
           >
-            What Medalyn does
+            What Clarifer does
           </p>
           <h2
             style={{
@@ -506,14 +506,14 @@ export default function LandingPage() {
               marginTop: 16,
             }}
           >
-            Medalyn was built by caregivers who lived it.
+            Clarifer was built by caregivers who lived it.
           </h2>
           <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.8, marginTop: 20 }}>
             We know what it is to sit in a waiting room with the wrong questions. To receive a
             document you cannot understand. To call a number and wait.
           </p>
           <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.8, marginTop: 16 }}>
-            We built Medalyn with the tools we wished we had. For the families who are in it
+            We built Clarifer with the tools we wished we had. For the families who are in it
             right now.
           </p>
         </div>
@@ -639,7 +639,7 @@ export default function LandingPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <AnchorIcon size={24} color="#FFFFFF" />
           <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            Medalyn by Cassini Design Group
+            Clarifer by Cassini Design Group
           </span>
         </div>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>

@@ -126,7 +126,7 @@ export const TEST_PATIENT_CARLOS_ES = {
 // fixtures/users.ts
 export const TEST_CAREGIVER = {
   id: 'test-user-caregiver-1',
-  email: 'caregiver@clarifier-test.com',
+  email: 'caregiver@clarifer-test.com',
   role: 'caregiver',
   organization_id: 'test-org-ccf-demo',
   full_name: 'Ana Rivera'
@@ -134,7 +134,7 @@ export const TEST_CAREGIVER = {
 
 export const TEST_PATIENT_USER = {
   id: 'test-user-patient-1',
-  email: 'patient@clarifier-test.com',
+  email: 'patient@clarifer-test.com',
   role: 'patient',
   organization_id: 'test-org-ccf-demo',
   full_name: 'Carlos Rivera'
@@ -142,7 +142,7 @@ export const TEST_PATIENT_USER = {
 
 export const TEST_PROVIDER = {
   id: 'test-user-provider-1',
-  email: 'provider@clarifier-test.com',
+  email: 'provider@clarifer-test.com',
   role: 'provider',
   organization_id: 'test-org-ccf-demo',
   full_name: 'Dr. Melissa Torres'
@@ -150,7 +150,7 @@ export const TEST_PROVIDER = {
 
 export const TEST_ADMIN = {
   id: 'test-user-admin-1',
-  email: 'admin@clarifier-test.com',
+  email: 'admin@clarifer-test.com',
   role: 'hospital_admin',
   organization_id: 'test-org-ccf-demo',
   full_name: 'Admin User'
@@ -158,7 +158,7 @@ export const TEST_ADMIN = {
 
 export const TEST_UNAUTHORIZED_USER = {
   id: 'test-user-unauthorized-1',
-  email: 'unauthorized@clarifier-test.com',
+  email: 'unauthorized@clarifer-test.com',
   role: 'caregiver',
   organization_id: 'test-org-different-tenant',
   full_name: 'Cross Tenant User'
@@ -566,9 +566,9 @@ NEXT_PUBLIC_SUPABASE_URL=your-test-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-test-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-test-service-role-key
 ANTHROPIC_API_KEY=your-anthropic-key
-TEST_CAREGIVER_EMAIL=caregiver@clarifier-test.com
+TEST_CAREGIVER_EMAIL=caregiver@clarifer-test.com
 TEST_CAREGIVER_PASSWORD=test-password-here
-TEST_PROVIDER_EMAIL=provider@clarifier-test.com
+TEST_PROVIDER_EMAIL=provider@clarifer-test.com
 TEST_PROVIDER_PASSWORD=test-password-here
 ```
 

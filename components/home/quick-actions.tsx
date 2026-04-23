@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const actions = [
   { href: "/log", icon: Activity, label: "Log Symptoms", color: "text-purple-500 bg-purple-500/10" },
-  { href: "/chat", icon: MessageCircle, label: "Ask Medalyn", color: "text-blue-500 bg-blue-500/10" },
+  { href: "/chat", icon: MessageCircle, label: "Ask Clarifer", color: "text-blue-500 bg-blue-500/10" },
   { href: "/documents/upload", icon: FileText, label: "Upload Doc", color: "text-emerald-500 bg-emerald-500/10" },
   { href: "/tools/trials", icon: Search, label: "Find Trials", color: "text-amber-500 bg-amber-500/10" },
 ];

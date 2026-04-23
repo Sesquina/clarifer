@@ -266,7 +266,7 @@ in supabase/migrations/20260422000004_add_tenant_id_to_all_tables.sql with this 
 
 After migrations run successfully, create this organization record in Supabase:
 INSERT INTO organizations (id, name, slug, primary_color) VALUES
-('fa731120-304a-48ba-889a-3be6431454f3', 'Clarifer Inc.', 'clarifier', '#2C5F4A');
+('fa731120-304a-48ba-889a-3be6431454f3', 'Clarifer Inc.', 'clarifer', '#2C5F4A');
 
 ---
 

@@ -138,7 +138,7 @@ export default function LoginPage() {
             marginTop: 4,
           }}
         >
-          Sign in to Medalyn
+          Sign in to Clarifer
         </p>
 
         {/* Form */}

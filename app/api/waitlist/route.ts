@@ -4,7 +4,7 @@ import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
 
 const BREVO_API = "https://api.brevo.com/v3";
-const MEDALYN_LIST_NAME = "Medalyn Waitlist";
+const CLARIFER_LIST_NAME = "Clarifer Waitlist";
 
 let cachedListId: number | null = null;
 
@@ -25,7 +25,7 @@ async function getOrCreateList(): Promise<number> {
   const listsRes = await brevoFetch("/contacts/lists?limit=50");
   if (listsRes.ok) {
     const data = await listsRes.json();
-    const existing = data.lists?.find((l: { name: string }) => l.name === MEDALYN_LIST_NAME);
+    const existing = data.lists?.find((l: { name: string }) => l.name === CLARIFER_LIST_NAME);
     if (existing) {
       cachedListId = existing.id;
       return existing.id;
@@ -34,7 +34,7 @@ async function getOrCreateList(): Promise<number> {
 
   const createRes = await brevoFetch("/contacts/lists", {
     method: "POST",
-    body: JSON.stringify({ name: MEDALYN_LIST_NAME, folderId: 1 }),
+    body: JSON.stringify({ name: CLARIFER_LIST_NAME, folderId: 1 }),
   });
 
   if (createRes.ok) {
@@ -84,9 +84,9 @@ export async function POST(request: Request) {
     await brevoFetch("/smtp/email", {
       method: "POST",
       body: JSON.stringify({
-        sender: { name: "Medalyn", email: "samira@cassinidesigngroup.com" },
+        sender: { name: "Clarifer", email: "samira@cassinidesigngroup.com" },
         to: [{ email: "samira@cassinidesigngroup.com", name: "Samira" }],
-        subject: safeMessage ? "New Medalyn contact message" : "New Medalyn waitlist signup",
+        subject: safeMessage ? "New Clarifer contact message" : "New Clarifer waitlist signup",
         textContent: `Name: ${safeName || "Not provided"}\nEmail: ${safeEmail}${safeMessage ? `\nMessage: ${safeMessage}` : ""}`,
       }),
     });

@@ -239,7 +239,7 @@ export default function OnboardingPage() {
                 className="mt-1"
                 style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#6B6B6B" }}
               >
-                This helps Medalyn personalize your experience
+                This helps Clarifer personalize your experience
               </p>
 
               <div className="mt-5 space-y-4">

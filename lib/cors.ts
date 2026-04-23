@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 const ALLOWED_ORIGINS = [
-  "https://medalyn.cassinidesigngroup.com",
-  "https://medalyn.vercel.app",
+  "https://clarifer.com",
+  "https://clarifer.vercel.app",
 ];
 
 export function checkOrigin(request: Request): NextResponse | null {

@@ -15,13 +15,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Medalyn",
+  title: "Clarifer",
   description: "Your AI-powered health companion for chronic condition management",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Medalyn",
+    title: "Clarifer",
   },
 };
 

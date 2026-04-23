@@ -6,12 +6,12 @@ export function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem("medalyn-cookie-consent");
+    const consent = localStorage.getItem("clarifer-cookie-consent");
     if (!consent) setVisible(true);
   }, []);
 
   function accept() {
-    localStorage.setItem("medalyn-cookie-consent", "accepted");
+    localStorage.setItem("clarifer-cookie-consent", "accepted");
     setVisible(false);
   }
 
@@ -35,7 +35,7 @@ export function CookieBanner() {
       }}
     >
       <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", maxWidth: 600 }}>
-        Medalyn uses essential cookies to keep you signed in. We do not use tracking or advertising
+        Clarifer uses essential cookies to keep you signed in. We do not use tracking or advertising
         cookies. See our{" "}
         <a href="/privacy" style={{ color: "#FFFFFF", textDecoration: "underline" }}>
           Privacy Policy

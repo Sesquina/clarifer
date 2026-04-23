@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "About – Medalyn",
-  description: "The story behind Medalyn — built by a caregiver, for caregivers.",
+  title: "About – Clarifer",
+  description: "The story behind Clarifer — built by a caregiver, for caregivers.",
 };
 
 const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
@@ -78,11 +78,11 @@ export default function AboutPage() {
               He passed in October 2025.
             </p>
             <p style={{ marginTop: 20 }}>
-              I finished building Medalyn after he was gone, because I knew other families were
+              I finished building Clarifer after he was gone, because I knew other families were
               sitting where I sat. I wanted to give them something I wished I had.
             </p>
             <p style={{ marginTop: 20 }}>
-              Medalyn is free. It is not a medical provider. It will not replace your doctor. But it
+              Clarifer is free. It is not a medical provider. It will not replace your doctor. But it
               will help you understand what your doctor is telling you, track what is happening, find
               clinical trials, and keep the people who love your family informed.
             </p>
@@ -90,7 +90,7 @@ export default function AboutPage() {
               It was built by a caregiver, for caregivers and patients. That is all it has ever been.
             </p>
             <p style={{ marginTop: 32 }}>
-              My name is <strong>Samira Esquina</strong>. I am the founder of Medalyn and Cassini
+              My name is <strong>Samira Esquina</strong>. I am the founder of Clarifer and Cassini
               Design Group LLC. If you have questions, feedback, or just need to talk to someone who
               gets it, you can reach me at{" "}
               <a href="mailto:samira@cassinidesigngroup.com" style={{ color: "#2C5F4A", textDecoration: "underline" }}>
@@ -117,7 +117,7 @@ export default function AboutPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <AnchorIcon size={24} color="#FFFFFF" />
           <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            Medalyn by Cassini Design Group
+            Clarifer by Cassini Design Group
           </span>
         </div>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>

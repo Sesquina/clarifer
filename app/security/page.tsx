@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Security – Medalyn",
-  description: "How Medalyn protects your data — encryption, access controls, and your rights.",
+  title: "Security – Clarifer",
+  description: "How Clarifer protects your data — encryption, access controls, and your rights.",
 };
 
 const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
@@ -25,7 +25,7 @@ const sections = [
   },
   {
     heading: "Who can see it",
-    body: "Only you. Supabase Row Level Security ensures that every query is restricted to your own data at the database level. No Medalyn employee can access your records without your explicit permission.",
+    body: "Only you. Supabase Row Level Security ensures that every query is restricted to your own data at the database level. No Clarifer employee can access your records without your explicit permission.",
   },
   {
     heading: "How AI processing works",
@@ -37,7 +37,7 @@ const sections = [
   },
   {
     heading: "Research opt-in",
-    body: "Medalyn has an optional research program where anonymized, de-identified data can be shared with IRB-approved researchers. This is always opt-in, never automatic, and you can withdraw at any time.",
+    body: "Clarifer has an optional research program where anonymized, de-identified data can be shared with IRB-approved researchers. This is always opt-in, never automatic, and you can withdraw at any time.",
   },
   {
     heading: "Your rights",
@@ -45,7 +45,7 @@ const sections = [
   },
   {
     heading: "Disclaimer",
-    body: "Medalyn is not a HIPAA covered entity. We apply security practices consistent with HIPAA standards but have not signed a Business Associate Agreement with our infrastructure providers. If you require formal HIPAA compliance please contact samira@cassinidesigngroup.com.",
+    body: "Clarifer is not a HIPAA covered entity. We apply security practices consistent with HIPAA standards but have not signed a Business Associate Agreement with our infrastructure providers. If you require formal HIPAA compliance please contact samira@cassinidesigngroup.com.",
   },
   {
     heading: "Questions",
@@ -126,7 +126,7 @@ export default function SecurityPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <AnchorIcon size={24} color="#FFFFFF" />
           <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            Medalyn by Cassini Design Group
+            Clarifer by Cassini Design Group
           </span>
         </div>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>

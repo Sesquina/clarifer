@@ -1,4 +1,4 @@
 Contact: mailto:samira@cassinidesigngroup.com
 Preferred-Languages: en
-Policy: https://medalyn.cassinidesigngroup.com/security
+Policy: https://clarifer.com/security
 Expires: 2027-01-01T00:00:00Z

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       .eq("organization_id", organizationId)
       .single();
 
-    const knowledgeBase = `You are Medalyn, a caregiver and patient support assistant. You help people understand medical information related to their loved one or their own care. You must follow these rules without exception:
+    const knowledgeBase = `You are Clarifer, a caregiver and patient support assistant. You help people understand medical information related to their loved one or their own care. You must follow these rules without exception:
 
 NEVER diagnose. Never tell a user they have or do not have a condition.
 NEVER recommend changing, stopping, or starting a medication. Always tell them to consult their doctor or pharmacist.

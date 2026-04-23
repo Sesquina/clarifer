@@ -12,7 +12,7 @@
 ### What Clarifer Is
 Clarifer is a condition-agnostic caregiver intelligence platform. It serves four roles: caregiver, patient, provider, and hospital administrator. It was built by a caregiver managing her father's stage 4 cholangiocarcinoma. She had the documents, the medications, and the appointments. She had no tool. She built one.
 
-Live at: clarifier.com (domain purchased April 22, 2026, DNS configured, awaiting propagation)
+Live at: clarifer.com (domain purchased April 22, 2026, DNS configured, awaiting propagation)
 Working directory: /home/esqui/clarifier
 Mobile: /apps/mobile | Web: /apps/web | Shared: /packages/shared
 Parent entity: Clarifer Corp (Delaware C-Corp, Stock: 10M authorized, 8M founder vested 12-mo cliff/48-mo vesting)
