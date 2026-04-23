@@ -310,3 +310,76 @@ SQL migration written (NOT executed — Samira runs manually):
     role check constraint on users, role indexes.
 
 WAITING FOR SAMIRA: Run migration 20260422000006 in Supabase dashboard after Sprint 3 migrations.
+
+
+---
+
+[2026-04-22T21:18:00Z] SPRINT 5 COMPLETE — DOCUMENT INTELLIGENCE
+
+Branch: main
+Commit: feat: document intelligence — upload, analysis streaming, mobile UI
+
+Files delivered:
+
+  Infrastructure:
+  supabase/migrations/20260423000001_create_documents_bucket.sql
+    — Private storage bucket + org-folder RLS (INSERT/SELECT/DELETE). DO NOT RUN — Samira runs manually.
+
+  lib/documents/validate.ts         — validateFile: size (50 MB) + MIME type allowlist
+  lib/documents/prompt.ts           — buildAnalysisPrompt with hardcoded GUARDRAILS (no diagnose/meds/prognosis)
+  lib/documents/storage.ts          — uploadToStorage, generateSignedUrl (3600s TTL), deleteFromStorage
+  lib/documents/extract.ts          — extractText using pdf-parse v2 PDFParse class API
+
+  API Routes:
+  app/api/documents/upload/route.ts  — POST: caregiver/provider roles, validateFile, org patient check,
+                                       upload to storage, insert documents row (analysis_status: pending),
+                                       audit_log (UPLOAD_DOCUMENT) → 201
+  app/api/documents/[id]/route.ts    — GET added: signed URL generation (3600s), audit_log (DOWNLOAD) → 200
+                                       DELETE unchanged (uploader-only delete with storage cleanup)
+  app/api/ai/analyze-document/route.ts — Updated: Anthropic SDK streaming (replacing Vercel AI SDK).
+                                         Downloads file from storage → extractText → buildAnalysisPrompt
+                                         → @anthropic-ai/sdk messages.stream() → ReadableStream response.
+                                         On completion: insert chat_messages, update analysis_status:completed,
+                                         audit_log (AI_ANALYSIS). Graceful 503 if storage/stream fails.
+  app/api/documents/[id]/summary/route.ts — GET: latest chat_messages for document
+
+  Web Components:
+  components/documents/DocumentUploadForm.tsx — Next.js web upload form (patient-scoped, success/error state)
+
+  Mobile Components + Screens:
+  apps/mobile/components/documents/DocumentCard.tsx   — Status badge (pending/completed/failed), nav to detail
+  apps/mobile/components/documents/UploadButton.tsx   — expo-document-picker, multipart upload with auth token
+  apps/mobile/components/documents/SummaryViewer.tsx  — Parses KEY FINDINGS/MEDICATIONS/NEXT STEPS/QUESTIONS sections
+  apps/mobile/app/(app)/_layout.tsx                   — App group layout (Slot)
+  apps/mobile/app/(app)/documents/index.tsx           — Patient document list + upload button
+  apps/mobile/app/(app)/documents/[id].tsx            — Document detail + "Analyze with AI" button + SummaryViewer
+
+  Tests (20 new tests):
+  tests/api/documents-upload.test.ts    — 6 tests: 401, 403, 400 (no file), 400 (bad type), 201, audit_log
+  tests/api/documents-analyze.test.ts  — 4 tests: 401, 403, stream+chat_message+analysis_status, 503 (storage error)
+  tests/api/documents-download.test.ts — 4 tests: 401, 404, signed URL returned, audit_log DOWNLOAD
+  tests/components/document-upload.test.tsx — 3 tests: renders, error on empty submit, success state
+  apps/mobile/tests/e2e/documents.spec.ts  — 3 Playwright tests: unauthenticated redirect (GET /documents,
+                                              home, GET /documents/:id all redirect to login)
+
+  Type system:
+  lib/supabase/types.ts — documents table: added file_name, file_path, mime_type, analysis_status, created_at
+  tests/api/ai-analyze-document.test.ts — Updated to mock @anthropic-ai/sdk + pdf-parse v2 + storage
+  tests/analyze-document.test.ts        — Updated to match Sprint 5 route (Anthropic SDK, text/plain content-type)
+
+Test results: 61/61 passing (17 test files), 0 tsc errors.
+Previously: 44/44 tests. Net new: 17 tests added (upload×6, analyze×4, download×4, component×3).
+
+Architecture notes:
+  - pdf-parse upgraded to v2 (class-based API: new PDFParse({ data: buffer }); await parser.getText())
+    Tests mock PDFParse class using vi.mock + inline class syntax (vi.fn() cannot be called with new
+    when mockImplementation uses arrow function — use class syntax in mock factory instead).
+  - Anthropic SDK streaming: vi.hoisted() required for mockMessagesStream to be accessible in vi.mock factory.
+    Class-based MockAnthropic in mock: class MockAnthropic { messages = { stream: messagesStream }; }
+  - FormData in test: jsdom File ≠ undici File; avoid FormData.append(key, new File(...)). Instead mock
+    request.formData() directly using Object.defineProperty.
+  - Mobile screens at apps/mobile/app/(app)/documents/ require (app) group layout. Expo Router strips
+    group prefix from URL; /documents is the URL pattern.
+
+WAITING FOR SAMIRA: Run migration 20260423000001_create_documents_bucket.sql in Supabase dashboard.
+  This creates the private documents storage bucket with org-folder-scoped RLS policies.

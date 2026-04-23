@@ -395,13 +395,18 @@ export type Database = {
       }
       documents: {
         Row: {
+          analysis_status: string | null
           analyzed_at: string | null
+          created_at: string | null
           document_category: string | null
           exported_at: string | null
+          file_name: string | null
+          file_path: string | null
           file_type: string | null
           file_url: string | null
           flagged: boolean | null
           id: string
+          mime_type: string | null
           organization_id: string | null
           key_findings: Json | null
           patient_id: string | null
@@ -413,13 +418,18 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          analysis_status?: string | null
           analyzed_at?: string | null
+          created_at?: string | null
           document_category?: string | null
           exported_at?: string | null
+          file_name?: string | null
+          file_path?: string | null
           file_type?: string | null
           file_url?: string | null
           flagged?: boolean | null
           id?: string
+          mime_type?: string | null
           organization_id?: string | null
           key_findings?: Json | null
           patient_id?: string | null
@@ -431,13 +441,18 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          analysis_status?: string | null
           analyzed_at?: string | null
+          created_at?: string | null
           document_category?: string | null
           exported_at?: string | null
+          file_name?: string | null
+          file_path?: string | null
           file_type?: string | null
           file_url?: string | null
           flagged?: boolean | null
           id?: string
+          mime_type?: string | null
           organization_id?: string | null
           key_findings?: Json | null
           patient_id?: string | null
