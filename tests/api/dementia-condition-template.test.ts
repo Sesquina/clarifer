@@ -12,7 +12,8 @@ import { TEST_CAREGIVER } from "../fixtures/users";
 vi.mock("@/lib/cors", () => ({ checkOrigin: vi.fn().mockReturnValue(null) }));
 
 const DEMENTIA_TEMPLATE = {
-  id: "dementia",
+  id: "c0297dcb-5e17-42aa-9f8d-129c7a580f08",
+  slug: "dementia",
   name: "Dementia",
   category: "neurology",
   ai_context: "dementia, cognitive decline, memory loss, elderly parent caregiver",
@@ -113,7 +114,7 @@ describe("GET /api/condition-templates/[id] — dementia template", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
 
-    expect(body.id).toBe("dementia");
+    expect(body.slug).toBe("dementia");
     expect(body.name).toBe("Dementia");
     expect(body.category).toBe("neurology");
     expect(body.is_active).toBe(true);

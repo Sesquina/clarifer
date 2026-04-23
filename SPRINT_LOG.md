@@ -536,3 +536,51 @@ Pending migrations from Sprint 6 that will be applied on the next push:
 Claude Code will not run `supabase link` or `supabase db push`. Both require
 Samira's interactive credentials and both are explicit hard stops in the
 autonomous-execution memory.
+
+---
+
+[2026-04-23] DISCOVERED ISSUE: condition_templates UUID vs text slug mismatch
+`supabase db push` failed on 20260422000001_dementia_condition_template.sql
+with: "invalid input syntax for type uuid: 'dementia'".
+
+Root cause: production condition_templates.id is UUID (5 rows already seeded with
+real UUIDs); all three condition-template migrations were inserting text slugs
+('dementia', 'alzheimers', 'cholangiocarcinoma') into the UUID primary key column.
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260421120000_condition_templates_slug.sql
+NEW migration that runs BEFORE the 20260422* template inserts (timestamp chosen
+to sort first). Adds a `slug TEXT` column with UNIQUE constraint, backfills slugs
+on the 5 existing production rows by their known UUIDs, and creates an index on
+slug for fast lookup. Idempotent (IF NOT EXISTS, DO $$ ... END $$ guard on the
+constraint, WHERE slug IS NULL on updates).
+
+[2026-04-23] FILE MODIFIED (migration rewrite): supabase/migrations/20260422000001_dementia_condition_template.sql
+Now inserts with `id = gen_random_uuid()` + `slug = 'dementia'`, and uses
+`ON CONFLICT (slug) DO UPDATE` instead of `ON CONFLICT (id)`. Row update path
+matches the production row c0297dcb-5e17-42aa-9f8d-129c7a580f08 via slug.
+
+[2026-04-23] FILE MODIFIED (migration rewrite): supabase/migrations/20260422000002_alzheimers_condition_template.sql
+Same treatment. No existing production row matches slug 'alzheimers', so first
+run will INSERT a new UUID row; subsequent runs update via slug.
+
+[2026-04-23] FILE MODIFIED (migration rewrite): supabase/migrations/20260423000004_cholangiocarcinoma_template.sql
+Same treatment. Matches existing production row ab7ded51-685c-4f5b-aa7e-b7f776d218ed via slug.
+
+[2026-04-23] FILE MODIFIED: lib/supabase/types.ts
+Added `slug: string | null` to condition_templates Row/Insert/Update.
+
+[2026-04-23] FILE MODIFIED: app/api/condition-templates/[id]/route.ts
+Route now accepts either a UUID or a slug on the `[id]` segment and picks the
+lookup column accordingly (UUID regex test). Response includes slug so the client
+can round-trip either identifier.
+
+[2026-04-23] TESTS UPDATED (expected-behavior regression from this fix):
+- tests/api/dementia-condition-template.test.ts — mock template gains slug,
+  assertion changed from body.id === "dementia" to body.slug === "dementia".
+- tests/api/alzheimers-condition-template.test.ts — same treatment.
+
+App code references like components/symptoms/DementiaSymptomForm.tsx and the
+mobile onboarding/condition-select.tsx pass "dementia"/"alzheimers" to
+/api/symptoms/log as a conditionTemplateId, but the server stores that value
+in symptom_logs.condition_context (TEXT, not a FK), so no UUID constraint is
+violated. Those files are intentionally left unchanged.

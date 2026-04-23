@@ -359,6 +359,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           research_fields: Json | null
+          slug: string | null
           symptom_questions: Json | null
           symptom_vocabulary: Json | null
           trial_filters: Json | null
@@ -373,6 +374,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           research_fields?: Json | null
+          slug?: string | null
           symptom_questions?: Json | null
           symptom_vocabulary?: Json | null
           trial_filters?: Json | null
@@ -387,6 +389,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           research_fields?: Json | null
+          slug?: string | null
           symptom_questions?: Json | null
           symptom_vocabulary?: Json | null
           trial_filters?: Json | null
