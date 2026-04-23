@@ -267,3 +267,46 @@ in supabase/migrations/20260422000004_add_tenant_id_to_all_tables.sql with this 
 After migrations run successfully, create this organization record in Supabase:
 INSERT INTO organizations (id, name, slug, primary_color) VALUES
 ('fa731120-304a-48ba-889a-3be6431454f3', 'Clarifier Inc.', 'clarifier', '#2C5F4A');
+
+---
+
+[2026-04-22T17:52:00Z] SPRINT 4 COMPLETE — MOBILE AUTH + ONBOARDING
+
+Branch: sprint-4-mobile-auth
+Commit: feat: add mobile auth and onboarding for all 4 user roles
+
+Files delivered:
+  apps/mobile/app.json              — Expo 51 config (iOS + Android + Web)
+  apps/mobile/package.json          — Expo 51 dependencies
+  apps/mobile/tsconfig.json         — TypeScript config (standalone, no expo/tsconfig.base)
+  apps/mobile/lib/auth-logic.ts     — Pure testable logic: getHomeRouteForRole, shouldShowDisclaimer,
+                                      canAccessRoute, extractRoleFromUserRecord, DISCLAIMER_VERSION
+  apps/mobile/lib/supabase-client.ts — Supabase client with SecureStore adapter for session persistence
+  apps/mobile/lib/auth-context.tsx  — React context: signIn/signUp/signOut/setRole/acceptDisclaimer
+  apps/mobile/app/(auth)/login.tsx
+  apps/mobile/app/(auth)/signup.tsx
+  apps/mobile/app/(auth)/verify-email.tsx
+  apps/mobile/app/(auth)/role-select.tsx
+  apps/mobile/app/(home)/caregiver.tsx
+  apps/mobile/app/(home)/patient.tsx
+  apps/mobile/app/(home)/provider.tsx
+  apps/mobile/app/(home)/admin.tsx
+  apps/mobile/app/(onboarding)/condition-select.tsx
+  apps/mobile/app/(onboarding)/care-team-setup.tsx
+  apps/mobile/app/(modals)/medical-disclaimer.tsx
+  app/api/auth/callback/route.ts    — Web callback: code exchange + role check
+  supabase/migrations/20260422000006_add_roles_table.sql — user_role enum, medical_disclaimer_acceptances
+  tests/mobile/auth-flow.e2e.test.ts — 10 passing tests (pure logic layer)
+
+Test results: 44/44 passing (13 test files), 0 tsc errors.
+
+Architecture note: React Native screen components cannot render in jsdom (Vitest environment).
+All testable auth logic extracted to apps/mobile/lib/auth-logic.ts (no native imports).
+Screen components tested at integration level only (manual / device testing).
+
+SQL migration written (NOT executed — Samira runs manually):
+  - 20260422000006_add_roles_table.sql
+    Creates user_role enum, medical_disclaimer_acceptances table, RLS policies,
+    role check constraint on users, role indexes.
+
+WAITING FOR SAMIRA: Run migration 20260422000006 in Supabase dashboard after Sprint 3 migrations.
