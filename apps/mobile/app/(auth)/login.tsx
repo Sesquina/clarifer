@@ -35,7 +35,7 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.title}>Clarifier</Text>
+      <Text style={styles.title}>Clarifer</Text>
       <Text style={styles.subtitle}>Sign in to your account</Text>
 
       <TextInput

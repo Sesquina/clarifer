@@ -1,23 +1,23 @@
-# CLAUDE.md — Clarifier Agent Brain
+# CLAUDE.md — Clarifer Agent Brain
 **Read this file completely before writing a single line of code.**
 **Update this file after every sprint. It is the living record of this codebase.**
 **Last updated: Sprint 1 (April 22, 2026)**
 **CCF Demo Date: June 17, 2026 (8-week deadline)**
-**Clarifier Corp Incorporation: April 22, 2026 (via every.io, ETA finalized 3-5 days)**
+**Clarifer Corp Incorporation: April 22, 2026 (via every.io, ETA finalized 3-5 days)**
 
 ---
 
 ## SECTION 1 — PROJECT CONTEXT
 
-### What Clarifier Is
-Clarifier is a condition-agnostic caregiver intelligence platform. It serves four roles: caregiver, patient, provider, and hospital administrator. It was built by a caregiver managing her father's stage 4 cholangiocarcinoma. She had the documents, the medications, and the appointments. She had no tool. She built one.
+### What Clarifer Is
+Clarifer is a condition-agnostic caregiver intelligence platform. It serves four roles: caregiver, patient, provider, and hospital administrator. It was built by a caregiver managing her father's stage 4 cholangiocarcinoma. She had the documents, the medications, and the appointments. She had no tool. She built one.
 
 Live at: clarifier.com (domain purchased April 22, 2026, DNS configured, awaiting propagation)
 Working directory: /home/esqui/clarifier
 Mobile: /apps/mobile | Web: /apps/web | Shared: /packages/shared
-Parent entity: Clarifier Corp (Delaware C-Corp, Stock: 10M authorized, 8M founder vested 12-mo cliff/48-mo vesting)
+Parent entity: Clarifer Corp (Delaware C-Corp, Stock: 10M authorized, 8M founder vested 12-mo cliff/48-mo vesting)
 
-### What Clarifier Does NOT Do — Hard-Coded Guardrails, Zero Exceptions
+### What Clarifer Does NOT Do — Hard-Coded Guardrails, Zero Exceptions
 - Does NOT diagnose. Ever.
 - Does NOT recommend changing medications or treatment plans.
 - Does NOT speculate on prognosis or survival.
@@ -34,7 +34,7 @@ Warm, human, never clinical. Never cold. Never empty states that judge the user.
 
 ### Legal Context
 - HIPAA compliance is non-negotiable. See Section 3.
-- Delaware C-Corp incorporation pending. Currently Clarifier Corp.
+- Delaware C-Corp incorporation pending. Currently Clarifer Corp.
 - BAAs required with every vendor touching PHI before use.
 - Medical disclaimer modal with timestamp logging on first patient profile load.
 - AI analysis consent is a separate logged flow.
@@ -315,7 +315,7 @@ POST   /api/admin/users/invite            hospital_admin
 
 ### Document Analysis
 ```
-You are Clarifier's document analysis assistant.
+You are Clarifer's document analysis assistant.
 You NEVER diagnose. You NEVER recommend treatment changes. You NEVER speculate on prognosis.
 Output four sections: KEY FINDINGS, MEDICATIONS MENTIONED, NEXT STEPS, QUESTIONS TO ASK.
 Condition context: {{condition_template_context}}
@@ -747,7 +747,7 @@ All four production bugs fixed, tested, and committed to main.
 - Apple and Google developer accounts: must be opened immediately
 
 ### Architecture Constraints
-- Clarifier Supabase project is separate from all other projects. Confirm project ref before any query.
+- Clarifer Supabase project is separate from all other projects. Confirm project ref before any query.
 - Never modify table schema without Samira approval and manual SQL execution.
 - SUPABASE_SERVICE_ROLE_KEY use must have an explanatory comment every time.
 

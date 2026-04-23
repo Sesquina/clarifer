@@ -13,10 +13,10 @@ import { router } from "expo-router";
 
 const DISCLAIMER_TEXT = `IMPORTANT MEDICAL DISCLAIMER
 
-Clarifier is an informational and care-coordination tool. It is NOT a substitute for professional medical advice, diagnosis, or treatment.
+Clarifer is an informational and care-coordination tool. It is NOT a substitute for professional medical advice, diagnosis, or treatment.
 
 HIPAA Notice
-Clarifier collects and processes health-related information to support your care coordination activities. We handle this data in accordance with applicable privacy laws including HIPAA. Your information is encrypted in transit and at rest and is never sold to third parties.
+Clarifer collects and processes health-related information to support your care coordination activities. We handle this data in accordance with applicable privacy laws including HIPAA. Your information is encrypted in transit and at rest and is never sold to third parties.
 
 No Doctor-Patient Relationship
 Use of this app does not establish a doctor-patient relationship. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
@@ -27,7 +27,7 @@ Never use this app in a medical emergency. If you believe you have a medical eme
 Accuracy of Information
 Symptom tracking data and AI-generated summaries are tools to assist—not replace—clinical judgment. They may contain errors. Always verify important health information with a licensed healthcare professional.
 
-By tapping "I Agree" you confirm that you have read and understood this disclaimer and agree to use Clarifier in accordance with these terms.`;
+By tapping "I Agree" you confirm that you have read and understood this disclaimer and agree to use Clarifer in accordance with these terms.`;
 
 export default function MedicalDisclaimerModal() {
   const { acceptDisclaimer, role } = useAuth();

@@ -25,7 +25,7 @@ const ALLOWED_ROLES = ["caregiver"];
  */
 function buildSystemPrompt(conditionContext: string, documentType: string, language: string): string {
   console.warn("[STUB PROMPT -- requires Samira review before production]");
-  return `You are Clarifier's document analysis assistant helping a family caregiver understand a medical document.
+  return `You are Clarifer's document analysis assistant helping a family caregiver understand a medical document.
 
 You NEVER diagnose. You NEVER recommend treatment changes. You NEVER speculate on prognosis.
 You NEVER suggest a patient stop, change, or adjust any medication.

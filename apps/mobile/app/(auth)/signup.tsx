@@ -42,7 +42,7 @@ export default function SignupScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Join Clarifier to get started</Text>
+      <Text style={styles.subtitle}>Join Clarifer to get started</Text>
 
       <TextInput
         style={styles.input}
