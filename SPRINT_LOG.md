@@ -253,3 +253,17 @@ SQL migrations written (NOT executed — Samira runs manually):
   - 20260422000005_update_rls_for_multi_tenancy.sql
 API routes updated: 12 routes, all user-facing tables now org-scoped.
 WAITING FOR SAMIRA: Run 3 SQL migrations in Supabase dashboard. Replace SAMIRA_DEFAULT_ORG_UUID with actual org UUID before running migration 4.
+
+---
+
+[2026-04-22T17:20:00Z] DEFAULT_ORG_UUID FOR SPRINT 3 MIGRATIONS:
+fa731120-304a-48ba-889a-3be6431454f3
+
+This UUID will be used in migration 20260422000004 to backfill all existing data.
+
+Samira: Before running migrations, use this UUID. Replace all occurrences of 'SAMIRA_DEFAULT_ORG_UUID'
+in supabase/migrations/20260422000004_add_tenant_id_to_all_tables.sql with this value.
+
+After migrations run successfully, create this organization record in Supabase:
+INSERT INTO organizations (id, name, slug, primary_color) VALUES
+('fa731120-304a-48ba-889a-3be6431454f3', 'Clarifier Inc.', 'clarifier', '#2C5F4A');
