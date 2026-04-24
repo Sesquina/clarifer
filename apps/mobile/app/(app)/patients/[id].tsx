@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase-client";
+import { ExportButton } from "@/components/export/ExportButton";
 
 type Patient = { id: string; name: string; custom_diagnosis: string | null };
 type MedRow = { id: string; name: string; dose: string | null; unit: string | null; frequency: string | null };
@@ -61,6 +62,17 @@ export default function PatientDashboardMobile() {
       <View style={styles.card}>
         <Text style={styles.patientName}>{patient.name}</Text>
         <Text style={styles.patientDiag}>{patient.custom_diagnosis ?? "Diagnosis not recorded"}</Text>
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.emergencyButton}
+            onPress={() => router.push({ pathname: "/(app)/patients/emergency-card", params: { id: patient.id } } as never)}
+            accessibilityRole="button"
+            accessibilityLabel="Open emergency medical card"
+          >
+            <Text style={styles.emergencyButtonText}>Emergency card</Text>
+          </TouchableOpacity>
+          <ExportButton patientId={patient.id} />
+        </View>
       </View>
 
       <Section title="Medications" empty="Add medications to keep track of the schedule.">
@@ -130,4 +142,15 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 15, color: "#1A1A1A", fontWeight: "500" },
   rowSub: { marginTop: 2, fontSize: 13, color: "#6B6B6B" },
   emptyText: { color: "#6B6B6B", fontSize: 14, backgroundColor: "#FFFFFF", padding: 14, borderRadius: 14, borderWidth: 1, borderColor: "#E8E2D9" },
+  actionsRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
+  emergencyButton: {
+    backgroundColor: "#C4714A",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emergencyButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 });

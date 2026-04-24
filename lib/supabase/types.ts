@@ -69,6 +69,9 @@ export type Database = {
           provider_specialty: string | null
           source: string | null
           title: string | null
+          appointment_type: string | null
+          pre_visit_checklist: Json | null
+          post_visit_notes: string | null
         }
         Insert: {
           completed?: boolean | null
@@ -86,6 +89,9 @@ export type Database = {
           provider_specialty?: string | null
           source?: string | null
           title?: string | null
+          appointment_type?: string | null
+          pre_visit_checklist?: Json | null
+          post_visit_notes?: string | null
         }
         Update: {
           completed?: boolean | null
@@ -103,6 +109,9 @@ export type Database = {
           provider_specialty?: string | null
           source?: string | null
           title?: string | null
+          appointment_type?: string | null
+          pre_visit_checklist?: Json | null
+          post_visit_notes?: string | null
         }
         Relationships: [
           {
@@ -120,6 +129,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      biomarkers: {
+        Row: {
+          id: string
+          patient_id: string
+          organization_id: string
+          biomarker_type: string
+          status: string
+          value: string | null
+          tested_date: string | null
+          lab_name: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          patient_id: string
+          organization_id: string
+          biomarker_type: string
+          status: string
+          value?: string | null
+          tested_date?: string | null
+          lab_name?: string | null
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          patient_id?: string
+          organization_id?: string
+          biomarker_type?: string
+          status?: string
+          value?: string | null
+          tested_date?: string | null
+          lab_name?: string | null
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      newly_connected_checklists: {
+        Row: {
+          id: string
+          patient_id: string
+          organization_id: string
+          checklist_items: Json
+          completed_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          patient_id: string
+          organization_id: string
+          checklist_items?: Json
+          completed_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          patient_id?: string
+          organization_id?: string
+          checklist_items?: Json
+          completed_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       audit_log: {
         Row: {
@@ -707,6 +791,14 @@ export type Database = {
           primary_language: string | null
           sex: string | null
           status: string | null
+          emergency_card_enabled: boolean | null
+          blood_type: string | null
+          allergies: string[] | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_notes: string | null
+          dpd_deficiency_screened: boolean | null
+          dpd_deficiency_status: string | null
         }
         Insert: {
           condition_template_id?: string | null
@@ -723,6 +815,14 @@ export type Database = {
           primary_language?: string | null
           sex?: string | null
           status?: string | null
+          emergency_card_enabled?: boolean | null
+          blood_type?: string | null
+          allergies?: string[] | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_notes?: string | null
+          dpd_deficiency_screened?: boolean | null
+          dpd_deficiency_status?: string | null
         }
         Update: {
           condition_template_id?: string | null
@@ -739,6 +839,14 @@ export type Database = {
           primary_language?: string | null
           sex?: string | null
           status?: string | null
+          emergency_card_enabled?: boolean | null
+          blood_type?: string | null
+          allergies?: string[] | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_notes?: string | null
+          dpd_deficiency_screened?: boolean | null
+          dpd_deficiency_status?: string | null
         }
         Relationships: [
           {

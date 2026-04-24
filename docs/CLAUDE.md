@@ -686,6 +686,78 @@ Sprint 25: Performance optimization and load testing
 
 ## SECTION 11 -- CURRENT SPRINT
 
+**SPRINT 8 COMPLETE: CCF Demo Environment + 10 Integration Features**
+**Status: ✅ COMPLETE (April 23, 2026)**
+**CCF Demo Deadline: June 17, 2026**
+
+### Sprint 8 Summary
+
+- **Carlos Rivera demo seed** (`scripts/seed-demo-data.ts`): 90-day
+  backdated patient, caregiver auth user (demo@clarifer.com), 30 days
+  of symptom logs with gemcitabine chemo-cycle pattern (days 1 & 8 of
+  21), 3 documents with AI summaries, 5 medications, 4 care team
+  members (stored in chat_messages as DEMO_CARE_TEAM for the v1 demo,
+  since care_relationships requires real auth users), 2 upcoming
+  appointments with checklists, 3 saved trials (pemigatinib /
+  durvalumab / futibatinib), 12 biomarkers, English + Spanish family
+  updates. MANUAL REQUIRED: `npx tsx scripts/seed-demo-data.ts`.
+- **Three migrations** logged (NOT executed):
+  `20260423000008_emergency_card.sql`,
+  `20260423000009_biomarkers.sql`,
+  `20260423000010_newly_connected.sql`.
+- **10 CCF features**:
+  1. Emergency Information Card (web + mobile, offline cache in
+     localStorage/AsyncStorage, tap-to-call, URGENT styling).
+  2. Biomarker Tracker (grid with status colors, FGFR2/IDH1 alerts,
+     actionable therapy recommendations, not-tested screening prompt).
+  3. Newly Connected 30-day checklist (4 weeks, auto-created on first
+     dashboard load, progress bar, external CCF links).
+  4. DPD enzyme deficiency alert (auto-detects fluoropyrimidines:
+     5-FU, capecitabine, tegafur, flucytosine; two-checkbox resolution
+     persists to patients.dpd_deficiency_screened/_status).
+  5. CCF support group calendar (curated list, Spanish-first ordering
+     for Spanish users, caregiver-first for caregivers).
+  6. Specialist finder (12 CCF-verified centers, search/filter,
+     add-to-care-team, link to CCF's full map).
+  7. Nutrition guidance (treatment-phase aware: chemo vs post-surgery
+     vs general; dismissible tips).
+  8. Patient Advocate Connect (prominent CTA on dashboard + checklist
+     + emergency card).
+  9. Hospital-grade PDF export (@react-pdf/renderer, 8 pages: cover /
+     patient / biomarkers / meds + DPD alert / symptom trend / docs /
+     care team / appointments; every page carries the "care
+     coordination tool, not a medical record" footer).
+  10. Biomarker-to-trial auto-matching (BiomarkerTrialMatcher links
+      FGFR2/IDH1/BRAF/NTRK/MSI positive results to relevant trial NCT
+      IDs with deep links to ClinicalTrials.gov).
+
+### Sprint status through Sprint 8
+- Sprint 1 — Four production bug fixes ✅
+- Sprint 2 — Vercel AI SDK streaming ✅
+- Sprint 2A/2B — Dementia + Alzheimer's condition templates ✅
+- Sprint 3 — Multi-tenancy (organizations + tenant_id + RLS) ✅
+- Sprint 4 — Mobile auth (email/password, verify email, role select) ✅
+- Sprint 5 — Document intelligence (upload + Claude streaming summary) ✅
+- Sprint 6 — Enterprise hardening ✅
+- Sprint auth-providers — Google OAuth + Apple + Phone OTP + password reset ✅
+- Sprint 7 — User journey, design system, full schema baseline ✅
+- Sprint 8 — CCF demo environment + 10 integration features ✅
+
+### Test status (end of Sprint 8)
+- 39 test files / 128 tests / all passing.
+- npm audit (root, --audit-level=high) — 0 vulnerabilities.
+- tsc --noEmit — 0 errors.
+
+### MIGRATION REQUIRED (Samira runs `npx supabase db push`)
+- `20260423000008_emergency_card.sql`
+- `20260423000009_biomarkers.sql`
+- `20260423000010_newly_connected.sql`
+
+### MANUAL REQUIRED (after migrations run)
+- `npx tsx scripts/seed-demo-data.ts`
+
+---
+
 **SPRINT 7 COMPLETE: Complete User Journey + Design System + Full Schema**
 **Status: ✅ COMPLETE (April 23, 2026)**
 **CCF Demo Deadline: June 17, 2026**

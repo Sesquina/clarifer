@@ -777,3 +777,117 @@ overrunning. Mobile home screen (caregiver.tsx) also not rewritten.
 [2026-04-23] npm audit --audit-level=high: 0 vulnerabilities.
 
 [2026-04-23] SPRINT 7 COMPLETE
+
+[2026-04-23] SPRINT 8 STARTED — CCF demo environment + 10 CCF integration features
+Branch: sprint-8-ccf-demo
+
+[2026-04-23] FILES CREATED — Carlos Rivera demo seed:
+  - scripts/seed-demo-data.ts
+MANUAL REQUIRED: Run seed script to populate demo data after Sprint 8
+migrations are applied to the staging DB:
+  Command: npx tsx scripts/seed-demo-data.ts
+WARNING: Only run against demo/staging environment. Never run against
+production with real patient data.
+
+[2026-04-23] MIGRATION REQUIRED:
+  File: supabase/migrations/20260423000008_emergency_card.sql
+  Adds emergency-card columns to patients (blood_type, allergies,
+  emergency_contact_name/phone, emergency_notes, dpd_deficiency_screened,
+  dpd_deficiency_status, emergency_card_enabled).
+  ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS emergency_card_enabled BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS blood_type TEXT,
+    ADD COLUMN IF NOT EXISTS allergies TEXT[],
+    ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT,
+    ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT,
+    ADD COLUMN IF NOT EXISTS emergency_notes TEXT,
+    ADD COLUMN IF NOT EXISTS dpd_deficiency_screened BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS dpd_deficiency_status TEXT;
+
+[2026-04-23] MIGRATION REQUIRED:
+  File: supabase/migrations/20260423000009_biomarkers.sql
+  Creates biomarkers table with RLS (org-isolated) and indexes on
+  patient_id and organization_id. Stores cholangiocarcinoma molecular
+  profiling (FGFR2, IDH1, etc.) per patient.
+
+[2026-04-23] MIGRATION REQUIRED:
+  File: supabase/migrations/20260423000010_newly_connected.sql
+  Creates newly_connected_checklists table with RLS (org-isolated).
+  Stores the 30-day onboarding checklist state per patient.
+
+[2026-04-23] FILES CREATED — Emergency card (Part 2):
+  - app/api/patients/[id]/emergency-card/route.ts  (GET, offline cache)
+  - app/(app)/patients/[id]/emergency-card/page.tsx (web page)
+  - apps/mobile/app/(app)/patients/emergency-card.tsx (mobile, AsyncStorage cache)
+
+[2026-04-23] FILES CREATED — Biomarker tracker (Part 3):
+  - app/api/biomarkers/route.ts          (GET list / POST create)
+  - app/api/biomarkers/[id]/route.ts     (PATCH / DELETE)
+  - lib/ccf/biomarkers.ts                (CCA biomarker catalog)
+  - components/biomarkers/BiomarkerTracker.tsx
+  - components/biomarkers/BiomarkerAlert.tsx (FGFR2/IDH1/not-tested alerts)
+  - components/biomarkers/BiomarkerTrialMatcher.tsx (biomarker->trial auto-match)
+
+[2026-04-23] FILES CREATED — Newly Connected checklist (Part 4):
+  - lib/ccf/newly-connected-template.ts  (30-day 4-week checklist)
+  - app/api/newly-connected/route.ts     (GET auto-create / PATCH persist)
+  - components/newly-connected/NewlyConnectedChecklist.tsx
+
+[2026-04-23] FILES CREATED — DPD enzyme alert (Part 5):
+  - components/medications/DPDAlert.tsx  (fluoropyrimidine detection,
+    two-checkbox resolution, isFluoropyrimidine() helper)
+
+[2026-04-23] FILES CREATED — CCF support groups (Part 6):
+  - lib/ccf/support-groups.ts            (curated schedule + sort helpers)
+  - components/community/SupportGroupCalendar.tsx
+
+[2026-04-23] FILES CREATED — Specialist finder (Part 7):
+  - lib/ccf/specialists.ts               (12 CCF-verified centers + filters)
+  - components/care-team/SpecialistFinder.tsx
+
+[2026-04-23] FILES CREATED — Nutrition guidance (Part 8):
+  - components/nutrition/NutritionGuidance.tsx
+    (treatment-phase aware: chemo / post-surgery / general tips)
+
+[2026-04-23] FILES CREATED — Patient advocate connect (Part 9):
+  - components/community/PatientAdvocateConnect.tsx
+
+[2026-04-23] FILES CREATED — Hospital-grade PDF export (Part 10):
+  - lib/export/generate-pdf.ts           (@react-pdf/renderer, 8 pages,
+    cover / patient / biomarkers / meds / symptom trend / docs / care team /
+    appointments; DPD alert surfaced on meds page; footer on every page)
+  - app/api/export/pdf/route.ts          (POST, caregiver/provider/admin +
+    org scope + audit_log EXPORT/patient_pdf)
+  - apps/mobile/components/export/ExportButton.tsx
+
+[2026-04-23] FILES MODIFIED — Types + dashboards:
+  - lib/supabase/types.ts                (added Sprint 8 columns + biomarkers
+    + newly_connected_checklists tables)
+  - app/(app)/patients/[id]/page.tsx     (wires emergency-card link, DPD
+    alert, biomarker tracker + trial matcher, newly-connected checklist,
+    nutrition, advocate connect, support groups, specialist finder)
+  - apps/mobile/app/(app)/patients/[id].tsx (emergency card + PDF export
+    action row)
+
+[2026-04-23] FILES CREATED — Tests (7 files, 18 tests):
+  - tests/api/emergency-card.test.ts          (3)
+  - tests/api/biomarkers.test.ts              (3)
+  - tests/components/biomarker-tracker.test.tsx (3)
+  - tests/components/dpd-alert.test.tsx       (3)
+  - tests/components/newly-connected.test.tsx (2)
+  - tests/components/support-groups.test.tsx  (2)
+  - tests/lib/pdf-export.test.ts              (2)
+
+[2026-04-23] DEPENDENCY ADDED — @react-pdf/renderer (PDF export)
+  Installed via `npm install @react-pdf/renderer --save`. No other deps added.
+
+[2026-04-23] DESIGN SYSTEM — All new web components use CSS variables
+(var(--primary), var(--terracotta), var(--pale-sage), var(--pale-terra),
+var(--muted-foreground)). No hex in web components. Mobile emergency-card
+screen uses lib/design-tokens.ts constants only. Touch targets >= 48px
+throughout. Warm empty states, warm errors, skeleton loading.
+
+[2026-04-23] npm test: 128/128 passing (39 files, 110 prior + 18 new).
+[2026-04-23] tsc --noEmit: 0 errors.
+[2026-04-23] npm audit --audit-level=high: 0 vulnerabilities.
+
+[2026-04-23] SPRINT 8 COMPLETE

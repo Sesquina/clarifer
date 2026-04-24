@@ -1,11 +1,26 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { SymptomChart, SymptomPoint } from "@/components/symptoms/SymptomChart";
+import { BiomarkerTracker, type BiomarkerRow } from "@/components/biomarkers/BiomarkerTracker";
+import { BiomarkerTrialMatcher } from "@/components/biomarkers/BiomarkerTrialMatcher";
+import { NewlyConnectedChecklist } from "@/components/newly-connected/NewlyConnectedChecklist";
+import { DPDAlert, isFluoropyrimidine } from "@/components/medications/DPDAlert";
+import { SupportGroupCalendar } from "@/components/community/SupportGroupCalendar";
+import { SpecialistFinder } from "@/components/care-team/SpecialistFinder";
+import { NutritionGuidance } from "@/components/nutrition/NutritionGuidance";
+import { PatientAdvocateConnect } from "@/components/community/PatientAdvocateConnect";
+import type { NewlyConnectedItem } from "@/lib/ccf/newly-connected-template";
 
 interface DashboardResponse {
-  patient: { id: string; name: string; custom_diagnosis: string | null };
+  patient: {
+    id: string;
+    name: string;
+    custom_diagnosis: string | null;
+    primary_language?: string | null;
+    created_at?: string | null;
+  };
   documents: Array<{ id: string; title: string | null; analysis_status: string | null; uploaded_at: string | null }>;
   symptoms: Array<{ id: string; overall_severity: number | null; ai_summary: string | null; created_at: string | null }>;
   medications: Array<{ id: string; name: string; dose: string | null; unit: string | null; frequency: string | null }>;
@@ -37,6 +52,8 @@ export default function PatientDashboard() {
   const id = typeof params?.id === "string" ? params.id : "";
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [symptomPoints, setSymptomPoints] = useState<SymptomPoint[]>([]);
+  const [biomarkers, setBiomarkers] = useState<BiomarkerRow[]>([]);
+  const [checklist, setChecklist] = useState<NewlyConnectedItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,9 +62,11 @@ export default function PatientDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [dash, series] = await Promise.all([
+      const [dash, series, bio, nc] = await Promise.all([
         fetch(`/api/patients/${id}`),
         fetch(`/api/symptoms/${id}?days=7`),
+        fetch(`/api/biomarkers?patient_id=${id}`),
+        fetch(`/api/newly-connected?patient_id=${id}`),
       ]);
       if (!dash.ok) {
         if (dash.status === 404) setError("We could not find this patient.");
@@ -59,6 +78,14 @@ export default function PatientDashboard() {
         const body = await series.json();
         setSymptomPoints(body.points ?? []);
       }
+      if (bio.ok) {
+        const body = await bio.json();
+        setBiomarkers(body.biomarkers ?? []);
+      }
+      if (nc.ok) {
+        const body = await nc.json();
+        setChecklist(body.items ?? null);
+      }
     } catch {
       setError("Having trouble connecting. Check your connection and try again.");
     } finally {
@@ -67,6 +94,21 @@ export default function PatientDashboard() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const isNewlyDiagnosed = useMemo(() => {
+    if (!data?.patient.created_at) return true;
+    const ms = Date.now() - new Date(data.patient.created_at).getTime();
+    return ms / (1000 * 60 * 60 * 24) <= 90;
+  }, [data]);
+
+  const onChecklistChange = async (items: NewlyConnectedItem[]) => {
+    setChecklist(items);
+    await fetch(`/api/newly-connected`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: id, items }),
+    });
+  };
 
   if (error) {
     return (
@@ -84,14 +126,32 @@ export default function PatientDashboard() {
         {loading || !data ? (
           <Skeleton height={56} />
         ) : (
-          <div>
-            <h1 className="font-heading text-3xl text-foreground">{data.patient.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {data.patient.custom_diagnosis ?? "Diagnosis not recorded"}
-            </p>
+          <div className="flex w-full flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="font-heading text-3xl text-foreground">{data.patient.name}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {data.patient.custom_diagnosis ?? "Diagnosis not recorded"}
+              </p>
+            </div>
+            <Link
+              href={`/patients/${id}/emergency-card`}
+              className="rounded-lg px-4 py-2 text-sm font-semibold"
+              style={{ background: "var(--terracotta)", color: "#FFFFFF", minHeight: 48, display: "inline-flex", alignItems: "center" }}
+            >
+              Emergency card
+            </Link>
           </div>
         )}
       </header>
+
+      {!loading && data && data.medications.some((m) => isFluoropyrimidine(m.name)) && (
+        <div className="mb-6">
+          <DPDAlert
+            patientName={data.patient.name}
+            medications={data.medications.map((m) => ({ name: m.name }))}
+          />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
@@ -107,7 +167,7 @@ export default function PatientDashboard() {
               </Link>
             </div>
             {loading ? <Skeleton height={120} /> : data!.documents.length === 0 ? (
-              <EmptyState title="No documents yet" body="Upload your first one — it takes less than a minute." />
+              <EmptyState title="No documents yet" body="Upload your first one -- it takes less than a minute." />
             ) : (
               <ul className="space-y-2" role="list">
                 {data!.documents.map((d) => (
@@ -126,6 +186,28 @@ export default function PatientDashboard() {
             <h2 id="symptoms-heading" className="mb-3 font-heading text-lg text-primary">Symptoms (last 7 days)</h2>
             {loading ? <Skeleton height={220} /> : <SymptomChart points={symptomPoints} days={7} />}
           </section>
+
+          {loading ? <Skeleton height={200} /> : (
+            <BiomarkerTracker
+              biomarkers={biomarkers}
+              oncologistName={data?.care_team.find((c) => (c.relationship_type ?? "").toLowerCase().includes("oncolog"))?.relationship_type ?? undefined}
+            />
+          )}
+
+          {!loading && biomarkers.length > 0 && (
+            <BiomarkerTrialMatcher biomarkers={biomarkers} />
+          )}
+
+          {!loading && isNewlyDiagnosed && (
+            <NewlyConnectedChecklist
+              initialItems={checklist ?? undefined}
+              onChange={onChecklistChange}
+            />
+          )}
+
+          {!loading && data && (
+            <NutritionGuidance medications={data.medications.map((m) => ({ name: m.name }))} />
+          )}
         </div>
 
         <aside className="space-y-6 lg:col-span-2">
@@ -180,6 +262,17 @@ export default function PatientDashboard() {
               </ul>
             )}
           </section>
+
+          {!loading && isNewlyDiagnosed && <PatientAdvocateConnect />}
+
+          {!loading && data && (
+            <SupportGroupCalendar
+              role="caregiver"
+              language={data.patient.primary_language === "es" ? "Spanish" : "English"}
+            />
+          )}
+
+          {!loading && <SpecialistFinder />}
         </aside>
       </div>
     </main>
