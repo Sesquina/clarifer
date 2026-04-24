@@ -17,6 +17,7 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- RLS: authenticated users can upload to their org folder only
+DROP POLICY IF EXISTS "org_upload_policy" ON storage.objects;
 CREATE POLICY "org_upload_policy" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -27,6 +28,7 @@ CREATE POLICY "org_upload_policy" ON storage.objects
   );
 
 -- RLS: authenticated users can read their org files only
+DROP POLICY IF EXISTS "org_read_policy" ON storage.objects;
 CREATE POLICY "org_read_policy" ON storage.objects
   FOR SELECT TO authenticated
   USING (
@@ -37,6 +39,7 @@ CREATE POLICY "org_read_policy" ON storage.objects
   );
 
 -- RLS: authenticated users can delete their org files only
+DROP POLICY IF EXISTS "org_delete_policy" ON storage.objects;
 CREATE POLICY "org_delete_policy" ON storage.objects
   FOR DELETE TO authenticated
   USING (
