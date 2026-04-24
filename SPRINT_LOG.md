@@ -891,3 +891,19 @@ throughout. Warm empty states, warm errors, skeleton loading.
 [2026-04-23] npm audit --audit-level=high: 0 vulnerabilities.
 
 [2026-04-23] SPRINT 8 COMPLETE
+
+[2026-04-23] HOTFIX — users RLS infinite recursion
+Error observed in production: "infinite recursion detected in policy for
+relation users". Root cause: two policies on public.users contained a
+subquery back to public.users to resolve organization_id, retriggering
+the same policy. Offending policies:
+  - users_select_same_org (20260422000005_update_rls_for_multi_tenancy.sql)
+  - users_self_select     (20260423000006_full_schema_baseline.sql)
+
+MIGRATION REQUIRED:
+  File: supabase/migrations/20260423000011_fix_users_rls_recursion.sql
+  Drops the recursive policies and recreates three auth.uid()-only
+  policies (users_select_own, users_insert_own, users_update_own).
+  Cross-user queries (provider listings, org member lists) must now go
+  through SECURITY DEFINER views or the service role in API routes, not
+  through RLS on public.users directly.

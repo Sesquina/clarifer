@@ -7,8 +7,13 @@
  * Usage:
  *   npx tsx scripts/seed-demo-data.ts
  *
- * Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment.
+ * Reads .env.local for SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
  */
+
+import { config } from "dotenv";
+import { resolve } from "path";
+
+config({ path: resolve(process.cwd(), ".env.local") });
 
 import { createClient } from "@supabase/supabase-js";
 

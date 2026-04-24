@@ -102,10 +102,10 @@ describe("Medications CRUD", () => {
 
   it("GET list returns active only", async () => {
     createClient.mockResolvedValue(makeSupabase({}));
-    const { GET } = await import("@/app/api/medications/[patientId]/route");
+    const { GET } = await import("@/app/api/medications/[id]/route");
     const res = await GET(
       new Request("http://localhost/api/medications/patient-1"),
-      { params: Promise.resolve({ patientId: "patient-1" }) }
+      { params: Promise.resolve({ id: "patient-1" }) }
     );
     expect(res.status).toBe(200);
     const body = await res.json();

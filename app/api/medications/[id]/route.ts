@@ -1,5 +1,9 @@
 /**
- * GET /api/medications/[patientId] — lists active medications.
+ * GET /api/medications/[id] -- lists a patient's active medications.
+ * The [id] segment is the patient id. The PATCH update route lives at
+ * /api/medications/[id]/update and uses [id] as the medication id; Next.js
+ * requires the same slug name at a given path level, so both endpoints
+ * share "id" even though the semantic target differs.
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -11,12 +15,12 @@ const ALLOWED_ROLES = ["caregiver", "provider", "admin"];
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ patientId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  const { patientId } = await params;
+  const { id: patientId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
