@@ -8,6 +8,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/__setup.ts"],
     globals: true,
+    // Module-cache leaks across parallel workers cause intermittent timeouts
+    // in the heavily-mocked API tests (@/lib/supabase/server, @/lib/cors, etc.).
+    // Running files serially adds ~30s but keeps the suite deterministic.
+    fileParallelism: false,
     exclude: [
       "**/node_modules/**",
       "**/e2e/**",
