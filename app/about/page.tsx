@@ -1,132 +1,250 @@
-import Link from "next/link";
+import { Header } from "@/components/layout/header";
 
 export const metadata = {
-  title: "About – Clarifer",
-  description: "The story behind Clarifer — built by a caregiver, for caregivers.",
+  title: "About Clarifer",
+  description:
+    "Clarifer exists because coordinating care for someone you love should not be a second full-time job.",
 };
 
-const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" width={size} height={size}>
-    <circle cx="12" cy="5" r="3" />
-    <line x1="12" y1="8" x2="12" y2="22" />
-    <path d="M5 15l7 7 7-7" />
-    <path d="M5 12h4M15 12h4" />
-  </svg>
-);
+const BODY: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+};
+const HEADING: React.CSSProperties = {
+  fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+};
 
 export default function AboutPage() {
   return (
-    <div style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", color: "#1A1A1A" }}>
-      <main style={{ backgroundColor: "#FAF7F2", minHeight: "100vh" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 24px 60px" }}>
-          <Link
-            href="/"
-            style={{ fontSize: 14, color: "#2C5F4A", textDecoration: "underline" }}
-          >
-            &larr; Back to home
-          </Link>
+    <div style={{ backgroundColor: "var(--background)", ...BODY }}>
+      <Header />
 
+      {/* HERO */}
+      <section
+        className="text-center"
+        style={{ padding: "80px 24px", maxWidth: 700, margin: "0 auto" }}
+      >
+        <h1
+          style={{
+            ...HEADING,
+            fontSize: 48,
+            color: "var(--primary)",
+            marginBottom: 16,
+            fontWeight: 700,
+            lineHeight: 1.15,
+          }}
+        >
+          Built for the families who need it most
+        </h1>
+        <p
+          style={{
+            ...BODY,
+            fontSize: 19,
+            color: "var(--muted)",
+            lineHeight: 1.7,
+          }}
+        >
+          Clarifer exists because coordinating care for someone you love should
+          not be a second full-time job.
+        </p>
+      </section>
+
+      {/* MISSION */}
+      <section
+        style={{ backgroundColor: "var(--pale-sage)", padding: "80px 24px" }}
+      >
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <h2
+            style={{
+              ...HEADING,
+              fontSize: 34,
+              color: "var(--primary)",
+              marginBottom: 24,
+              fontWeight: 700,
+            }}
+          >
+            Our mission
+          </h2>
           <p
             style={{
-              fontSize: 13,
-              color: "#6B6B6B",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              marginTop: 48,
-            }}
-          >
-            Our story
-          </p>
-
-          <h1
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: "clamp(32px, 5vw, 44px)",
-              color: "#1A1A1A",
-              marginTop: 12,
-              lineHeight: 1.2,
-            }}
-          >
-            My father had cholangiocarcinoma.
-          </h1>
-
-          <div
-            style={{
-              marginTop: 32,
+              ...BODY,
               fontSize: 17,
-              color: "#1A1A1A",
-              lineHeight: 1.85,
+              color: "var(--text)",
+              lineHeight: 1.8,
+              marginBottom: 16,
             }}
           >
-            <p>
-              In 2024 my father was diagnosed with bile duct cancer. For the next year I was his
-              caregiver, his advocate, and the person trying to make sense of a system that was not
-              built for families like ours.
+            We believe every caregiver deserves tools that make the
+            coordination of care easier, so they can spend their energy on what
+            actually matters: the person they are caring for.
+          </p>
+          <p
+            style={{
+              ...BODY,
+              fontSize: 17,
+              color: "var(--muted)",
+              lineHeight: 1.8,
+            }}
+          >
+            Clarifer was built from direct experience with serious illness.
+            That experience drives every product decision we make. Every
+            screen, every feature, and every word is written for the caregiver
+            sitting in a hospital parking lot at 2am.
+          </p>
+        </div>
+      </section>
+
+      {/* FOUNDER NOTE */}
+      <section style={{ backgroundColor: "var(--background)", padding: "64px 24px" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto" }}>
+          {/* TODO: Samira to write 2-3 sentences for this section
+              before the site goes live. Keep it brief. Keep it hers. */}
+          <blockquote
+            style={{
+              borderLeft: "3px solid var(--accent)",
+              paddingLeft: 24,
+              margin: 0,
+            }}
+          >
+            <p
+              style={{
+                ...HEADING,
+                fontStyle: "italic",
+                fontSize: 22,
+                color: "var(--primary)",
+                lineHeight: 1.6,
+              }}
+            >
+              [FOUNDER NOTE: this section is reserved for Samira to write in
+              her own words before launch. It will live here, brief and honest,
+              when she is ready.]
             </p>
-            <p style={{ marginTop: 20 }}>
-              I am a software developer. So I built something.
+            <p
+              style={{
+                ...BODY,
+                fontSize: 14,
+                color: "var(--muted)",
+                marginTop: 12,
+              }}
+            >
+              Founder, Clarifer
             </p>
-            <p style={{ marginTop: 20 }}>
-              I built it while sitting in waiting rooms. While trying to understand lab results at
-              midnight. While figuring out how to explain what was happening to twenty family members
-              across two languages.
-            </p>
-            <p style={{ marginTop: 20 }}>
-              It was the only thing that helped me feel less lost.
-            </p>
-            <p style={{ marginTop: 20 }}>
-              He passed in October 2025.
-            </p>
-            <p style={{ marginTop: 20 }}>
-              I finished building Clarifer after he was gone, because I knew other families were
-              sitting where I sat. I wanted to give them something I wished I had.
-            </p>
-            <p style={{ marginTop: 20 }}>
-              Clarifer is free. It is not a medical provider. It will not replace your doctor. But it
-              will help you understand what your doctor is telling you, track what is happening, find
-              clinical trials, and keep the people who love your family informed.
-            </p>
-            <p style={{ marginTop: 20 }}>
-              It was built by a caregiver, for caregivers and patients. That is all it has ever been.
-            </p>
-            <p style={{ marginTop: 32 }}>
-              My name is <strong>Samira Esquina</strong>. I am the founder of Clarifer and Cassini
-              Design Group LLC. If you have questions, feedback, or just need to talk to someone who
-              gets it, you can reach me at{" "}
-              <a href="mailto:samira@cassinidesigngroup.com" style={{ color: "#2C5F4A", textDecoration: "underline" }}>
-                samira@cassinidesigngroup.com
-              </a>.
-            </p>
-            <p style={{ marginTop: 8 }}>I read every message.</p>
+          </blockquote>
+        </div>
+      </section>
+
+      {/* VALUES */}
+      <section
+        style={{ backgroundColor: "var(--pale-terra)", padding: "80px 24px" }}
+      >
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <h2
+            className="text-center"
+            style={{
+              ...HEADING,
+              fontSize: 34,
+              marginBottom: 48,
+              color: "var(--text)",
+              fontWeight: 700,
+            }}
+          >
+            What we believe
+          </h2>
+          <div
+            className="grid grid-cols-1 md:grid-cols-3"
+            style={{ gap: 20 }}
+          >
+            {[
+              {
+                title: "Private by design",
+                body:
+                  "Your health data belongs to you. HIPAA compliant. Encrypted. Audit logged. Never sold. Never shared without your explicit consent.",
+              },
+              {
+                title: "Free for caregivers",
+                body:
+                  "Revenue comes from hospital licensing and research partnerships. Caregivers should never have to pay for tools that help them provide care.",
+              },
+              {
+                title: "Built for real conditions",
+                body:
+                  "Not designed for ideal circumstances. Built for the caregiver who is exhausted, overwhelmed, and doing their best. Clarifer works for real life.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                style={{
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 16,
+                  padding: "28px 24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+              >
+                <h3
+                  style={{
+                    ...BODY,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginBottom: 8,
+                  }}
+                >
+                  {card.title}
+                </h3>
+                <p
+                  style={{
+                    ...BODY,
+                    fontSize: 15,
+                    color: "var(--muted)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {card.body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
-      </main>
+      </section>
 
-      {/* Footer */}
-      <footer
-        style={{
-          backgroundColor: "#1A1A1A",
-          padding: "40px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
-        }}
+      {/* CONTACT */}
+      <section
+        className="text-center"
+        style={{ backgroundColor: "var(--background)", padding: "64px 24px" }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <AnchorIcon size={24} color="#FFFFFF" />
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            Clarifer by Cassini Design Group
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <a href="/about" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>About</a>
-          <a href="/security" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>Security</a>
-          <a href="/privacy" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>Privacy Policy</a>
-          <a href="/terms" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>Terms</a>
-        </div>
-      </footer>
+        <h2
+          style={{
+            ...HEADING,
+            fontSize: 28,
+            marginBottom: 16,
+            color: "var(--text)",
+            fontWeight: 600,
+          }}
+        >
+          Get in touch
+        </h2>
+        <p
+          style={{
+            ...BODY,
+            fontSize: 16,
+            color: "var(--muted)",
+            marginBottom: 24,
+          }}
+        >
+          For partnerships, press, or questions:
+        </p>
+        <a
+          href="mailto:support@clarifer.com"
+          style={{
+            ...BODY,
+            fontSize: 16,
+            color: "var(--primary)",
+            fontWeight: 500,
+          }}
+        >
+          support@clarifer.com
+        </a>
+      </section>
     </div>
   );
 }

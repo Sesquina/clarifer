@@ -1,660 +1,626 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { UploadCloud, Activity, Search, Menu, X } from "lucide-react";
+import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import { Header } from "@/components/layout/header";
 import { CookieBanner } from "@/components/cookie-banner";
 
-const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" width={size} height={size}>
-    <circle cx="12" cy="5" r="3" />
-    <line x1="12" y1="8" x2="12" y2="22" />
-    <path d="M5 15l7 7 7-7" />
-    <path d="M5 12h4M15 12h4" />
-  </svg>
-);
+export const metadata = {
+  title: "Clarifer. Care coordination for caregivers.",
+  description:
+    "Clarifer helps caregivers coordinate medical care, understand documents, track symptoms, and keep family informed.",
+};
 
-function smoothScroll(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
+const SECTION_HEADING: React.CSSProperties = {
+  fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+};
+
+const BODY_FONT: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+};
 
 export default function LandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactMessage, setContactMessage] = useState("");
-  const [contactStatus, setContactStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-
-  async function handleContact(e: React.FormEvent) {
-    e.preventDefault();
-    if (!contactEmail.includes("@")) return;
-    setContactStatus("sending");
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: contactName, email: contactEmail, message: contactMessage }),
-      });
-      setContactStatus(res.ok ? "success" : "error");
-    } catch {
-      setContactStatus("error");
-    }
-  }
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const navLinks = [
-    { label: "How it works", id: "how-it-works" },
-    { label: "Research", id: "research" },
-    { label: "Our story", id: "our-story" },
-    { label: "About", href: "/about" },
-    { label: "Security", href: "/security" },
-  ];
-
   return (
-    <div style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", color: "#1A1A1A" }}>
-      {/* ═══ NAVIGATION ═══ */}
-      <nav
+    <div style={{ backgroundColor: "var(--background)", color: "var(--text)", ...BODY_FONT }}>
+      <Header />
+
+      {/* HERO */}
+      <section
+        className="flex flex-col items-center justify-center text-center"
         style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          backgroundColor: "#FFFFFF",
-          boxShadow: scrolled ? "0 1px 8px rgba(0,0,0,0.08)" : "none",
-          transition: "box-shadow 0.2s",
+          backgroundColor: "var(--background)",
+          minHeight: "90vh",
+          padding: "40px 24px",
         }}
       >
         <div
-          style={{
-            maxWidth: 1100,
-            margin: "0 auto",
-            padding: "0 24px",
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
+          className="flex flex-col items-center"
+          style={{ maxWidth: 720, margin: "0 auto" }}
         >
-          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <AnchorIcon size={28} />
-            <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: 20, color: "#1A1A1A" }}>
-              Clarifer
-            </span>
-          </a>
-
-          {/* Desktop nav — hidden on mobile */}
-          <div className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>
-            {navLinks.map((link) =>
-              link.href ? (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  style={{
-                    fontSize: 15,
-                    color: "#1A1A1A",
-                    textDecoration: "none",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <button
-                  key={link.id}
-                  onClick={() => smoothScroll(link.id!)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 15,
-                    color: "#1A1A1A",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
-                  {link.label}
-                </button>
-              )
-            )}
+          <div style={{ marginBottom: 28 }}>
+            <AnchorLogo size={72} />
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <h1
+            className="text-[36px] md:text-[52px] text-center"
+            style={{
+              ...SECTION_HEADING,
+              color: "var(--primary)",
+              marginBottom: 20,
+              lineHeight: 1.15,
+              fontWeight: 700,
+            }}
+          >
+            Care is hard enough.
+            <br />
+            We will help you organize it.
+          </h1>
+          <p
+            className="text-center"
+            style={{
+              ...BODY_FONT,
+              fontSize: 19,
+              color: "var(--muted)",
+              maxWidth: 540,
+              margin: "0 auto 36px",
+              lineHeight: 1.6,
+            }}
+          >
+            Clarifer helps caregivers coordinate medical care, understand
+            documents, track symptoms, and keep family informed. All in one
+            place.
+          </p>
+          <div
+            className="flex flex-wrap justify-center"
+            style={{ gap: 14 }}
+          >
+            <Link
+              href="/download"
+              className="inline-flex items-center justify-center"
+              style={{
+                height: 52,
+                padding: "0 28px",
+                borderRadius: 26,
+                backgroundColor: "var(--primary)",
+                color: "var(--white)",
+                fontSize: 16,
+                fontWeight: 600,
+                ...BODY_FONT,
+              }}
+            >
+              Download the App
+            </Link>
             <Link
               href="/login"
+              className="inline-flex items-center justify-center"
               style={{
-                height: 40,
-                padding: "0 20px",
-                borderRadius: 20,
-                border: "1.5px solid #2C5F4A",
-                color: "#2C5F4A",
-                fontSize: 14,
-                fontWeight: 500,
-                display: "flex",
-                alignItems: "center",
-                textDecoration: "none",
-                fontFamily: "var(--font-dm-sans)",
-              }}
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/login?mode=signup"
-              className="hidden md:flex"
-              style={{
-                height: 40,
-                padding: "0 20px",
-                borderRadius: 20,
-                backgroundColor: "#2C5F4A",
-                color: "#FFFFFF",
-                fontSize: 14,
+                height: 52,
+                padding: "0 28px",
+                borderRadius: 26,
+                border: "1.5px solid var(--primary)",
+                color: "var(--primary)",
+                backgroundColor: "transparent",
+                fontSize: 16,
                 fontWeight: 600,
-                alignItems: "center",
-                textDecoration: "none",
-                fontFamily: "var(--font-dm-sans)",
+                ...BODY_FONT,
               }}
             >
-              Sign up free
+              Sign In
             </Link>
-            {/* Mobile hamburger — visible only on mobile */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="block md:hidden"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
-            >
-              {menuOpen ? <X size={24} color="#1A1A1A" /> : <Menu size={24} color="#1A1A1A" />}
-            </button>
           </div>
-        </div>
-
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div
-            className="flex flex-col md:hidden"
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderTop: "1px solid #E8E2D9",
-              padding: "16px 24px",
-              gap: 16,
-            }}
-          >
-            {navLinks.map((link) =>
-              link.href ? (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  style={{
-                    fontSize: 16,
-                    color: "#1A1A1A",
-                    textDecoration: "none",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <button
-                  key={link.id}
-                  onClick={() => {
-                    smoothScroll(link.id!);
-                    setMenuOpen(false);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 16,
-                    color: "#1A1A1A",
-                    textAlign: "left",
-                    fontFamily: "var(--font-dm-sans)",
-                  }}
-                >
-                  {link.label}
-                </button>
-              )
-            )}
-          </div>
-        )}
-      </nav>
-
-      {/* ═══ SECTION 1: HERO ═══ */}
-      <section
-        style={{
-          backgroundColor: "#F7F2EA",
-          padding: "144px 24px 80px",
-          textAlign: "center",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <AnchorIcon size={48} />
-        </div>
-        <h1
-          style={{
-            fontFamily: "var(--font-playfair), serif",
-            fontSize: "clamp(40px, 6vw, 64px)",
-            color: "#1A1A1A",
-            maxWidth: 700,
-            margin: "24px auto 0",
-            lineHeight: 1.15,
-          }}
-        >
-          For the family doing everything they can.
-        </h1>
-        <p
-          style={{
-            fontSize: 18,
-            color: "#6B6B6B",
-            maxWidth: 560,
-            margin: "20px auto 0",
-            lineHeight: 1.6,
-          }}
-        >
-          Clarifer helps patients and caregivers understand medical documents, track symptoms, find
-          clinical trials, and stay connected with their care team. In plain language. At any hour.
-        </p>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-            marginTop: 32,
-            flexWrap: "wrap",
-          }}
-        >
-          <Link
-            href="/login?mode=signup"
-            style={{
-              height: 52,
-              padding: "0 32px",
-              borderRadius: 26,
-              backgroundColor: "#2C5F4A",
-              color: "#FFFFFF",
-              border: "none",
-              fontSize: 16,
-              fontWeight: 600,
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              fontFamily: "var(--font-dm-sans)",
-            }}
-          >
-            Sign up free
-          </Link>
-          <Link
-            href="/login"
-            style={{
-              height: 52,
-              padding: "0 32px",
-              borderRadius: 26,
-              backgroundColor: "transparent",
-              color: "#2C5F4A",
-              border: "1.5px solid #2C5F4A",
-              fontSize: 16,
-              fontWeight: 600,
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              fontFamily: "var(--font-dm-sans)",
-            }}
-          >
-            Sign in
-          </Link>
-        </div>
-        <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 20 }}>
-          Built by caregivers, for caregivers.
-        </p>
-        <p style={{ fontSize: 13, color: "#9A9A9A", marginTop: 12, maxWidth: 500, margin: "12px auto 0" }}>
-          <a href="/privacy" style={{ color: "#9A9A9A", textDecoration: "underline" }}>Privacy Policy</a>,{" "}
-          <a href="/terms" style={{ color: "#9A9A9A", textDecoration: "underline" }}>Terms of Service</a>, and{" "}
-          <a href="/security" style={{ color: "#9A9A9A", textDecoration: "underline" }}>Security</a> details linked in the footer. Your data is never sold.
-        </p>
-      </section>
-
-      {/* ═══ SECTION 2: THE PROBLEM ═══ */}
-      <section id="how-it-works" style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
-        <div
-          style={{
-            maxWidth: 900,
-            margin: "0 auto",
-            display: "grid",
-            gap: 48,
-          }}
-          className="md:grid-cols-2"
-        >
-          <div
-            style={{
-              borderLeft: "3px solid #C4714A",
-              paddingLeft: 24,
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-playfair), serif",
-                fontStyle: "italic",
-                fontSize: 26,
-                color: "#2C5F4A",
-                lineHeight: 1.4,
-              }}
-            >
-              &ldquo;He came home with a stack of papers, a bag of medications, and more questions
-              than answers.&rdquo;
-            </p>
-          </div>
-          <div style={{ fontSize: 17, color: "#1A1A1A", lineHeight: 1.7 }}>
-            <p>
-              Serious illness moves fast. The information does not always keep up. Lab results
-              arrive without context. Discharge notes are written for clinicians. Medications
-              change weekly.
-            </p>
-            <p style={{ marginTop: 16 }}>
-              Caregivers do their best with what they have. Clarifer gives them more.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ SECTION 3: THE PRODUCT ═══ */}
-      <section id="product" style={{ backgroundColor: "#F7F2EA", padding: "80px 24px" }}>
-        <div style={{ textAlign: "center" }}>
           <p
+            className="text-center"
             style={{
+              ...BODY_FONT,
               fontSize: 13,
-              color: "#6B6B6B",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            What Clarifer does
-          </p>
-          <h2
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: 36,
-              color: "#1A1A1A",
-              marginTop: 8,
-            }}
-          >
-            Tools built for the people in the waiting room.
-          </h2>
-        </div>
-
-        <div
-          style={{
-            maxWidth: 1000,
-            margin: "48px auto 0",
-            display: "grid",
-            gap: 24,
-          }}
-          className="md:grid-cols-3"
-        >
-          {[
-            {
-              icon: <UploadCloud size={24} color="#C4714A" />,
-              iconBg: "#FDF3EE",
-              title: "Understand any document",
-              desc: "Upload a discharge summary, lab result, or pathology report. Get a plain-language summary with flagged values highlighted.",
-            },
-            {
-              icon: <Activity size={24} color="#2C5F4A" />,
-              iconBg: "#F0F5F2",
-              title: "Track what is happening",
-              desc: "Log symptoms in 3 minutes. Get a clinical summary your doctor can use. See patterns over time.",
-            },
-            {
-              icon: <Search size={24} color="#C4714A" />,
-              iconBg: "#FDF3EE",
-              title: "Find trials and options",
-              desc: "Search clinical trials matched to your diagnosis and biomarkers. Updated daily from ClinicalTrials.gov.",
-            },
-          ].map((card) => (
-            <div
-              key={card.title}
-              style={{
-                backgroundColor: "#FFFFFF",
-                borderRadius: 16,
-                padding: 28,
-                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 16,
-              }}
-            >
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  backgroundColor: card.iconBg,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {card.icon}
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700 }}>{card.title}</h3>
-              <p style={{ fontSize: 15, color: "#6B6B6B", lineHeight: 1.6 }}>{card.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ SECTION 4: RESEARCH ═══ */}
-      <section id="research" style={{ backgroundColor: "#2C5F4A", padding: "80px 24px" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: 36,
-              color: "#FFFFFF",
-            }}
-          >
-            Your experience could help the next family.
-          </h2>
-          <p
-            style={{
-              fontSize: 17,
-              color: "rgba(255,255,255,0.8)",
-              lineHeight: 1.7,
+              color: "var(--muted)",
               marginTop: 20,
             }}
           >
-            If you choose, your anonymized medical data can help researchers identify patterns,
-            find mutations, and match future patients to clinical trials. Your name and personal
-            details are never included. You can change your mind at any time.
-          </p>
-          <p
-            style={{
-              fontSize: 17,
-              color: "rgba(255,255,255,0.8)",
-              lineHeight: 1.7,
-              marginTop: 16,
-            }}
-          >
-            We built this because the hardest experiences deserve to mean something beyond the
-            people who lived them.
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: "rgba(255,255,255,0.5)",
-              fontStyle: "italic",
-              marginTop: 16,
-            }}
-          >
-            Data shared only with IRB-approved researchers. Never sold.
+            Free for caregivers. HIPAA compliant. iOS, Android and Web.
           </p>
         </div>
       </section>
 
-      {/* ═══ SECTION 5: THE STORY ═══ */}
-      <section id="our-story" style={{ backgroundColor: "#FFFFFF", padding: "80px 24px" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <AnchorIcon size={40} />
-          </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: 32,
-              color: "#1A1A1A",
-              marginTop: 16,
-            }}
-          >
-            Clarifer was built by caregivers who lived it.
-          </h2>
-          <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.8, marginTop: 20 }}>
-            We know what it is to sit in a waiting room with the wrong questions. To receive a
-            document you cannot understand. To call a number and wait.
-          </p>
-          <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.8, marginTop: 16 }}>
-            We built Clarifer with the tools we wished we had. For the families who are in it
-            right now.
-          </p>
-        </div>
-      </section>
-
-      {/* ═══ SECTION 6: GET IN TOUCH ═══ */}
-      <section id="contact" style={{ backgroundColor: "#F7F2EA", padding: "80px 24px" }}>
+      {/* MISSION */}
+      <section
+        id="mission"
+        style={{ backgroundColor: "var(--pale-sage)", padding: "80px 24px" }}
+      >
         <div
+          className="grid md:grid-cols-2"
+          style={{ maxWidth: 900, margin: "0 auto", gap: 60 }}
+        >
+          <div>
+            <h2
+              style={{
+                ...SECTION_HEADING,
+                fontSize: 36,
+                color: "var(--primary)",
+                marginBottom: 16,
+                fontWeight: 700,
+              }}
+            >
+              Built for the hardest moments.
+            </h2>
+            <p
+              style={{
+                ...BODY_FONT,
+                fontSize: 17,
+                color: "var(--text)",
+                lineHeight: 1.75,
+                marginBottom: 16,
+              }}
+            >
+              When someone you love is seriously ill, you become a coordinator,
+              an advocate, an interpreter, and a communicator, all at once. Most
+              caregivers do this with a folder of papers, a notes app, and
+              sheer determination.
+            </p>
+            <p
+              style={{
+                ...BODY_FONT,
+                fontSize: 17,
+                color: "var(--muted)",
+                lineHeight: 1.75,
+              }}
+            >
+              Clarifer was built to change that. Not to replace the care you
+              give, but to make the coordination easier so you can focus on
+              what actually matters.
+            </p>
+          </div>
+          <div className="flex flex-col" style={{ gap: 16 }}>
+            {[
+              {
+                number: "70M+",
+                color: "var(--primary)",
+                label: "family caregivers in the United States alone",
+              },
+              {
+                number: "45%",
+                color: "var(--accent)",
+                label: "increase in family caregivers over the last decade",
+              },
+              {
+                number: "$0",
+                color: "var(--primary)",
+                label: "cost to caregivers. Free forever.",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.number}
+                style={{
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 14,
+                  padding: "20px 24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div
+                  style={{
+                    ...SECTION_HEADING,
+                    fontSize: 40,
+                    color: stat.color,
+                    lineHeight: 1.1,
+                    fontWeight: 700,
+                  }}
+                >
+                  {stat.number}
+                </div>
+                <div
+                  style={{
+                    ...BODY_FONT,
+                    fontSize: 14,
+                    color: "var(--muted)",
+                    marginTop: 6,
+                  }}
+                >
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section
+        id="features"
+        style={{ backgroundColor: "var(--background)", padding: "80px 24px" }}
+      >
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <h2
+            className="text-center"
+            style={{
+              ...SECTION_HEADING,
+              fontSize: 38,
+              marginBottom: 12,
+              color: "var(--text)",
+              fontWeight: 700,
+            }}
+          >
+            Everything you need to coordinate care
+          </h2>
+          <p
+            className="text-center"
+            style={{
+              ...BODY_FONT,
+              fontSize: 17,
+              color: "var(--muted)",
+              maxWidth: 480,
+              margin: "0 auto 48px",
+            }}
+          >
+            From the first diagnosis to the daily routine of care.
+          </p>
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            style={{ gap: 20 }}
+          >
+            {[
+              {
+                icon: "📄",
+                title: "AI Document Analysis",
+                body:
+                  "Upload any hospital document and receive a plain-language summary in seconds. Lab reports, discharge summaries, pathology reports, explained clearly.",
+              },
+              {
+                icon: "📊",
+                title: "Symptom Tracking",
+                body:
+                  "Log how your patient is feeling in under 60 seconds. View 30-day trend charts. Share directly with the care team.",
+              },
+              {
+                icon: "🆘",
+                title: "Emergency Information Card",
+                body:
+                  "One tap. Works offline. Diagnosis, medications, and care team contact, ready for any nurse at 2am.",
+              },
+              {
+                icon: "🔬",
+                title: "Clinical Trial Finder",
+                body:
+                  "Trials filtered for the specific diagnosis and location, explained in plain language. Includes international trials for Mexico and Panama.",
+              },
+              {
+                icon: "💬",
+                title: "Family Updates",
+                body:
+                  "Generate a clear care update in English or Spanish. Copy to WhatsApp in one tap. Keep everyone in the loop without the emotional labor.",
+              },
+              {
+                icon: "💊",
+                title: "Medications and Care Team",
+                body:
+                  "All providers, medications, and appointments organized in one place. Drug interactions flagged automatically.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="flex flex-col"
+                style={{
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 16,
+                  padding: "28px 24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                  height: "100%",
+                }}
+              >
+                <div style={{ fontSize: 32, marginBottom: 16 }} aria-hidden="true">
+                  {card.icon}
+                </div>
+                <h3
+                  style={{
+                    ...BODY_FONT,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginBottom: 8,
+                  }}
+                >
+                  {card.title}
+                </h3>
+                <p
+                  style={{
+                    ...BODY_FONT,
+                    fontSize: 15,
+                    color: "var(--muted)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHO IT IS FOR */}
+      <section
+        id="hospitals"
+        style={{ backgroundColor: "var(--pale-terra)", padding: "80px 24px" }}
+      >
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <h2
+            className="text-center"
+            style={{
+              ...SECTION_HEADING,
+              fontSize: 38,
+              marginBottom: 48,
+              color: "var(--text)",
+              fontWeight: 700,
+            }}
+          >
+            Built for every caregiver
+          </h2>
+          <div
+            className="grid grid-cols-1 md:grid-cols-3"
+            style={{ gap: 20 }}
+          >
+            {[
+              {
+                title: "Cancer caregivers",
+                body:
+                  "AI document analysis, biomarker tracking, clinical trial finder with international coverage, and automatic alerts for critical drug interactions.",
+              },
+              {
+                title: "Dementia and Alzheimer's caregivers",
+                body:
+                  "Condition-aware symptom logging, medication management, care coordination tools, and family updates for the long journey ahead.",
+              },
+              {
+                title: "All conditions",
+                body:
+                  "Clarifer adapts to any diagnosis. Whatever your family is navigating, the tools work the same way. Organized, private, and free.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                style={{
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 16,
+                  padding: "28px 24px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+              >
+                <h3
+                  style={{
+                    ...BODY_FONT,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginBottom: 8,
+                  }}
+                >
+                  {card.title}
+                </h3>
+                <p
+                  style={{
+                    ...BODY_FONT,
+                    fontSize: 15,
+                    color: "var(--muted)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TRUST */}
+      <section style={{ backgroundColor: "var(--background)", padding: "64px 24px" }}>
+        <div
+          className="grid md:grid-cols-2"
+          style={{ maxWidth: 900, margin: "0 auto", gap: 48 }}
+        >
+          <div>
+            <h3
+              style={{
+                ...SECTION_HEADING,
+                fontSize: 26,
+                color: "var(--primary)",
+                marginBottom: 12,
+                fontWeight: 600,
+              }}
+            >
+              Free for caregivers. Always.
+            </h3>
+            <p
+              style={{
+                ...BODY_FONT,
+                fontSize: 15,
+                color: "var(--muted)",
+                lineHeight: 1.7,
+              }}
+            >
+              Clarifer&apos;s revenue comes from hospital licensing and research
+              partnerships, not from the people who need this most. Caregivers
+              will never pay for Clarifer.
+            </p>
+          </div>
+          <div>
+            <h3
+              style={{
+                ...SECTION_HEADING,
+                fontSize: 26,
+                color: "var(--primary)",
+                marginBottom: 12,
+                fontWeight: 600,
+              }}
+            >
+              HIPAA compliant. Built for privacy.
+            </h3>
+            <p
+              style={{
+                ...BODY_FONT,
+                fontSize: 15,
+                color: "var(--muted)",
+                lineHeight: 1.7,
+              }}
+            >
+              All data is encrypted at rest and in transit. Every access to
+              health information is logged. Your data belongs to you and your
+              care team. No one else.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section
+        style={{
+          backgroundColor: "var(--primary)",
+          padding: "80px 24px",
+          textAlign: "center",
+          color: "var(--white)",
+        }}
+      >
+        <h2
           style={{
-            maxWidth: 480,
-            margin: "0 auto",
-            backgroundColor: "#FFFFFF",
-            borderRadius: 16,
-            padding: 40,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+            ...SECTION_HEADING,
+            fontSize: 38,
+            color: "var(--white)",
+            marginBottom: 16,
+            fontWeight: 700,
           }}
         >
-          <h2
+          Start organizing care today
+        </h2>
+        <p
+          style={{
+            ...BODY_FONT,
+            fontSize: 18,
+            color: "rgba(255,255,255,0.75)",
+            marginBottom: 36,
+          }}
+        >
+          Free for caregivers. Available on iOS, Android, and web.
+        </p>
+        <div
+          className="flex flex-wrap justify-center"
+          style={{ gap: 16 }}
+        >
+          <Link
+            href="/download"
+            className="inline-flex items-center justify-center"
             style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: 28,
-              color: "#1A1A1A",
-              textAlign: "center",
+              height: 52,
+              padding: "0 28px",
+              borderRadius: 26,
+              backgroundColor: "var(--white)",
+              color: "var(--primary)",
+              fontSize: 16,
+              fontWeight: 600,
+              ...BODY_FONT,
             }}
           >
-            Get in touch
-          </h2>
-          <p
+            Download on App Store
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center"
             style={{
-              fontSize: 15,
-              color: "#6B6B6B",
-              textAlign: "center",
+              height: 52,
+              padding: "0 28px",
+              borderRadius: 26,
+              backgroundColor: "var(--white)",
+              color: "var(--primary)",
+              fontSize: 16,
+              fontWeight: 600,
+              ...BODY_FONT,
+            }}
+          >
+            Open Web App
+          </Link>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer
+        style={{
+          backgroundColor: "var(--background)",
+          borderTop: "1px solid var(--border)",
+          padding: "40px 24px",
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div
+            className="flex flex-wrap items-center"
+            style={{ justifyContent: "space-between", gap: 16 }}
+          >
+            <Link
+              href="/"
+              className="flex items-center no-underline"
+              style={{ gap: 10 }}
+              aria-label="Clarifer home"
+            >
+              <AnchorLogo size={24} />
+              <span
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "var(--primary)",
+                }}
+              >
+                Clarifer
+              </span>
+            </Link>
+            <div
+              className="flex flex-wrap"
+              style={{ gap: 24 }}
+            >
+              {[
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms", href: "/terms" },
+                { label: "Medical Disclaimer", href: "/disclaimer" },
+                { label: "Support", href: "/support" },
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  style={{
+                    ...BODY_FONT,
+                    fontSize: 13,
+                    color: "var(--muted)",
+                  }}
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <p
+            className="text-center"
+            style={{
+              ...BODY_FONT,
+              fontSize: 12,
+              color: "var(--muted)",
+              marginTop: 20,
+              maxWidth: 720,
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            Clarifer is a care coordination tool, not a medical device. It does
+            not diagnose, prescribe, or replace professional medical advice.
+          </p>
+          <p
+            className="text-center"
+            style={{
+              ...BODY_FONT,
+              fontSize: 12,
+              color: "var(--muted)",
               marginTop: 8,
             }}
           >
-            Questions, feedback, or just want to share what you are going through. We would love to hear from you.
+            © 2026 Clarifer Corp. All rights reserved. support@clarifer.com
           </p>
-
-          <div style={{ marginTop: 32 }}>
-            {contactStatus === "success" ? (
-              <div style={{ textAlign: "center", padding: "24px 0" }}>
-                <p style={{ fontSize: 18, fontWeight: 600, color: "#2C5F4A" }}>
-                  Message sent.
-                </p>
-                <p style={{ fontSize: 15, color: "#6B6B6B", marginTop: 4 }}>
-                  We will be in touch.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleContact} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  style={{
-                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
-                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, background: "white", width: "100%",
-                    boxSizing: "border-box", outline: "none",
-                  }}
-                />
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  required
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  style={{
-                    height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9",
-                    padding: "0 16px", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, background: "white", width: "100%",
-                    boxSizing: "border-box", outline: "none",
-                  }}
-                />
-                <textarea
-                  placeholder="Your message (optional)"
-                  value={contactMessage}
-                  onChange={(e) => setContactMessage(e.target.value)}
-                  rows={4}
-                  style={{
-                    borderRadius: 12, border: "1.5px solid #E8E2D9",
-                    padding: "12px 16px", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, background: "white", width: "100%",
-                    boxSizing: "border-box", outline: "none", resize: "vertical",
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={contactStatus === "sending" || !contactEmail.includes("@")}
-                  style={{
-                    height: 52, borderRadius: 26, background: "#2C5F4A",
-                    color: "white", border: "none", fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 16, fontWeight: 600, cursor: "pointer", width: "100%",
-                    opacity: contactStatus === "sending" ? 0.6 : 1,
-                  }}
-                >
-                  {contactStatus === "sending" ? "Sending..." : "Send message"}
-                </button>
-                {contactStatus === "error" && (
-                  <p style={{ fontSize: 14, color: "#C4714A", textAlign: "center" }}>
-                    Something went wrong. Please try again.
-                  </p>
-                )}
-              </form>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ FOOTER ═══ */}
-      <footer
-        style={{
-          backgroundColor: "#1A1A1A",
-          padding: "40px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <AnchorIcon size={24} color="#FFFFFF" />
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            Clarifer by Cassini Design Group
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <a href="/about" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
-            About
-          </a>
-          <a href="/security" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
-            Security
-          </a>
-          <a href="/privacy" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
-            Privacy Policy
-          </a>
-          <a href="/terms" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>
-            Terms
-          </a>
         </div>
       </footer>
 
