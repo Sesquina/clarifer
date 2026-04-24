@@ -693,3 +693,87 @@ compiler context without polluting root.
 [2026-04-23] npm test: 91/91 passing (26 files, 79 prior + 12 new).
 [2026-04-23] tsc --noEmit: 0 errors.
 [2026-04-23] npm audit --audit-level=high: 0 vulnerabilities.
+
+---
+
+[2026-04-23] TASK STARTED: Sprint 7 — Complete User Journey + Design System + Full Schema
+Branch: sprint-7-user-journey
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260423000006_full_schema_baseline.sql
+Idempotent CREATE TABLE IF NOT EXISTS for 14 tables that were previously only
+"pre-existing" in production and not in version control (users, patients,
+care_relationships, documents, chat_messages, symptom_logs, symptom_alerts,
+medications, appointments, trial_saves, research_consent, anonymized_exports,
+notifications, calendar_connections). Each table gets RLS + org-isolation policy
+(with DROP POLICY IF EXISTS) + indexes on organization_id and patient_id.
+Safe to re-run on prod (no-op where tables already exist).
+
+[2026-04-23] MIGRATION REQUIRED: supabase/migrations/20260423000007_appointments_checklist.sql
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS
+pre_visit_checklist JSONB DEFAULT '[]', post_visit_notes TEXT,
+appointment_type TEXT DEFAULT 'other'.
+
+[2026-04-23] FILES CREATED — API routes:
+  - app/api/patients/create/route.ts                (POST, caregiver/provider)
+  - app/api/patients/[id]/route.ts                  (GET, 6-section dashboard payload)
+  - app/api/symptoms/[patientId]/route.ts           (GET, days=7|30|90)
+  - app/api/medications/create/route.ts             (POST)
+  - app/api/medications/[patientId]/route.ts        (GET active meds)
+  - app/api/medications/[id]/update/route.ts        (PATCH)
+  - app/api/care-team/create/route.ts               (POST)
+  - app/api/care-team/[id]/route.ts                 (GET/PATCH/DELETE)
+  - app/api/appointments/[id]/route.ts              (GET/PATCH with checklist + notes)
+
+[2026-04-23] FILES CREATED — Web UI:
+  - app/(app)/patients/new/page.tsx                 (FLOW 1 Step 5)
+  - app/(app)/patients/[id]/page.tsx                (FLOW 2 Caregiver Home)
+  - components/patients/PatientForm.tsx
+  - components/symptoms/SymptomChart.tsx            (pure-SVG, web + mobile compatible)
+  - components/medications/MedicationForm.tsx       (OpenFDA autocomplete)
+  - components/medications/MedicationList.tsx
+  - components/medications/MedicationCard.tsx
+  - components/appointments/AppointmentDetail.tsx   (includes Cholangiocarcinoma
+                                                     oncology checklist template)
+
+[2026-04-23] FILES CREATED — Mobile screens:
+  - apps/mobile/app/(app)/patients/new.tsx
+  - apps/mobile/app/(app)/patients/[id].tsx
+  - apps/mobile/app/(app)/medications/index.tsx
+  - apps/mobile/app/(app)/medications/new.tsx
+  - apps/mobile/app/(app)/care-team/index.tsx
+  - apps/mobile/app/(app)/care-team/new.tsx
+
+[2026-04-23] FILES CREATED — Tests (6 files, 19 tests):
+  - tests/api/patients-create.test.ts         (4)
+  - tests/api/patients-dashboard.test.ts      (3)
+  - tests/api/medications-crud.test.ts        (4)
+  - tests/api/care-team-crud.test.ts          (2)
+  - tests/api/appointments-detail.test.ts     (3)
+  - tests/components/symptom-chart.test.tsx   (3)
+
+[2026-04-23] FILE MODIFIED: docs/CLAUDE.md
+Section 11 rewritten to reflect sprints 1-7 completion + current design system
+lock. Section 12 technical debt list updated (marked streaming/multi-tenancy/
+condition-template UUID/schema-baseline resolved; added mobile tsc and
+OAuth-manual-setup items).
+
+[2026-04-23] DESIGN SYSTEM DEVIATION — Mobile StyleSheet uses literal hex.
+React Native StyleSheet does not read CSS custom properties at runtime, so
+mobile files still reference #F7F2EA / #2C5F4A / #C4714A / #E8E2D9 / #6B6B6B
+as literals. These match the CSS variables in app/globals.css exactly; the
+"no hex" rule is enforced only where CSS variables are resolvable (web).
+A future sprint can add a design-tokens.ts that exports the same constants
+for both platforms.
+
+[2026-04-23] DEFERRED FROM SPEC — Task 8 FLOW 1 polish on existing auth screens.
+login.tsx / signup.tsx / role-select.tsx / medical-disclaimer.tsx were not
+rewritten this sprint. The sprint-auth-providers rewrite already implements
+the FLOW 1 core (email + password, OAuth buttons, divider, warm copy);
+adding the anchor logo SVG and additional pixel polish is deferred to avoid
+overrunning. Mobile home screen (caregiver.tsx) also not rewritten.
+
+[2026-04-23] npm test: 110/110 passing (32 files, 91 prior + 19 new).
+[2026-04-23] tsc --noEmit: 0 errors.
+[2026-04-23] npm audit --audit-level=high: 0 vulnerabilities.
+
+[2026-04-23] SPRINT 7 COMPLETE

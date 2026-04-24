@@ -686,65 +686,102 @@ Sprint 25: Performance optimization and load testing
 
 ## SECTION 11 -- CURRENT SPRINT
 
-**SPRINT 1 COMPLETE: Four Production Bug Fixes**
-**Status: ✅ COMPLETE (April 22, 2026)**
-**CCF Demo Deadline: June 17, 2026 (8 weeks)**
-**Next Sprint Starts: April 25, 2026 (Sprint 2 — Streaming AI)**
+**SPRINT 7 COMPLETE: Complete User Journey + Design System + Full Schema**
+**Status: ✅ COMPLETE (April 23, 2026)**
+**CCF Demo Deadline: June 17, 2026**
 
-### Sprint 1 Summary
+### Sprint status through Sprint 7
+- Sprint 1 — Four production bug fixes ✅
+- Sprint 2 — Vercel AI SDK streaming ✅
+- Sprint 2A/2B — Dementia + Alzheimer's condition templates ✅
+- Sprint 3 — Multi-tenancy (organizations + tenant_id + RLS) ✅
+- Sprint 4 — Mobile auth (email/password, verify email, role select) ✅
+- Sprint 5 — Document intelligence (upload + Claude streaming summary) ✅
+- Sprint 6 — Enterprise hardening (audit logs, role gates, rate limits,
+  30-min session timeout, Cholangiocarcinoma seed, legal docs, CI/CD) ✅
+- Sprint auth-providers — Google OAuth + Apple + Phone OTP + password reset ✅
+- Sprint 7 — User journey, design system, full schema baseline ✅
 
-All four production bugs fixed, tested, and committed to main.
+### Sprint 7 Summary (this sprint)
 
-**Bug 1: Appointments Not Saving** ✅
-- Created `app/api/appointments/create/route.ts` with auth, insertion, audit_log write
-- Created `components/appointments/AppointmentForm.tsx` with success state
-- Test passing: appointment created → audit_log written → user sees confirmation
+- **Full schema baseline migration** (`20260423000006`) — all 14
+  previously-unversioned tables now have idempotent `CREATE TABLE IF NOT EXISTS`
+  with org-isolation RLS policies. Closes the disaster-recovery gap flagged in
+  the April 23 audit.
+- **Appointments checklist migration** (`20260423000007`) — adds
+  `pre_visit_checklist`, `post_visit_notes`, `appointment_type` columns.
+- **Patient creation flow** — `/api/patients/create` + web + mobile screens
+  with the full FLOW 1 Step 5 design (form, condition dropdown, warm validation).
+- **Patient dashboard** — `/api/patients/[id]` returns all 6 sections;
+  web page implements FLOW 2 two-column layout with loading skeletons and
+  warm empty states; mobile page mirrors the sections in a scrollable layout.
+- **Symptom chart** — pure-SVG line chart in `components/symptoms/SymptomChart.tsx`.
+  No library dependency — avoids `victory-native` + SDK 55 issues. Colors
+  come from CSS variables so web/mobile share the same file.
+- **Medication management** — three routes (create, list, update) plus
+  `MedicationForm` (OpenFDA autocomplete), `MedicationList`, `MedicationCard`.
+  Mobile screens `medications/index` and `medications/new`.
+- **Care team** — create/[id] routes; mobile index + new screens with warm
+  empty state and tap-to-call/email.
+- **Appointments detail** — `/api/appointments/[id]` GET/PATCH +
+  `AppointmentDetail` component with checkable pre-visit list + notes-on-blur.
+  Cholangiocarcinoma-specific checklist template exported for auto-populate.
+- **Design system enforcement** — new components use `var(--primary)`,
+  `var(--terracotta)`, etc. (no literal hex); 48px minimum touch targets;
+  warm human copy for empty/error states.
 
-**Bug 2: Upload Doc Routing to Wrong Page** ✅
-- Updated `components/home/quick-actions.tsx` href from "/documents" to "/documents/upload"
-- Test passing: quick action opens upload flow, not chat
+### Test status (end of Sprint 7)
+- 32 test files / 110 tests / all passing.
+- npm audit (root, --audit-level=high) — 0 vulnerabilities.
+- tsc --noEmit — 0 errors.
 
-**Bug 3: Document Summaries Not Linked to Documents** ✅
-- Created `app/api/ai/analyze-document/route.ts` with document_id explicit linking via .eq("id", documentId)
-- Summaries now queryable by document_id, render on document detail view
-- Test passing: summary linked to source document
+### MIGRATION REQUIRED (Samira runs `npx supabase db push`)
+- `20260423000006_full_schema_baseline.sql`
+- `20260423000007_appointments_checklist.sql`
 
-**Bug 4: Care Team Email Links Not Working** ✅
-- Created `components/care-team/CareTeamMember.tsx` with mailto: and tel: links
-- Test passing: email link opens device email client, phone link opens dialer
-
-**Test Status: 4/4 passing. npm audit: clean. TypeScript: zero errors.**
-
-### Critical Path Dependencies
-
-**Sprint 2 (Streaming AI) — Starts April 25**
-- Prerequisite: Sprint 1 ✅
-- All AI routes must stream via Vercel AI SDK
-- First token under 500ms (required for CCF demo)
-- This blocks: Sprints 5, 6, 9, 10, 11, 14, 15 (all AI features)
-
-**Sprint 3 (Multi-Tenancy) — Starts May 5**
-- Prerequisite: Sprint 2 complete
-- organizations table, tenant_id migration, RLS updates
-- This blocks: Sprints 14, 18 (provider portal, white-label, hospital features)
+### Next Sprint Candidates
+Sprint 8 — CCF Demo Environment + PDF Export (target May 5).
+Sprint 9 — ClinicalTrials.gov discovery. Sprint 10 — WHO ICTRP.
+Sprint 11 — Family updates polish. Sprint 12 — Care team threads.
 
 ---
 
 ## SECTION 12 -- KNOWN ISSUES AND CONSTRAINTS
 
-### Active Technical Debt
-1. AI not streaming -- Sprint 2
-2. Single-tenant schema -- Sprint 3
-3. No push notifications -- Sprint 16
-4. WHO ICTRP missing -- Sprint 10
-5. No offline capability -- Sprint 17
-6. Basic PDF only -- Sprint 15
+### Active Technical Debt (post-Sprint 7)
+1. ~~AI not streaming~~ ✅ Sprint 2
+2. ~~Single-tenant schema~~ ✅ Sprint 3
+3. ~~Condition template UUID/slug mismatch~~ ✅ (20260421120000 + rewrites)
+4. ~~Schema disaster-recovery gap (18 tables unversioned)~~ ✅ Sprint 7
+5. No push notifications — Sprint 16
+6. WHO ICTRP missing — Sprint 10
+7. No offline capability — Sprint 17
+8. Basic TXT export, not hospital-grade PDF — Sprint 15
+9. Root tsc cannot type-check `apps/mobile` in one run (react-native
+   typings conflict with DOM's FormData) — worked around with .d.ts shims
+   in `tests/auth/mobile-auth.d.ts`. Proper fix: TypeScript Project References.
+10. OAuth manual setup not complete (Google console, Apple Developer, Twilio)
+    — blocks end-to-end OAuth flow testing; steps logged in SPRINT_LOG.md.
 
 ### Open DECISION REQUIRED Items
-- Drug interaction API: RxNorm (free, NIH), DrugBank (paid), or OpenFDA
-- Spanish family update output: requires native speaker medical review before production
-- Supabase BAA: must be signed before launch
-- Apple and Google developer accounts: must be opened immediately
+- Drug interaction API: RxNorm (free, NIH), DrugBank (paid), or OpenFDA.
+  (Current default: OpenFDA autocomplete for drug names, no interaction
+  checking — Sprint 7 MedicationForm.)
+- Spanish family update output: requires native speaker medical review
+  before production. Prompt is production-ready; review is human step.
+- Supabase BAA: must be signed before launch.
+- Apple and Google developer accounts: must be opened immediately.
+
+### Design System (locked — Sprint 7)
+- CSS variables in `app/globals.css` are the source of truth:
+  `--background` (linen), `--primary` (dark sage), `--terracotta`,
+  `--border`, `--card`, `--muted-foreground`.
+- Typography: Playfair Display (headings), DM Sans (body, labels).
+- Spacing: 8px grid; border radius 12px (inputs) / 14–16px (cards / tiles).
+- 48px minimum touch target on every interactive element.
+- No hex strings in components touched by current or future sprints.
+- No em dashes in UI copy (use `--` or restructure the sentence).
+- Warm empty states, warm error states, loading skeletons on async sections.
 
 ### Architecture Constraints
 - Clarifer Supabase project is separate from all other projects. Confirm project ref before any query.
