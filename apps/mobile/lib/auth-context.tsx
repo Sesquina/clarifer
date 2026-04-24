@@ -18,6 +18,7 @@ interface AuthState {
   user: User | null;
   role: UserRole | null;
   disclaimerAccepted: boolean;
+  emailVerified: boolean;
   loading: boolean;
 }
 
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
     role: null,
     disclaimerAccepted: false,
+    emailVerified: false,
     loading: true,
   });
 
@@ -67,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             user: null,
             role: null,
             disclaimerAccepted: false,
+            emailVerified: false,
             loading: false,
           });
         }
@@ -120,11 +123,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single(),
     ]);
 
+    // Email verification: phone-auth users won't have email_confirmed_at;
+    // they're still verified because SMS OTP provides equivalent assurance.
+    const isEmailUser = Boolean(session.user.email);
+    const emailVerified = isEmailUser
+      ? Boolean(session.user.email_confirmed_at)
+      : true;
+
     setState({
       session,
       user: session.user,
       role: extractRoleFromUserRecord(userRecord),
       disclaimerAccepted: !shouldShowDisclaimer(acceptance),
+      emailVerified,
       loading: false,
     });
   }

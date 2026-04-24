@@ -4,7 +4,7 @@
 -- PREREQUISITE: Migration 20260422000003 must run first.
 -- BEFORE RUNNING: Samira must provide DEFAULT_ORG_UUID —
 --   the UUID of the seed organization for existing rows.
---   Replace all occurrences of 'SAMIRA_DEFAULT_ORG_UUID' below
+--   Replace all occurrences of 'fa731120-304a-48ba-889a-3be6431454f3' below
 --   with the actual UUID from the organizations table.
 -- Safe to run multiple times (ADD COLUMN IF NOT EXISTS).
 -- DO NOT RUN — Samira runs manually in Supabase dashboard.
@@ -34,21 +34,21 @@ ALTER TABLE public.symptom_alerts       ADD COLUMN IF NOT EXISTS organization_id
 ALTER TABLE public.anonymized_exports   ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id);
 
 -- ─── 2. BACKFILL: set all existing rows to default organization ──────────────
--- Replace 'SAMIRA_DEFAULT_ORG_UUID' with the actual org UUID before running.
+-- Replace 'fa731120-304a-48ba-889a-3be6431454f3' with the actual org UUID before running.
 
-UPDATE public.patients             SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.appointments         SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.documents            SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.chat_messages        SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.symptom_logs         SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.medications          SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.trial_saves          SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.audit_log            SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.research_consent     SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.notifications        SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.calendar_connections SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.symptom_alerts       SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
-UPDATE public.anonymized_exports   SET organization_id = 'SAMIRA_DEFAULT_ORG_UUID' WHERE organization_id IS NULL;
+UPDATE public.patients             SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.appointments         SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.documents            SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.chat_messages        SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.symptom_logs         SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.medications          SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.trial_saves          SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.audit_log            SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.research_consent     SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.notifications        SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.calendar_connections SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.symptom_alerts       SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
+UPDATE public.anonymized_exports   SET organization_id = 'fa731120-304a-48ba-889a-3be6431454f3' WHERE organization_id IS NULL;
 
 -- ─── 3. ENFORCE NOT NULL after backfill ─────────────────────────────────────
 

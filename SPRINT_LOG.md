@@ -584,3 +584,112 @@ mobile onboarding/condition-select.tsx pass "dementia"/"alzheimers" to
 /api/symptoms/log as a conditionTemplateId, but the server stores that value
 in symptom_logs.condition_context (TEXT, not a FK), so no UUID constraint is
 violated. Those files are intentionally left unchanged.
+
+---
+
+[2026-04-23] TASK STARTED: Sprint auth-providers — Google + Apple + Phone + password reset.
+Branch: sprint-auth-providers
+
+[2026-04-23] KNOWN-ISSUES SCAN (pre-work):
+  - Supabase Google OAuth: supabase-js 2.91.0 has a cookie-persist race on
+    exchangeCodeForSession (pin 2.90.1 if hit). Redirect URL "/**" pattern
+    works better than specific paths.
+  - Supabase Apple Sign In: Apple's identity token does NOT carry full_name
+    after the first sign-in. Captured natively and persisted via updateUser
+    in the new apps/mobile/lib/auth/apple.ts. Older OIDC issuer mismatch
+    (appleid → account.apple.com) fixed in Supabase Auth v2.177.0 (Jul 2025).
+  - Phone OTP: default 30/hr rate limit, 60s between requests, 1hr expiry.
+    These are Supabase dashboard settings, not repo-configurable.
+  - Expo AuthSession (SDK 55): expo-crypto is a peer dep (installed).
+    WebBrowser.maybeCompleteAuthSession() must be called once at app boot if
+    not using the deep-link callback route added this sprint.
+  - Expo Apple Authentication (SDK 55): requires `com.apple.developer.applesignin`
+    entitlement in ios/<app>/<app>.entitlements and `CFBundleAllowMixedLocalizations=true`
+    in Info.plist. Both are native-build concerns; EAS Build handles them once
+    the Apple Developer capability is enabled.
+
+[2026-04-23] MANUAL REQUIRED: Google OAuth setup (Samira)
+  1. https://console.cloud.google.com → create OAuth 2.0 credentials
+  2. Authorized redirect URIs:
+     - https://lrhwgswbsctfqtvdjntr.supabase.co/auth/v1/callback
+     - clarifer://auth/callback
+     - exp://192.168.x.x:8081/--/auth/callback (Expo Go, LAN IP varies)
+  3. Copy Client ID and Client Secret.
+  4. Supabase → Authentication → Providers → Google: enable, paste credentials.
+  5. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to .env.local (and .env.example is documented).
+
+[2026-04-23] MANUAL REQUIRED: Apple Sign In setup (Samira)
+  1. Apple Developer → enable "Sign In with Apple" capability for com.clarifer.app.
+  2. Create Service ID for web (com.clarifer.web).
+  3. Generate private key (.p8) for Sign In with Apple.
+  4. Supabase → Authentication → Providers → Apple: enable, paste:
+     - Team ID (from Apple Developer)
+     - Bundle ID: com.clarifer.app
+     - Secret Key (contents of the .p8)
+  5. Confirm Supabase callback URL is in Apple's allowed return URLs:
+     - https://lrhwgswbsctfqtvdjntr.supabase.co/auth/v1/callback
+
+[2026-04-23] MANUAL REQUIRED: Twilio SMS setup (Samira)
+  1. Supabase → Authentication → Providers → Phone: enable.
+  2. SMS provider: Twilio.
+  3. From Twilio dashboard paste:
+     - Account SID
+     - Auth Token
+     - Message Service SID (or From number)
+  4. OTP expiry: 300 seconds (5 minutes).
+  5. Enable "Confirm phone number on signup".
+  6. Consider raising the default 30/hr SMS rate limit in Authentication → Rate Limits
+     if real usage exceeds it; keep spend alerts enabled on Twilio either way.
+
+[2026-04-23] FILES CREATED (4 auth helpers + 5 mobile screens + 2 web files + 4 tests + 2 stubs + 1 d.ts = 18):
+  - apps/mobile/lib/auth/google.ts        — signInWithOAuth wrapper
+  - apps/mobile/lib/auth/apple.ts         — signInWithIdToken + full-name persist
+  - apps/mobile/lib/auth/phone.ts         — E.164 validation + signInWithOtp + verifyOtp
+  - apps/mobile/lib/auth/password-reset.ts — resetPasswordForEmail + updateUser
+  - apps/mobile/app/(auth)/forgot-password.tsx
+  - apps/mobile/app/(auth)/reset-password.tsx
+  - apps/mobile/app/(auth)/phone-login.tsx
+  - apps/mobile/app/(auth)/verify-otp.tsx
+  - apps/mobile/app/auth/callback.tsx       — OAuth deep-link target
+  - app/(auth)/forgot-password/page.tsx     — web reset-email entry page
+  - app/api/auth/reset-password/route.ts    — rate-limited server-side reset endpoint
+  - tests/auth/google-oauth.test.ts         — 3 tests
+  - tests/auth/apple-auth.test.ts           — 2 tests
+  - tests/auth/phone-otp.test.ts            — 4 tests
+  - tests/auth/password-reset.test.ts       — 3 tests
+  - tests/__stubs/expo-apple-authentication.ts — vitest alias target
+  - tests/__stubs/react-native.ts           — vitest alias target
+  - tests/auth/mobile-auth.d.ts             — type shims for @mobile/* (apps/mobile is tsc-excluded)
+
+[2026-04-23] FILES MODIFIED:
+  - apps/mobile/app/(auth)/login.tsx — rewrote UI with Google/Apple/Phone
+    buttons, divider, forgot-password link. Apple button iOS-only via Platform.OS.
+  - apps/mobile/app/(auth)/signup.tsx — added Google/Apple OAuth options alongside email/password.
+  - apps/mobile/lib/auth-context.tsx — added emailVerified flag derived from
+    session.user.email_confirmed_at (phone-auth users auto-pass since they
+    have no email column).
+  - apps/mobile/package.json — +expo-auth-session, +expo-crypto, +expo-apple-authentication
+  - vitest.config.ts — added @mobile alias, plus test-only stubs for
+    expo-apple-authentication and react-native to sidestep Flow-syntax parse errors.
+  - tsconfig.json — kept apps/mobile fully excluded; @mobile/* type info
+    comes from the new tests/auth/mobile-auth.d.ts shim instead. React Native
+    typings and root DOM typings can't coexist in one compiler run (FormData
+    specifically).
+
+[2026-04-23] DISCOVERED ISSUE: Root tsc and apps/mobile type-checking are
+incompatible in a single compiler run. When apps/mobile/lib is added to tsc's
+compilation scope, react-native's types conflict with dom's FormData (and likely
+other DOM globals). Worked around via .d.ts shims for the tests. Proper fix
+(future sprint): TypeScript Project References, so apps/mobile has its own
+compiler context without polluting root.
+
+[2026-04-23] NOT-TESTED-IN-THIS-SPRINT (UI behavior, pending jsdom+RN setup):
+  - Apple button render-on-iOS-only (UI gate — logic lives inline in login.tsx/signup.tsx)
+  - OTP input auto-submit at 6 digits (useEffect in verify-otp.tsx)
+  - Auth callback SIGNED_IN routing (expo-router component)
+  Each is covered by the screen-level code and will be verified in the smoke
+  test. The 12 unit tests cover the lib-level auth logic end-to-end.
+
+[2026-04-23] npm test: 91/91 passing (26 files, 79 prior + 12 new).
+[2026-04-23] tsc --noEmit: 0 errors.
+[2026-04-23] npm audit --audit-level=high: 0 vulnerabilities.
