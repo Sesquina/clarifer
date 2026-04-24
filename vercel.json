@@ -1,0 +1,12 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "sprint-*": true,
+      "main": true
+    }
+  },
+  "github": {
+    "silent": false,
+    "autoAlias": true
+  }
+}

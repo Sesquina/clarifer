@@ -907,3 +907,75 @@ MIGRATION REQUIRED:
   Cross-user queries (provider listings, org member lists) must now go
   through SECURITY DEFINER views or the service role in API routes, not
   through RLS on public.users directly.
+
+[2026-04-24] INFRASTRUCTURE — dev/staging/prod pipeline established
+Changes in this commit:
+  - .github/workflows/ci.yml updated (pull_request trigger on main, named jobs
+    "test" and "mobile-test" for branch-protection status checks, env secrets
+    wired to npm test)
+  - vercel.json created (enables Vercel deploys for sprint-* branches and main)
+  - .github/branch-protection.md created (manual GitHub config reference)
+  - docs/CLARIFER_WORKSPACE.md updated (Development Pipeline section, sprint
+    branch deployment flow, emergency rollback)
+  - docs/CLAUDE.md updated (SECTION 4 — DEPLOYMENT PIPELINE PROTOCOL)
+
+MANUAL REQUIRED: Configure branch protection on GitHub
+  github.com/Sesquina/clarifer → Settings → Branches → Add rule → main
+  Full rule spec in .github/branch-protection.md. Required status checks:
+  "test" and "mobile-test".
+
+MANUAL REQUIRED: Configure Vercel deployment protection
+  vercel.com → Clarifer project → Settings → Deployment Protection
+  Enable "Standard Protection" for preview deployments to prevent sprint
+  branch preview URLs from being publicly indexed.
+
+MANUAL REQUIRED: Create staging Supabase project
+  1. supabase.com → New project → name: clarifer-staging
+  2. Run migrations against staging:
+       - Temporarily set .env.local NEXT_PUBLIC_SUPABASE_URL to staging URL
+       - npx supabase link --project-ref [staging-project-ref]
+       - npx supabase db push
+       - Restore .env.local to production URL
+  3. Seed staging with demo data:
+       - Point scripts/seed-demo-data.ts at staging Supabase URL
+       - npx tsx scripts/seed-demo-data.ts
+  4. Add staging env vars in Vercel scoped to "Preview" environment only.
+  Until this exists, sprint branch previews use the production database.
+  CRITICAL: never run seed scripts against production with real patient names.
+
+MANUAL REQUIRED: Scope environment variables in Vercel
+  vercel.com → Clarifer → Settings → Environment Variables
+    NEXT_PUBLIC_SUPABASE_URL        Production + Preview + Development
+    NEXT_PUBLIC_SUPABASE_ANON_KEY   Production + Preview + Development
+    SUPABASE_SERVICE_ROLE_KEY       Production ONLY (never Preview/Development)
+    ANTHROPIC_API_KEY               Production + Preview
+    UPSTASH_REDIS_REST_URL          Production + Preview
+    UPSTASH_REDIS_REST_TOKEN        Production + Preview
+    BREVO_API_KEY                   Production only
+    SENTRY_DSN                      Production + Preview
+    NEXT_PUBLIC_SENTRY_DSN          Production + Preview
+  The service role key must NEVER be in Preview scope. Preview deployments
+  (sprint branches) should use the anon key only. Protects production data
+  from preview URLs.
+
+MANUAL REQUIRED: Add the above secrets to GitHub Actions
+  github.com/Sesquina/clarifer → Settings → Secrets and variables → Actions
+  Add: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+       SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY
+  These are referenced by the "test" job in .github/workflows/ci.yml. Without
+  them, CI will run tests with empty env and the "test" status check will
+  fail, which will block all merges to main.
+
+[2026-04-24] LOCAL ENVIRONMENT — npm test skipped before this commit
+Reason: node_modules contains Windows-built native bindings but WSL needs
+Linux bindings. rolldown (vitest's bundler) cannot load
+@rolldown/binding-linux-x64-gnu and errors at startup before any test
+runs. This is a local install issue, not a code issue.
+
+Fix on next WSL session:
+  rm -rf node_modules package-lock.json
+  npm install
+
+This commit changes only CI config, Vercel config, and documentation —
+no runtime code paths. GitHub Actions will run the full suite against a
+clean Linux install on first push after branch-protection is configured.
