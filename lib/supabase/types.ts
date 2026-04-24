@@ -205,6 +205,135 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_runs: {
+        Row: {
+          id: string
+          agent_name: string
+          status: "success" | "error" | "warning"
+          summary: string | null
+          details: Json | null
+          ran_at: string | null
+        }
+        Insert: {
+          id?: string
+          agent_name: string
+          status: "success" | "error" | "warning"
+          summary?: string | null
+          details?: Json | null
+          ran_at?: string | null
+        }
+        Update: {
+          id?: string
+          agent_name?: string
+          status?: "success" | "error" | "warning"
+          summary?: string | null
+          details?: Json | null
+          ran_at?: string | null
+        }
+        Relationships: []
+      }
+      team_tasks: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          lane: "build" | "samira" | "michael" | "blocked"
+          priority: "high" | "medium" | "low"
+          status: "active" | "done" | "archived"
+          due_date: string | null
+          category: string | null
+          assigned_to: string | null
+          created_by: string | null
+          completed_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          lane: "build" | "samira" | "michael" | "blocked"
+          priority?: "high" | "medium" | "low"
+          status?: "active" | "done" | "archived"
+          due_date?: string | null
+          category?: string | null
+          assigned_to?: string | null
+          created_by?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          lane?: "build" | "samira" | "michael" | "blocked"
+          priority?: "high" | "medium" | "low"
+          status?: "active" | "done" | "archived"
+          due_date?: string | null
+          category?: string | null
+          assigned_to?: string | null
+          created_by?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sprint_updates: {
+        Row: {
+          id: string
+          sprint_name: string
+          sprint_number: string | null
+          branch: string | null
+          summary: string
+          tests_before: number | null
+          tests_after: number | null
+          files_changed: number | null
+          migrations_pending: Json
+          manual_actions: Json
+          blockers: Json
+          next_sprint: string | null
+          commit_hash: string | null
+          built_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          sprint_name: string
+          sprint_number?: string | null
+          branch?: string | null
+          summary: string
+          tests_before?: number | null
+          tests_after?: number | null
+          files_changed?: number | null
+          migrations_pending?: Json
+          manual_actions?: Json
+          blockers?: Json
+          next_sprint?: string | null
+          commit_hash?: string | null
+          built_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          sprint_name?: string
+          sprint_number?: string | null
+          branch?: string | null
+          summary?: string
+          tests_before?: number | null
+          tests_after?: number | null
+          files_changed?: number | null
+          migrations_pending?: Json
+          manual_actions?: Json
+          blockers?: Json
+          next_sprint?: string | null
+          commit_hash?: string | null
+          built_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string | null
