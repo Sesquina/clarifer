@@ -96,8 +96,6 @@ export default function AboutPage() {
       {/* FOUNDER NOTE */}
       <section style={{ backgroundColor: "var(--background)", padding: "64px 24px" }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          {/* TODO: Samira to write 2-3 sentences for this section
-              before the site goes live. Keep it brief. Keep it hers. */}
           <blockquote
             style={{
               borderLeft: "3px solid var(--accent)",
@@ -114,16 +112,59 @@ export default function AboutPage() {
                 lineHeight: 1.6,
               }}
             >
-              [FOUNDER NOTE: this section is reserved for Samira to write in
-              her own words before launch. It will live here, brief and honest,
-              when she is ready.]
+              My father was in the ER, about to go into surgery. The doctors
+              were busy. It was late. I was sitting there scared, overwhelmed,
+              and completely alone, trying to piece together his care plan from
+              memory, from papers, from nothing.
+            </p>
+            <p
+              style={{
+                ...HEADING,
+                fontStyle: "italic",
+                fontSize: 22,
+                color: "var(--primary)",
+                lineHeight: 1.6,
+                marginTop: 20,
+              }}
+            >
+              The signs had been there for months. The labs told a story nobody
+              read out loud. I learned that medical gaslighting is real, and
+              that the people who love a patient are often the last ones anyone
+              listens to.
+            </p>
+            <p
+              style={{
+                ...HEADING,
+                fontStyle: "italic",
+                fontSize: 22,
+                color: "var(--primary)",
+                lineHeight: 1.6,
+                marginTop: 20,
+              }}
+            >
+              I built Clarifer because caregivers deserve better than that. You
+              deserve peace. You deserve dignity. You deserve to walk into that
+              hospital room feeling like you have everything you need, because
+              you do.
+            </p>
+            <p
+              style={{
+                ...HEADING,
+                fontStyle: "italic",
+                fontSize: 22,
+                color: "var(--primary)",
+                lineHeight: 1.6,
+                marginTop: 20,
+              }}
+            >
+              This is what caregiving should feel like.
             </p>
             <p
               style={{
                 ...BODY,
                 fontSize: 14,
                 color: "var(--muted)",
-                marginTop: 12,
+                marginTop: 20,
               }}
             >
               Founder, Clarifer
