@@ -1,7 +1,8 @@
-import Link from "next/link";
-import { fetchTasksGrouped, fetchLatestSprint, fetchSprints } from "./_data";
-import type { TeamTask, TaskLane } from "@/lib/internal/types";
-import { MILESTONES } from "@/lib/internal/types";
+import { fetchTasksGrouped, fetchLatestSprint } from "./_data";
+import { daysUntil, urgencyColor } from "./_overview/helpers";
+import PriorityActionsClient from "./_overview/PriorityActionsClient";
+import MilestoneTimeline from "./_overview/MilestoneTimeline";
+import BlockerCard from "./_overview/BlockerCard";
 
 export const dynamic = "force-dynamic";
 
@@ -12,174 +13,87 @@ const HEADING: React.CSSProperties = {
   fontFamily: "var(--font-playfair), 'Playfair Display', serif",
 };
 
-const LANE_META: Record<TaskLane, { label: string; emoji: string; color: string }> = {
-  build: { label: "Build", emoji: "🛠", color: "var(--primary)" },
-  samira: { label: "Samira", emoji: "🔴", color: "var(--accent)" },
-  michael: { label: "Michael", emoji: "🔵", color: "var(--primary)" },
-  blocked: { label: "Blocked", emoji: "⏳", color: "var(--muted)" },
-};
+const TESTS_PASSING = 154;
 
-function daysUntil(iso: string, now = new Date()): number {
-  const t = new Date(iso).getTime();
-  return Math.ceil((t - now.getTime()) / (1000 * 60 * 60 * 24));
+interface StatCardProps {
+  number: string;
+  numberColor: string;
+  label: string;
+  sub: string;
+  progressPercent?: number;
+  progressColor?: string;
 }
 
-function StatCard({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
+function StatCard(props: StatCardProps) {
   return (
     <div
       style={{
         backgroundColor: "var(--card)",
         border: "1px solid var(--border)",
-        borderRadius: 14,
-        padding: "20px 24px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        borderRadius: 16,
+        padding: 24,
+        minHeight: 140,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <div
         style={{
           ...HEADING,
-          fontSize: 36,
+          fontSize: 56,
           fontWeight: 700,
-          color: accent ? "var(--accent)" : "var(--primary)",
+          color: props.numberColor,
           lineHeight: 1,
+          marginBottom: 8,
         }}
       >
-        {value}
+        {props.number}
       </div>
-      <div style={{ ...BODY, fontSize: 13, color: "var(--muted)", marginTop: 6 }}>{label}</div>
-    </div>
-  );
-}
-
-function PriorityDot({ p }: { p: string }) {
-  const c = p === "high" ? "var(--accent)" : p === "medium" ? "#E8A464" : "var(--primary)";
-  return (
-    <span
-      aria-hidden="true"
-      style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", backgroundColor: c, marginRight: 10, flexShrink: 0 }}
-    />
-  );
-}
-
-function TaskRow({ t }: { t: TeamTask }) {
-  const overdue = t.due_date && daysUntil(t.due_date) < 0;
-  return (
-    <div
-      style={{
-        borderBottom: "1px solid var(--border)",
-        padding: "12px 0",
-      }}
-    >
-      <div className="flex items-start" style={{ gap: 0 }}>
-        <PriorityDot p={t.priority} />
-        <div style={{ flex: 1 }}>
-          <div style={{ ...BODY, fontSize: 14, fontWeight: 600, color: "var(--text)" }}>
-            {t.title}
-          </div>
-          {t.description && (
-            <div
-              style={{
-                ...BODY,
-                fontSize: 13,
-                color: "var(--muted)",
-                marginTop: 4,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {t.description}
-            </div>
-          )}
-          <div
-            className="flex items-center flex-wrap"
-            style={{ gap: 8, marginTop: 6 }}
-          >
-            {t.category && (
-              <span
-                style={{
-                  ...BODY,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "var(--primary)",
-                  backgroundColor: "var(--pale-sage)",
-                  padding: "2px 8px",
-                  borderRadius: 10,
-                }}
-              >
-                {t.category}
-              </span>
-            )}
-            {t.due_date && (
-              <span
-                style={{
-                  ...BODY,
-                  fontSize: 12,
-                  color: overdue ? "var(--accent)" : "var(--muted)",
-                  fontWeight: overdue ? 600 : 400,
-                }}
-              >
-                {overdue ? "OVERDUE " : "Due "}
-                {t.due_date}
-              </span>
-            )}
-          </div>
-        </div>
+      <div style={{ ...BODY, fontSize: 13, color: "var(--muted)", fontWeight: 500 }}>
+        {props.label}
       </div>
-    </div>
-  );
-}
-
-function MilestoneBar({ label, date }: { label: string; date: string }) {
-  const days = daysUntil(date);
-  const color =
-    days < 7 ? "var(--accent)" : days <= 14 ? "#E8A464" : "var(--primary)";
-  const pct = Math.max(0, Math.min(100, 100 - (days / 120) * 100));
-  return (
-    <div>
-      <div className="flex items-center" style={{ gap: 8, marginBottom: 4 }}>
-        <div style={{ ...BODY, fontSize: 14, fontWeight: 500, color: "var(--text)", flex: 1 }}>
-          {label}
-        </div>
-        <div style={{ ...BODY, fontSize: 12, color: "var(--muted)" }}>{date}</div>
+      <div style={{ ...BODY, fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+        {props.sub}
       </div>
-      <div
-        style={{
-          height: 8,
-          backgroundColor: "var(--border)",
-          borderRadius: 4,
-          overflow: "hidden",
-        }}
-      >
+      {typeof props.progressPercent === "number" && (
         <div
           style={{
-            width: `${pct}%`,
-            height: "100%",
-            backgroundColor: color,
-            transition: "width 0.3s",
+            marginTop: "auto",
+            paddingTop: 12,
+            height: 6,
+            backgroundColor: "var(--border)",
+            borderRadius: 3,
+            overflow: "hidden",
           }}
-        />
-      </div>
-      <div style={{ ...BODY, fontSize: 12, color, marginTop: 4, fontWeight: 500 }}>
-        {days < 0 ? `${Math.abs(days)} days past` : `${days} days remaining`}
-      </div>
+        >
+          <div
+            style={{
+              width: `${props.progressPercent}%`,
+              height: "100%",
+              backgroundColor: props.progressColor ?? "var(--accent)",
+              transition: "width 200ms ease",
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 export default async function OverviewPage() {
-  const [grouped, latestSprint, allSprints] = await Promise.all([
+  const [grouped, latestSprint] = await Promise.all([
     fetchTasksGrouped(),
     fetchLatestSprint(),
-    fetchSprints(),
   ]);
 
   const ccfDays = daysUntil("2026-05-08");
+  const aclDays = daysUntil("2026-07-31");
+  const ccfColor = urgencyColor(ccfDays);
+  const aclColor = urgencyColor(aclDays);
+
+  const blockers = grouped.byLane.blocked.filter((t) => t.status === "active");
   const activeTasks = grouped.tasks.filter((t) => t.status === "active");
-  const samiraUrgent = activeTasks.filter((t) => t.lane === "samira" && t.priority === "high");
-  const michaelUrgent = activeTasks.filter((t) => t.lane === "michael" && t.priority === "high");
-  const blocked = activeTasks.filter((t) => t.lane === "blocked");
 
   return (
     <div style={BODY}>
@@ -190,139 +104,202 @@ export default async function OverviewPage() {
         Command center for Clarifer.
       </p>
 
+      {/* SECTION 1: 4 STAT CARDS */}
       <div
-        className="grid grid-cols-2 md:grid-cols-4"
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
+        style={{ gap: 16, marginBottom: 20 }}
+      >
+        <StatCard
+          number={String(ccfDays)}
+          numberColor={ccfColor}
+          label="days to CCF demo"
+          sub="May 8, 2026"
+        />
+        <StatCard
+          number="0 / 10"
+          numberColor="var(--accent)"
+          label="caregivers recruited"
+          sub="needed for ACL grant by July 15"
+          progressPercent={0}
+          progressColor="var(--accent)"
+        />
+        <StatCard
+          number={String(aclDays)}
+          numberColor={aclColor}
+          label="days to ACL deadline"
+          sub="July 31, 2026. Up to $150,000."
+        />
+        <StatCard
+          number={String(TESTS_PASSING)}
+          numberColor="var(--primary)"
+          label="tests passing"
+          sub="0 failures"
+        />
+      </div>
+
+      {/* SECTION 2: 3 STATUS CARDS */}
+      <div
+        className="grid grid-cols-1 md:grid-cols-3"
         style={{ gap: 16, marginBottom: 28 }}
       >
-        <StatCard label="Tests passing" value={latestSprint?.tests_after ?? 0} />
-        <StatCard label="Days to CCF demo" value={ccfDays} accent={ccfDays <= 14} />
-        <StatCard label="Sprints complete" value={allSprints.length} />
-        <StatCard label="Open blockers" value={blocked.length} accent={blocked.length > 0} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5" style={{ gap: 20 }}>
-        {/* LEFT: Priority actions */}
-        <div style={{ gridColumn: "span 3" }}>
-          <h2 style={{ ...HEADING, fontSize: 20, color: "var(--primary)", fontWeight: 600, marginBottom: 12 }}>
-            Priority actions
-          </h2>
-
-          {[
-            { lane: "samira" as const, items: samiraUrgent },
-            { lane: "michael" as const, items: michaelUrgent },
-            { lane: "blocked" as const, items: blocked },
-          ].map((group) => (
-            <div
-              key={group.lane}
+        <section
+          style={{
+            backgroundColor: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: 14,
+            padding: 20,
+            height: "100%",
+          }}
+        >
+          <div className="flex items-center" style={{ marginBottom: 8 }}>
+            <h3 style={{ ...BODY, fontSize: 14, fontWeight: 600, color: "var(--text)" }}>
+              Current Sprint
+            </h3>
+            <span
               style={{
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 14,
-                padding: 20,
-                marginBottom: 16,
+                ...BODY,
+                marginLeft: "auto",
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--white)",
+                backgroundColor: "rgb(64, 113, 196)",
+                padding: "2px 10px",
+                borderRadius: 12,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
               }}
             >
-              <div
-                className="flex items-center"
-                style={{
-                  gap: 8,
-                  marginBottom: 12,
-                  paddingBottom: 8,
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
-                <span aria-hidden="true">{LANE_META[group.lane].emoji}</span>
-                <span style={{ ...BODY, fontSize: 15, fontWeight: 600, color: LANE_META[group.lane].color }}>
-                  {LANE_META[group.lane].label}
-                </span>
-                <span style={{ ...BODY, fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>
-                  {group.items.length} item{group.items.length === 1 ? "" : "s"}
+              building
+            </span>
+          </div>
+          <div style={{ ...HEADING, fontSize: 18, color: "var(--primary)", fontWeight: 600, marginBottom: 6 }}>
+            sprint-cc-fixes
+          </div>
+          <p style={{ ...BODY, fontSize: 13, color: "var(--muted)" }}>
+            Command center UI plus login auth fix.
+          </p>
+        </section>
+
+        <section
+          style={{
+            backgroundColor: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: 14,
+            padding: 20,
+            height: "100%",
+          }}
+        >
+          <h3 style={{ ...BODY, fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 12 }}>
+            Platform Status
+          </h3>
+          <div className="flex flex-col" style={{ gap: 8 }}>
+            {[
+              { label: "clarifer.com", value: "Live" },
+              { label: "Database", value: "25 migrations applied" },
+              { label: "Tests", value: `${TESTS_PASSING} passing` },
+            ].map((row) => (
+              <div key={row.label} className="flex items-center" style={{ gap: 8 }}>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: "var(--primary)",
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ ...BODY, fontSize: 13, color: "var(--text)" }}>{row.label}</span>
+                <span style={{ ...BODY, fontSize: 13, color: "var(--muted)", marginLeft: "auto" }}>
+                  {row.value}
                 </span>
               </div>
-              {group.items.length === 0 ? (
-                <p style={{ ...BODY, fontSize: 13, color: "var(--muted)" }}>
-                  No open items.
-                </p>
-              ) : (
-                group.items.map((t) => <TaskRow key={t.id} t={t} />)
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* RIGHT: Milestones + last sprint */}
-        <div style={{ gridColumn: "span 2" }}>
-          <h2 style={{ ...HEADING, fontSize: 20, color: "var(--primary)", fontWeight: 600, marginBottom: 12 }}>
-            Milestones
-          </h2>
-          <div
-            style={{
-              backgroundColor: "var(--card)",
-              border: "1px solid var(--border)",
-              borderRadius: 14,
-              padding: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-              marginBottom: 20,
-            }}
-          >
-            {MILESTONES.map((m) => (
-              <MilestoneBar key={m.key} label={m.label} date={m.date} />
             ))}
           </div>
+        </section>
 
-          <h2 style={{ ...HEADING, fontSize: 20, color: "var(--primary)", fontWeight: 600, marginBottom: 12 }}>
-            Last sprint
-          </h2>
-          {latestSprint ? (
-            <div
-              style={{
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 14,
-                padding: 20,
-              }}
-            >
-              <div style={{ ...HEADING, fontSize: 17, color: "var(--primary)", fontWeight: 600, marginBottom: 4 }}>
-                {latestSprint.sprint_name}
-              </div>
-              <div style={{ ...BODY, fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
-                {latestSprint.created_at.slice(0, 10)}
-              </div>
-              <p style={{ ...BODY, fontSize: 14, color: "var(--text)", lineHeight: 1.6, marginBottom: 12 }}>
-                {latestSprint.summary}
-              </p>
-              <div style={{ ...BODY, fontSize: 13, color: "var(--muted)" }}>
-                Tests {latestSprint.tests_before ?? 0} → {latestSprint.tests_after ?? 0} ·{" "}
-                {latestSprint.files_changed ?? 0} files changed
-              </div>
-              {latestSprint.commit_hash && (
-                <div style={{ ...BODY, fontSize: 12, color: "var(--muted)", marginTop: 8, fontFamily: "monospace" }}>
-                  {latestSprint.commit_hash.slice(0, 7)}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 14,
-                padding: 20,
-                color: "var(--muted)",
-                fontSize: 14,
-              }}
-            >
-              No sprints recorded yet. Once Claude Code posts to /api/internal/sprints, history will appear here.{" "}
-              <Link href="/internal/board" style={{ color: "var(--primary)" }}>
-                Open the board
-              </Link>
-              .
-            </div>
-          )}
+        <BlockerCard blockers={blockers} />
+      </div>
+
+      {/* SECTION 3: TWO COLUMNS */}
+      <div className="grid grid-cols-1 lg:grid-cols-5" style={{ gap: 20, marginBottom: 28 }}>
+        <div style={{ gridColumn: "span 3" }}>
+          <PriorityActionsClient initial={activeTasks} />
+        </div>
+        <div style={{ gridColumn: "span 2" }}>
+          <MilestoneTimeline />
         </div>
       </div>
+
+      {/* SECTION 4: LAST SPRINT */}
+      <section
+        style={{
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 14,
+          padding: 24,
+        }}
+        data-testid="last-sprint"
+      >
+        <h2 style={{ ...HEADING, fontSize: 18, color: "var(--primary)", fontWeight: 600, marginBottom: 16 }}>
+          Last Sprint
+        </h2>
+        {latestSprint ? (
+          <>
+            <div
+              className="grid grid-cols-1 md:grid-cols-3"
+              style={{ gap: 24, marginBottom: 16 }}
+            >
+              <div>
+                <div style={{ ...HEADING, fontSize: 20, color: "var(--text)", fontWeight: 600 }}>
+                  {latestSprint.sprint_name}
+                </div>
+                <div style={{ ...BODY, fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+                  {latestSprint.created_at.slice(0, 10)}
+                </div>
+                {latestSprint.branch && (
+                  <div style={{ ...BODY, fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                    {latestSprint.branch}
+                  </div>
+                )}
+              </div>
+              <div>
+                <div style={{ ...HEADING, fontSize: 28, fontWeight: 700, color: "var(--primary)" }}>
+                  {latestSprint.tests_before ?? "?"} → {latestSprint.tests_after ?? "?"}
+                </div>
+                <div style={{ ...BODY, fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+                  tests before → after
+                </div>
+              </div>
+              <div>
+                <div style={{ ...BODY, fontSize: 14, fontWeight: 500, color: "var(--text)" }}>
+                  {latestSprint.files_changed ?? 0} file{(latestSprint.files_changed ?? 0) === 1 ? "" : "s"} changed
+                </div>
+                {latestSprint.commit_hash && (
+                  <div
+                    style={{
+                      fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                      fontSize: 12,
+                      color: "var(--muted)",
+                      marginTop: 4,
+                    }}
+                  >
+                    {latestSprint.commit_hash.slice(0, 7)}
+                  </div>
+                )}
+              </div>
+            </div>
+            <p style={{ ...BODY, fontSize: 14, color: "var(--muted)", lineHeight: 1.6 }}>
+              {latestSprint.summary}
+            </p>
+          </>
+        ) : (
+          <p style={{ ...BODY, fontSize: 14, color: "var(--muted)" }}>
+            No sprint data yet. Claude Code updates this after each sprint.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
