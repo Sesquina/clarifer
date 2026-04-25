@@ -1098,3 +1098,49 @@ Review /internal/login (Google Sign In gate), /internal (Overview),
 /internal/agents.
 Until the migration runs, all data calls return empty arrays.
 Review the preview URL before merging to main.
+
+[2026-04-24] SPRINT-INTERNAL-AUTH-FIX — auth callback + email/password fallback
+
+Fixes:
+  - app/auth/callback/route.ts: now reads ?next= and only honors values
+    starting with /internal (open-redirect protection). All other values
+    fall back to /patients. Default changed from /home to /patients.
+  - app/internal/login/page.tsx: Google OAuth redirectTo now points to
+    /auth/callback?next=/internal so the code exchange happens correctly
+    and the user lands back on /internal after Google sign-in.
+  - app/internal/login/page.tsx: added email + password fallback below
+    the Google button. On submit calls supabase.auth.signInWithPassword,
+    enforces ALLOWED_EMAILS allowlist (signs out + redirects to / if not
+    allowed), warm error messages.
+  - lib/internal/types.ts: ALLOWED_EMAILS verified unchanged
+    (samira.esquina@clarifer.com and michael.barbara@clarifer.com only).
+
+Tests:
+  - tests/internal/auth-fix.test.ts: 2 tests covering callback redirect
+    resolution (next=/internal -> /internal, no/unknown next -> /patients,
+    explicit open-redirect protection cases).
+
+MANUAL REQUIRED: Set password for samira.esquina@clarifer.com
+  Go to: supabase.com -> Clarifer project -> Authentication -> Users
+  Find samira.esquina@clarifer.com (or create the user if missing).
+  Click the user, then either:
+    (a) Send password reset email, OR
+    (b) Set a temporary password: ClariferInternal2026!
+  Either path lets email/password login to /internal work immediately.
+  Do the same for michael.barbara@clarifer.com if/when he needs access.
+
+Why Google login was failing previously: the user signed in with
+samira.esquina@gmail.com but the allowlist requires
+samira.esquina@clarifer.com. The allowlist is correct. To use Google
+SSO, the clarifer.com Google Workspace identity must be the one
+selected at the Google account picker.
+
+DISCOVERED ISSUE (pre-existing on main, not caused by this sprint):
+  tests/pages/website.test.ts > "about page is mission-forward with no
+  founder medical details" fails because Samira's founder note in
+  app/about/page.tsx contains "My father was in the ER..." which
+  matches the regex /\bmy father\b/i. Confirmed by running the test
+  on clean main with this sprint stashed: same assertion fails at
+  tests/pages/website.test.ts:34. Either the test should relax the
+  /\bmy father\b/i guard now that the founder note is real copy, or
+  the founder note should rephrase. Defer to a content/test sprint.
