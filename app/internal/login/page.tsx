@@ -40,7 +40,7 @@ export default function InternalLoginPage() {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${origin}/internal` },
+        options: { redirectTo: `${origin}/internal/login` },
       });
       if (oauthError) {
         setError("Sign in failed. Try again.");

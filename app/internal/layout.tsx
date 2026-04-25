@@ -26,13 +26,13 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isChecking, setIsChecking] = useState(true);
 
   const onLoginRoute = pathname === "/internal/login";
 
   useEffect(() => {
     if (onLoginRoute) {
-      setLoading(false);
+      setIsChecking(false);
       return;
     }
     let active = true;
@@ -48,7 +48,7 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
         return;
       }
       setUser(data.user);
-      setLoading(false);
+      setIsChecking(false);
     });
     return () => {
       active = false;
@@ -62,19 +62,18 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
 
   if (onLoginRoute) return <>{children}</>;
 
-  if (loading || !user) {
+  if (isChecking || !user) {
     return (
       <div
-        className="flex items-center justify-center"
-        style={{ minHeight: "100vh", backgroundColor: "var(--background)", ...BODY }}
-      >
-        <p style={{ fontSize: 14, color: "var(--muted)" }}>Loading...</p>
-      </div>
+        style={{ minHeight: "100vh", backgroundColor: "var(--background)" }}
+        aria-hidden="true"
+      />
     );
   }
 
   const email = user.email ?? "";
   const level = accessLevelFor(email) ?? "growth";
+  const emailDisplay = email.length > 26 ? `${email.slice(0, 25)}…` : email;
 
   return (
     <div
@@ -121,13 +120,20 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
                   ...BODY,
                   display: "flex",
                   alignItems: "center",
-                  height: 40,
+                  height: 48,
                   padding: "0 12px",
                   borderRadius: 8,
                   fontSize: 14,
                   fontWeight: 500,
-                  color: active ? "var(--white)" : "rgba(255,255,255,0.65)",
-                  backgroundColor: active ? "rgba(255,255,255,0.1)" : "transparent",
+                  color: active ? "var(--white)" : "rgba(255,255,255,0.6)",
+                  backgroundColor: active ? "rgba(255,255,255,0.15)" : "transparent",
+                  transition: "background-color 120ms ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
                 {item.label}
@@ -144,8 +150,11 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
             gap: 6,
           }}
         >
-          <div style={{ ...BODY, fontSize: 12, color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {email}
+          <div
+            title={email}
+            style={{ ...BODY, fontSize: 12, color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
+            {emailDisplay}
           </div>
           <div
             className="inline-flex items-center"
