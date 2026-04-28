@@ -1,6 +1,13 @@
 /**
- * GET/PATCH /api/appointments/[id]
- * PATCH accepts { pre_visit_checklist, post_visit_notes, appointment_type }.
+ * app/api/appointments/[id]/route.ts
+ * GET/PATCH/DELETE single appointment by id.
+ * Tables: appointments (read/write/delete), users (read), audit_log (write)
+ * Auth: GET caregiver/provider/admin; PATCH caregiver/provider; DELETE caregiver/admin
+ * Sprint: Sprint 7 (GET/PATCH) + Sprint 11 (post_visit_action_items, DELETE)
+ *
+ * HIPAA: Org-scoped on every read/write. Cross-tenant access returns
+ * 404 (not 403) to avoid leaking tenant existence. audit_log written
+ * for every operation with forensic columns. No PHI in error responses.
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +18,7 @@ export const runtime = "nodejs";
 
 const ALL_ROLES = ["caregiver", "provider", "admin"];
 const WRITE_ROLES = ["caregiver", "provider"];
+const DELETE_ROLES = ["caregiver", "admin"];
 
 type AppointmentUpdate = Database["public"]["Tables"]["appointments"]["Update"];
 
@@ -114,6 +122,9 @@ export async function PATCH(
   if ("notes" in body && (typeof body.notes === "string" || body.notes === null)) {
     update.notes = body.notes;
   }
+  if ("post_visit_action_items" in body && Array.isArray(body.post_visit_action_items)) {
+    update.post_visit_action_items = body.post_visit_action_items as Json;
+  }
 
   const { data: existing } = await supabase
     .from("appointments")
@@ -150,4 +161,74 @@ export async function PATCH(
   });
 
   return NextResponse.json({ id, updated: Object.keys(update) });
+}
+
+/**
+ * DELETE /api/appointments/[id]
+ * Removes an appointment from the patient's record. Restricted to
+ * caregiver/admin roles. Cross-tenant returns 404 (do not leak tenant
+ * existence). audit_log DELETE written with forensic columns even when
+ * the row is gone afterwards -- the action is the audit subject.
+ */
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const corsError = checkOrigin(request);
+  if (corsError) return corsError;
+
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", user.id)
+    .single();
+  if (!userRecord?.organization_id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!DELETE_ROLES.includes(userRecord.role ?? "")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const orgId = userRecord.organization_id;
+
+  const { data: existing } = await supabase
+    .from("appointments")
+    .select("id, patient_id")
+    .eq("id", id)
+    .eq("organization_id", orgId)
+    .single();
+  if (!existing) {
+    return NextResponse.json({ error: "We could not find that appointment." }, { status: 404 });
+  }
+
+  const { error } = await supabase
+    .from("appointments")
+    .delete()
+    .eq("id", id)
+    .eq("organization_id", orgId);
+  if (error) {
+    return NextResponse.json(
+      { error: "We could not remove this appointment. Please try again." },
+      { status: 500 }
+    );
+  }
+
+  await supabase
+    .from("audit_log")
+    .insert({
+      user_id: user.id,
+      patient_id: existing.patient_id,
+      action: "DELETE",
+      resource_type: "appointments",
+      resource_id: id,
+      organization_id: orgId,
+      ...forensicColumns(request),
+    })
+    .then(() => undefined, () => undefined);
+
+  return NextResponse.json({ id, deleted: true });
 }
