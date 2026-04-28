@@ -72,6 +72,7 @@ export type Database = {
           appointment_type: string | null
           pre_visit_checklist: Json | null
           post_visit_notes: string | null
+          post_visit_action_items: Json | null
         }
         Insert: {
           completed?: boolean | null
@@ -92,6 +93,7 @@ export type Database = {
           appointment_type?: string | null
           pre_visit_checklist?: Json | null
           post_visit_notes?: string | null
+          post_visit_action_items?: Json | null
         }
         Update: {
           completed?: boolean | null
@@ -112,6 +114,7 @@ export type Database = {
           appointment_type?: string | null
           pre_visit_checklist?: Json | null
           post_visit_notes?: string | null
+          post_visit_action_items?: Json | null
         }
         Relationships: [
           {

@@ -1,3 +1,106 @@
+[2026-04-28] SPRINT 11 COMPLETE -- APPOINTMENT TRACKER (web + mobile)
+Branch: sprint-11-appointments
+Status: COMPLETE -- ready for Samira's review and merge to main
+
+Verification (final):
+  npx vitest run -> 221 / 221 passing (66 test files)
+  npx tsc --noEmit -> 0 errors
+  npm audit --audit-level=high -> 0 high/critical (3 moderate carried from
+    Sprint 9 -- postcss chain via next + @sentry/nextjs; same as Sprint 10)
+
+Sprint scope (per docs/MASTER_SESSION_PROMPT.md Sprint 11 spec):
+  - Appointment CRUD: GET list, POST create, PATCH (existing), DELETE
+  - Pre-visit checklist auto-generated from condition_template_id ×
+    appointment_type at create time
+  - Post-visit notes (free text, existing) + structured action items
+    (new JSONB column)
+  - Calendar view: month + week toggle
+  - Appointment reminders: deferred to Sprint 14 push sprint per spec;
+    web/mobile copy says "Reminders are coming in a future update"
+  - Web: app/(app)/patients/[id]/appointments/page.tsx
+  - Mobile: apps/mobile/app/(app)/patients/[id]/appointments.tsx
+  - audit_log on every read (SELECT) and write (INSERT/UPDATE/DELETE)
+    with forensic columns (ip, user_agent, status)
+  - Tests: 25 new (target was 15 minimum)
+
+MIGRATION REQUIRED (Samira runs `npx supabase db push`):
+  1. supabase/migrations/20260428000005_appointments_action_items.sql
+       -- ALTER TABLE appointments ADD COLUMN IF NOT EXISTS
+          post_visit_action_items JSONB
+       -- CREATE INDEX IF NOT EXISTS idx_appointments_patient_datetime
+          ON appointments (patient_id, datetime)
+       -- Idempotent. Adds the structured action-items list (separate
+          from the existing free-text post_visit_notes) and the index
+          that powers the upcoming-appointments dashboard query and
+          calendar month/week filters.
+
+Files delivered (new):
+  - app/(app)/patients/[id]/appointments/page.tsx   (web page)
+  - app/api/appointments/route.ts                   (GET list + POST create)
+  - apps/mobile/app/(app)/patients/[id]/appointments.tsx  (mobile screen)
+  - components/appointments/AppointmentCalendar.tsx (month + week)
+  - components/appointments/AppointmentCreateForm.tsx (CSS-vars, design-system compliant)
+  - lib/appointments/checklist-templates.ts         (per-condition × type)
+  - supabase/migrations/20260428000005_appointments_action_items.sql
+  - tests/api/appointments/list.test.ts             (4 tests)
+  - tests/api/appointments/create.test.ts           (4 tests)
+  - tests/api/appointments/delete.test.ts           (4 tests)
+  - tests/api/appointments/action-items.test.ts     (2 tests)
+  - tests/lib/appointments/checklist-templates.test.ts (6 tests)
+  - tests/components/appointments/calendar.test.tsx (3 tests)
+  - tests/components/appointments/create-form.test.tsx (2 tests)
+
+Files modified:
+  - app/api/appointments/[id]/route.ts
+       -- added DELETE handler (caregiver/admin only, audit_log DELETE
+          with forensic columns, 404 on cross-tenant)
+       -- extended PATCH allowlist with post_visit_action_items
+          (validated as Array.isArray)
+       -- added file-header comment block per master prompt rules
+  - lib/supabase/types.ts
+       -- added post_visit_action_items: Json | null to appointments
+          Row / Insert / Update
+
+Test count: 221 passing / 0 failing
+  -- Sprint 10 baseline: 196 tests (after merge to main d283301)
+  -- Sprint 11 added: 25 tests across 7 new files
+  -- Numbering continues from Sprint 10's last test number (15) ->
+     this sprint numbered 16-34 per established convention.
+
+Pre-existing surface left intact:
+  - app/api/appointments/create POST -- still works (existing UI is the
+    only caller); the canonical Sprint 11 endpoint is POST
+    /api/appointments which has the role check, forensic columns, and
+    server-side checklist auto-populate. Migrating the legacy
+    AppointmentForm to the new endpoint is a small follow-up. Logged as
+    DISCOVERED ISSUE below so it does not get lost.
+
+DISCOVERED ISSUE: components/appointments/AppointmentForm.tsx (Sprint 7)
+  uses inline hex strings (#2C5F4A, #C4714A, #E8E2D9, etc.) instead of
+  design tokens, and POSTs to the legacy /api/appointments/create
+  endpoint. AppointmentCreateForm replaces it for new entry points; the
+  old component is still wired into Sprint 7's patient dashboard. A
+  small follow-up sprint should swap the dashboard import to the new
+  component and delete the old file. Not in Sprint 11 scope.
+
+DECISION REQUIRED (carries from earlier sprints):
+  1. Drug interaction API -- RxNorm (free) vs DrugBank (paid) vs OpenFDA.
+  2. es-MX medical content reviewer -- Samira accepted current Spanish
+     output for launch as the fluent reviewer; per master prompt, hire
+     or identify before non-founder users.
+  3. Michael equity conversation -- milestone-vested terms, in person.
+
+URGENT (carries from master prompt OPEN ITEMS):
+  - 83(b) election: mail to IRS by May 22, 2026. 24 days from today.
+
+Preview URL: (auto-generated by Vercel on push to sprint-11-appointments)
+To merge to production: review preview, then merge sprint-11-appointments
+to main from PowerShell. Migration 20260428000005 must be applied (npx
+supabase db push) BEFORE the merged code reaches production traffic,
+otherwise PATCH writes that include post_visit_action_items will fail.
+
+---
+
 [2026-04-28] SPRINT 10 COMPLETE -- WHO ICTRP PIPELINE + CARE TEAM DIRECTORY
 Branch: sprint-10-who-ictrp-care-team
 Status: COMPLETE -- ready for Samira's review and merge to main
