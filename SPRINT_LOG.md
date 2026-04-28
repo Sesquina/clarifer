@@ -23,6 +23,56 @@ MIGRATION REQUIRED: supabase/migrations/20260428000002_add_terms_accepted_at.sql
 
 ---
 
+[2026-04-28] DECISION REQUIRED: WHO ICTRP free REST endpoint does not exist.
+Verification of the URL suggested in the Sprint 9 verification follow-up:
+  GET https://trialsearch.who.int/API/getAllTrials  -->  HTTP 404 (does not exist)
+
+Independent research against WHO's own documentation:
+  - ICTRP search portal (https://trialsearch.who.int/) is an interactive UI,
+    not a programmatic API.
+  - The "ICTRP Search Portal Web Service" exists but is XML-based and the
+    WHO page states: "The cost charged by ICTRP for accessing the ICTRP web
+    service can be provided upon request" -- it is a paid commercial
+    service, not a free REST API.
+  - Free public access is via weekly CSV/XML bulk downloads from the search
+    portal UI (https://www.who.int/tools/clinical-trials-registry-platform/
+    network/who-data-set/downloading-records-from-the-ictrp-database) and a
+    monthly CSV on a WHO OneDrive (requires Microsoft account; non-commercial
+    use only).
+  - The "Crawling Service" mentioned in WHO docs is currently unavailable,
+    requestable for 2025.
+
+Per docs/CLAUDE.md Section 4 BLOCKED STATE PROTOCOL and the explicit
+verification instruction "Do not guess field names", lib/trials/who-ictrp.ts
+has not been implemented against a fabricated endpoint. The existing scaffold
+(returns []) remains in place and continues to degrade gracefully. The merge
+/ dedupe / ordering / Spanish-translation code in app/api/trials/search is
+already wired and unit-tested with synthetic ICTRP fixtures, so a real data
+source can be wired in later without route changes.
+
+Samira: please choose one path before international personas (Panama, Mexico)
+can see WHO trials in production:
+  A. Subscribe to the paid WHO ICTRP Web Service. Cost: contact WHO ICTRP
+     Secretariat (ictrpinfo@who.int) for current pricing. Pros: real-time
+     authoritative data. Cons: ongoing cost; XML transport.
+  B. Build a server-side ingestion pipeline that downloads the weekly XML
+     bulk from the search portal, parses it, stores into a Clarifer-owned
+     trial mirror table, and replaces searchInternationalTrials() with a
+     read against that table. Pros: free; respects WHO non-commercial use
+     terms when used to inform individual caregivers. Cons: ~weekly stale;
+     storage and ingestion costs to build and maintain.
+  C. Defer international trial discovery until post-launch. Mark the
+     "International" filter as "Coming soon" in both web and mobile UI
+     and remove the WHO ICTRP code path until a data source is contracted.
+
+Recommendation: Option B. The non-commercial-use clause is satisfied because
+caregivers are not paying users in our model, and we are not republishing
+ICTRP data wholesale -- we are surfacing matches relevant to a specific
+patient's diagnosis. Build effort: ~one sprint (download + parse + store +
+RLS + cron). Storage: ~few hundred MB per snapshot, ~few GB/year retained.
+
+---
+
 [2026-04-28] SPRINT 9 COMPLETE -- TRIALS + FAMILY UPDATES
 Branch: sprint-9-trials-family
 Status: COMPLETE -- ready for Samira's review and merge to main
