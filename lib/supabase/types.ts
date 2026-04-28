@@ -509,6 +509,104 @@ export type Database = {
           },
         ]
       }
+      care_team: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          fax: string | null
+          id: string
+          is_primary: boolean | null
+          name: string
+          notes: string | null
+          npi: string | null
+          organization_id: string | null
+          patient_id: string | null
+          phone: string | null
+          role: string | null
+          specialty: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          fax?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          notes?: string | null
+          npi?: string | null
+          organization_id?: string | null
+          patient_id?: string | null
+          phone?: string | null
+          role?: string | null
+          specialty?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          fax?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          notes?: string | null
+          npi?: string | null
+          organization_id?: string | null
+          patient_id?: string | null
+          phone?: string | null
+          role?: string | null
+          specialty?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_team_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_team_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_team_message_templates: {
+        Row: {
+          body: string
+          care_team_member_id: string
+          created_at: string | null
+          id: string
+          label: string
+        }
+        Insert: {
+          body: string
+          care_team_member_id: string
+          created_at?: string | null
+          id?: string
+          label: string
+        }
+        Update: {
+          body?: string
+          care_team_member_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_team_message_templates_care_team_member_id_fkey"
+            columns: ["care_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "care_team"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -1332,6 +1430,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      who_ictrp_trials: {
+        Row: {
+          condition: string | null
+          countries: string[] | null
+          date_registration: string | null
+          id: string
+          ingested_at: string | null
+          phase: string | null
+          primary_sponsor: string | null
+          raw: Json | null
+          sponsor: string | null
+          status: string | null
+          title: string
+          trial_id: string
+          url: string | null
+        }
+        Insert: {
+          condition?: string | null
+          countries?: string[] | null
+          date_registration?: string | null
+          id?: string
+          ingested_at?: string | null
+          phase?: string | null
+          primary_sponsor?: string | null
+          raw?: Json | null
+          sponsor?: string | null
+          status?: string | null
+          title: string
+          trial_id: string
+          url?: string | null
+        }
+        Update: {
+          condition?: string | null
+          countries?: string[] | null
+          date_registration?: string | null
+          id?: string
+          ingested_at?: string | null
+          phase?: string | null
+          primary_sponsor?: string | null
+          raw?: Json | null
+          sponsor?: string | null
+          status?: string | null
+          title?: string
+          trial_id?: string
+          url?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

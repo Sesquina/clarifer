@@ -1,52 +1,100 @@
 /**
  * lib/trials/who-ictrp.ts
- * Scaffolded WHO ICTRP adapter that returns an empty list until a real ICTRP data source is configured.
- * Tables: none (no network calls today; no Supabase access).
- * Auth: callers (API routes) handle auth; this module trusts its inputs and is not exposed directly to clients.
- * Sprint: Sprint 9 -- Trials + Family Updates
+ * Searches the Clarifer-owned WHO ICTRP mirror table.
+ * Tables: who_ictrp_trials (read, service role)
+ * Auth: called server-side only from trials search route
+ * Sprint: Sprint 10 -- WHO ICTRP Pipeline
  *
- * HIPAA: No PHI stored in this file. When a data source is wired in, only condition name and country must be sent externally.
+ * HIPAA: No PHI. Public trial data only. Service role used because the
+ * who_ictrp_trials RLS policy returns false for all non-service callers
+ * (the table holds public-registry data; org isolation is unnecessary,
+ * and service-only access keeps writes admin-gated).
  */
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 import type { NormalizedTrial } from "./clinicaltrials-gov";
 
-/**
- * WHO ICTRP integration.
- *
- * The WHO International Clinical Trials Registry Platform does not
- * currently expose a stable public REST API. The official "API" is a
- * weekly XML bulk download requiring registration. This module is
- * scaffolded so the contract is in place; once Samira either (a)
- * registers for ICTRP weekly XML and we ingest it server-side, or
- * (b) we contract a third-party aggregator like CenterWatch or
- * trialscope, this function will be wired to return real results.
- *
- * For now: returns an empty array and logs a single info-level note.
- * Callers must merge defensively (treat empty as "no international
- * results" rather than an error).
- */
 export interface InternationalSearchOptions {
   condition: string;
   country?: string | null;
   limit?: number;
 }
 
-let warned = false;
-function warnOnce() {
-  if (warned) return;
-  warned = true;
-  // eslint-disable-next-line no-console
-  console.info("[who-ictrp] integration scaffolded; returning empty results until data source configured");
+function serviceClient() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
 }
 
+type Row = Database["public"]["Tables"]["who_ictrp_trials"]["Row"];
+
+function normalizeRow(row: Row): NormalizedTrial {
+  const country = (row.countries ?? [])[0] ?? null;
+  return {
+    source: "who_ictrp",
+    nct_id: row.trial_id,
+    title: row.title,
+    phase: row.phase ?? "Not specified",
+    status: row.status ?? "Unknown",
+    location: country ?? "Not specified",
+    city: null,
+    state: null,
+    country,
+    brief_summary: row.condition ?? "",
+    eligibility: "",
+    contact: row.primary_sponsor ?? row.sponsor ?? null,
+    external_url: row.url ?? "",
+  };
+}
+
+/**
+ * Searches the local WHO ICTRP mirror by condition (full-text against the
+ * condition column) and optional country (membership in the countries[]
+ * array). Returns NormalizedTrial[] for shape parity with ClinicalTrials.gov.
+ * Returns [] on any error -- never throws -- so the trials search route
+ * can degrade gracefully.
+ */
+export async function searchWhoIctrp(
+  condition: string,
+  country?: string,
+  limit = 25
+): Promise<NormalizedTrial[]> {
+  const cond = (condition ?? "").trim();
+  if (!cond) return [];
+  try {
+    const supabase = serviceClient();
+    let query = supabase
+      .from("who_ictrp_trials")
+      .select("*")
+      .textSearch("condition", cond, { type: "websearch", config: "english" });
+    if (country && country.trim()) {
+      query = query.contains("countries", [country.trim()]);
+    }
+    const { data, error } = await query.limit(Math.max(1, Math.min(limit, 100)));
+    if (error || !data) return [];
+    return data.map(normalizeRow);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Backwards-compatible wrapper for the call site in
+ * app/api/trials/search/route.ts (Sprint 9). Delegates to searchWhoIctrp.
+ */
 export async function searchInternationalTrials(
   opts: InternationalSearchOptions
 ): Promise<NormalizedTrial[]> {
-  if (!opts.condition?.trim()) return [];
+  if (!opts?.condition?.trim()) return [];
   if (!opts.country) return [];
   // International only -- skip for US patients (covered by clinicaltrials.gov).
-  if (opts.country.toUpperCase().includes("UNITED STATES") || opts.country.toUpperCase() === "US") {
+  if (
+    opts.country.toUpperCase().includes("UNITED STATES") ||
+    opts.country.toUpperCase() === "US"
+  ) {
     return [];
   }
-  warnOnce();
-  return [];
+  return searchWhoIctrp(opts.condition, opts.country, opts.limit);
 }
