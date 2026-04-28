@@ -344,6 +344,7 @@ export type Database = {
           patient_id: string | null
           resource_id: string | null
           resource_type: string | null
+          status: string | null
           user_agent: string | null
           user_id: string | null
         }
@@ -356,6 +357,7 @@ export type Database = {
           patient_id?: string | null
           resource_id?: string | null
           resource_type?: string | null
+          status?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -368,6 +370,7 @@ export type Database = {
           patient_id?: string | null
           resource_id?: string | null
           resource_type?: string | null
+          status?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -692,6 +695,67 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_updates: {
+        Row: {
+          date_range_days: number
+          edited_at: string | null
+          edited_text: string | null
+          generated_at: string | null
+          generated_by: string
+          id: string
+          language: string
+          organization_id: string
+          patient_id: string
+          update_text: string
+        }
+        Insert: {
+          date_range_days: number
+          edited_at?: string | null
+          edited_text?: string | null
+          generated_at?: string | null
+          generated_by: string
+          id?: string
+          language: string
+          organization_id: string
+          patient_id: string
+          update_text: string
+        }
+        Update: {
+          date_range_days?: number
+          edited_at?: string | null
+          edited_text?: string | null
+          generated_at?: string | null
+          generated_by?: string
+          id?: string
+          language?: string
+          organization_id?: string
+          patient_id?: string
+          update_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_updates_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_updates_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_updates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1237,6 +1301,7 @@ export type Database = {
           language: string | null
           organization_id: string | null
           role: string | null
+          terms_accepted_at: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1246,6 +1311,7 @@ export type Database = {
           language?: string | null
           organization_id?: string | null
           role?: string | null
+          terms_accepted_at?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1255,6 +1321,7 @@ export type Database = {
           language?: string | null
           organization_id?: string | null
           role?: string | null
+          terms_accepted_at?: string | null
         }
         Relationships: [
           {

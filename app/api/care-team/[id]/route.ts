@@ -4,11 +4,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 
 const ALL_ROLES = ["caregiver", "provider", "admin"];
 const WRITE_ROLES = ["caregiver"];
+
+type CareRelationshipUpdate = Database["public"]["Tables"]["care_relationships"]["Update"];
 
 async function loadUser(request: Request) {
   const supabase = await createClient();
@@ -90,9 +93,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const update: Record<string, unknown> = {};
-  if ("role" in body) update.relationship_type = body.role;
-  if ("details" in body) update.access_level = JSON.stringify(body.details ?? {});
+  const update: CareRelationshipUpdate = {};
+  if ("role" in body && (typeof body.role === "string" || body.role === null)) {
+    update.relationship_type = body.role;
+  }
+  if ("details" in body) {
+    update.access_level = JSON.stringify(body.details ?? {});
+  }
 
   const { data: existing } = await supabase
     .from("care_relationships")

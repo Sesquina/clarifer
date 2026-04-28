@@ -4,17 +4,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 
 const ALLOWED_ROLES = ["caregiver", "provider"];
-const PATCHABLE: Array<"dose" | "unit" | "frequency" | "notes" | "is_active"> = [
-  "dose",
-  "unit",
-  "frequency",
-  "notes",
-  "is_active",
-];
+
+type MedicationUpdate = Database["public"]["Tables"]["medications"]["Update"];
 
 export async function PATCH(
   request: Request,
@@ -59,12 +55,25 @@ export async function PATCH(
     return NextResponse.json({ error: "We could not find that medication." }, { status: 404 });
   }
 
-  const update: Record<string, unknown> = {};
-  for (const key of PATCHABLE) {
-    if (key in body) update[key] = body[key];
+  const update: MedicationUpdate = {};
+  if ("dose" in body && (typeof body.dose === "string" || body.dose === null)) {
+    update.dose = body.dose;
+  }
+  if ("unit" in body && (typeof body.unit === "string" || body.unit === null)) {
+    update.unit = body.unit;
+  }
+  if ("frequency" in body && (typeof body.frequency === "string" || body.frequency === null)) {
+    update.frequency = body.frequency;
+  }
+  if ("notes" in body && (typeof body.notes === "string" || body.notes === null)) {
+    update.notes = body.notes;
+  }
+  if ("is_active" in body && (typeof body.is_active === "boolean" || body.is_active === null)) {
+    update.is_active = body.is_active;
   }
 
-  if (Object.keys(update).length === 0) {
+  const updatedKeys = Object.keys(update);
+  if (updatedKeys.length === 0) {
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
@@ -93,5 +102,5 @@ export async function PATCH(
     status: "success",
   });
 
-  return NextResponse.json({ id, updated: Object.keys(update) });
+  return NextResponse.json({ id, updated: updatedKeys });
 }
