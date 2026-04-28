@@ -1,3 +1,56 @@
+[2026-04-28] TASK COMPLETE: TypeScript errors driven to zero (was 34 on rescue start).
+Fixed in this sprint:
+  - lib/supabase/types.ts: added status to audit_log Row/Insert/Update
+                          (drift from migration 20260423000005)
+  - lib/supabase/types.ts: added family_updates table from Sprint 9 migration
+                          20260424000006
+  - lib/supabase/types.ts: added terms_accepted_at to users Row/Insert/Update
+  - app/api/family-update/generate/route.ts: narrowed body.patient_id into a
+                          typed const patientId before stream closure use
+  - app/api/appointments/[id]/route.ts: replaced dynamic Record<string,unknown>
+                          patch accumulator with typed AppointmentUpdate plus
+                          per-field type guards (security improvement: explicit
+                          allowlist prevents callers patching unintended cols)
+  - app/api/care-team/[id]/route.ts: same pattern, typed CareRelationshipUpdate
+  - app/api/medications/[id]/update/route.ts: same pattern, typed MedicationUpdate
+                          with per-field typeof guards
+
+MIGRATION REQUIRED: supabase/migrations/20260428000002_add_terms_accepted_at.sql
+  -- ALTER TABLE public.users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;
+  -- Captures the ToS + Privacy Policy acceptance timestamp at signup
+  -- (gated by the agree-to-terms checkbox on app/signup/page.tsx).
+  -- Idempotent. DO NOT EXECUTE manually.
+
+---
+
+[2026-04-28] SPRINT 9 — TRIALS + FAMILY UPDATES
+Branch: sprint-9-trials-family
+Goal: ClinicalTrials.gov integration, WHO ICTRP integration,
+      family update generator in English and Spanish
+Status: IN PROGRESS -- rescued from main to branch
+Files in progress:
+  - app/(app)/patients/[id]/family-update/page.tsx
+  - app/(app)/patients/[id]/trials/page.tsx
+  - app/api/family-update/generate/route.ts
+  - app/api/trials/save/route.ts
+  - app/api/trials/saved/route.ts
+  - app/api/trials/search/route.ts
+  - apps/mobile/app/(app)/patients/[id]/index.tsx
+  - apps/mobile/app/(app)/patients/[id]/family-update.tsx
+  - apps/mobile/app/(app)/patients/[id]/trials.tsx
+  - lib/trials/clinicaltrials-gov.ts
+  - lib/trials/who-ictrp.ts
+  - supabase/migrations/20260424000006_trials_family.sql
+  - tests/access/trials-rls.test.ts
+  - tests/api/family-update/generate.test.ts
+  - tests/api/trials/search.test.ts
+  - tests/components/family-update/generator.test.tsx
+  - tests/components/trials/trial-card.test.tsx
+MIGRATION REQUIRED: 20260424000006_trials_family.sql
+  -- creates trial_saves, trial_cache, family_updates tables
+
+---
+
 # SPRINT_LOG.md — Clarifer Agent Communication Channel
 # Append-only. Every significant action logged here.
 # Samira reads this at end of every day.

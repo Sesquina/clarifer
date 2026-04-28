@@ -1,3 +1,12 @@
+/**
+ * apps/mobile/app/(app)/patients/[id]/index.tsx
+ * Mobile patient dashboard screen showing meds, appointments, documents, and recent symptoms.
+ * Tables: reads patients, medications, appointments, documents, symptom_logs via Supabase client.
+ * Auth: any authenticated user; RLS scopes results to the user's organization.
+ * Sprint: Sprint 9 -- Trials + Family Updates
+ *
+ * HIPAA: Renders patient name, medications, and appointment titles on screen. No PHI written to logs from this file.
+ */
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";

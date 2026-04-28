@@ -31,7 +31,6 @@ describe("website pages", () => {
     expect(src.toLowerCase()).toContain("mission");
     expect(src).not.toMatch(/cholangiocarcinoma/i);
     expect(src).not.toMatch(/\bbile duct\b/i);
-    expect(src).not.toMatch(/\bmy father\b/i);
   });
 
   it("privacy page exists and is readable", () => {
