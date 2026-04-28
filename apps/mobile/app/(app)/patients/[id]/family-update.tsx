@@ -22,19 +22,20 @@ import {
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams } from "expo-router";
 import { supabase } from "@/lib/supabase-client";
+import { colors, radius, touchTarget } from "@/lib/design-tokens";
 
 const tokens = {
-  background: "#F7F2EA",
-  primary: "#2C5F4A",
-  accent: "#C4714A",
-  card: "#FFFFFF",
-  text: "#1A1A1A",
-  muted: "#6B6B6B",
-  border: "#E8E2D9",
-  paleTerra: "#FDF3EE",
-  white: "#FFFFFF",
-  radiusCard: 16,
-  touchMin: 48,
+  background: colors.background,
+  primary: colors.primary,
+  accent: colors.accent,
+  card: colors.card,
+  text: colors.text,
+  muted: colors.muted,
+  border: colors.border,
+  paleTerra: colors.paleTerra,
+  white: colors.white,
+  radiusCard: radius.card,
+  touchMin: touchTarget.minimum,
 };
 
 type Lang = "en" | "es";
@@ -267,10 +268,10 @@ const styles = StyleSheet.create({
   toggleBtn: { paddingHorizontal: 18, height: tokens.touchMin, justifyContent: "center", backgroundColor: tokens.card },
   toggleText: { fontSize: 14, color: tokens.text, fontWeight: "500" },
   rangePill: {
-    paddingHorizontal: 14,
-    minHeight: 40,
+    paddingHorizontal: 16,
+    minHeight: tokens.touchMin,
     justifyContent: "center",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: tokens.border,
     backgroundColor: tokens.card,

@@ -169,8 +169,8 @@ export default function FamilyUpdatePage() {
           aria-label="Date range"
           style={{
             ...BODY,
-            height: 40,
-            padding: "0 12px",
+            height: 48,
+            padding: "0 16px",
             borderRadius: 12,
             border: "1px solid var(--border)",
             backgroundColor: "var(--card)",
@@ -338,8 +338,8 @@ function ToggleButton({ active, onClick, children }: { active: boolean; onClick:
       onClick={onClick}
       style={{
         ...BODY,
-        height: 40,
-        padding: "0 18px",
+        height: 48,
+        padding: "0 20px",
         border: "none",
         backgroundColor: active ? "var(--primary)" : "var(--card)",
         color: active ? "var(--white)" : "var(--text)",

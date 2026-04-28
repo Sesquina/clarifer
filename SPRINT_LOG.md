@@ -23,12 +23,83 @@ MIGRATION REQUIRED: supabase/migrations/20260428000002_add_terms_accepted_at.sql
 
 ---
 
-[2026-04-28] SPRINT 9 — TRIALS + FAMILY UPDATES
+[2026-04-28] SPRINT 9 COMPLETE -- TRIALS + FAMILY UPDATES
 Branch: sprint-9-trials-family
-Goal: ClinicalTrials.gov integration, WHO ICTRP integration,
-      family update generator in English and Spanish
-Status: IN PROGRESS -- rescued from main to branch
-Files in progress:
+Status: COMPLETE -- ready for Samira's review and merge to main
+
+Verification (final):
+  npm test  -> 173 / 173 passing (52 test files)
+  tsc --noEmit -> 0 errors
+  npm audit -> 3 moderate severity (postcss chain via next + @sentry/nextjs;
+              pre-existing on main, --audit-level=high is clean)
+
+Migrations (applied in production by Samira before this sprint completed):
+  - 20260424000006_trials_family.sql
+      trial_cache table (24h TTL, RLS service-only),
+      family_updates table (RLS org-isolated),
+      patients.city / patients.state / patients.country columns
+  - 20260428000002_add_terms_accepted_at.sql
+      users.terms_accepted_at TIMESTAMPTZ for ToS + Privacy consent
+
+Verification fixes applied this commit:
+  - lib/trials/who-ictrp.ts:46 -- replaced em dash with -- per docs/CLAUDE.md
+                                  no-em-dash rule
+  - app/api/trials/search/route.ts -- international ordering: when patient
+                                      country is non-US (Panama, Mexico),
+                                      WHO ICTRP results surface first; US
+                                      patients see ClinicalTrials.gov first
+  - app/api/trials/search/route.ts -- plain-language renderer now respects
+                                      a language param (en | es); Spanish is
+                                      default for non-US patients (overridable
+                                      via body.language). Cache key extended
+                                      to include language so EN/ES are cached
+                                      separately.
+  - app/api/family-update/generate/route.ts -- ALLOWED_ROLES tightened from
+                                              [caregiver, patient] to
+                                              [caregiver] only, matching
+                                              docs/CLAUDE.md SECTION 6
+  - apps/mobile/app/(app)/patients/[id]/trials.tsx -- imports tokens from
+                                              lib/design-tokens.ts instead of
+                                              hardcoded hex; Pill min height
+                                              raised 36 -> 48 to meet
+                                              WCAG / docs/CLAUDE.md touch
+                                              target rule
+  - apps/mobile/app/(app)/patients/[id]/family-update.tsx -- same migration
+                                              to lib/design-tokens.ts;
+                                              rangePill min height 40 -> 48
+  - app/(app)/patients/[id]/trials/page.tsx -- Tab buttons (~36 -> 48),
+                                              filter Pills (32 -> 48),
+                                              Save trial / Open full record
+                                              (40 -> 48)
+  - app/(app)/patients/[id]/family-update/page.tsx -- ToggleButton (40 -> 48),
+                                              date select (40 -> 48)
+
+DECISION REQUIRED (carries over from docs/CLAUDE.md SPRINT 11 spec):
+  Spanish output for the family-update generator and trials plain-language
+  renderer requires a native-speaker medical reviewer pass before this code
+  touches real users in production. The route generates Spanish via
+  claude-sonnet-4-6, which is fluent but unverified against medical-grade
+  Spanish. Samira: please assign a Spanish-speaking medical reviewer (or
+  confirm CCF advocate Ana Maria is acceptable) before the Spanish path is
+  enabled for live patients. The English path is unblocked.
+
+DISCOVERED ISSUE: WHO ICTRP integration is currently a scaffolded stub
+  (lib/trials/who-ictrp.ts always returns []). Real ICTRP results require
+  Samira to either (a) register for the official ICTRP weekly XML bulk
+  download and we ingest server-side, or (b) contract a third-party
+  aggregator (CenterWatch / TrialScope). Until then, international personas
+  see no trials. The merge / dedupe / ordering / Spanish-translation code
+  is wired and tested with synthetic ICTRP fixtures, so flipping on real
+  data later does not require route changes.
+
+DISCOVERED ISSUE: Sprint scope drift. docs/CLAUDE.md Section 10 splits
+  this work across three sprints (Sprint 9 ClinicalTrials.gov, Sprint 10
+  WHO ICTRP, Sprint 11 Family Updates). This branch implements all three
+  under the single label "Sprint 9 -- Trials + Family Updates", consistent
+  with the user's combined directive. Samira: confirm whether to split
+  this into three commits / PRs for traceability or merge as one.
+
+Files delivered:
   - app/(app)/patients/[id]/family-update/page.tsx
   - app/(app)/patients/[id]/trials/page.tsx
   - app/api/family-update/generate/route.ts
@@ -41,13 +112,17 @@ Files in progress:
   - lib/trials/clinicaltrials-gov.ts
   - lib/trials/who-ictrp.ts
   - supabase/migrations/20260424000006_trials_family.sql
+  - supabase/migrations/20260428000002_add_terms_accepted_at.sql
   - tests/access/trials-rls.test.ts
   - tests/api/family-update/generate.test.ts
   - tests/api/trials/search.test.ts
   - tests/components/family-update/generator.test.tsx
   - tests/components/trials/trial-card.test.tsx
-MIGRATION REQUIRED: 20260424000006_trials_family.sql
-  -- creates trial_saves, trial_cache, family_updates tables
+
+Preview URL: (auto-generated by Vercel on push to sprint-9-trials-family)
+To merge to production: review preview, then merge sprint-9-trials-family
+to main. Do NOT merge until Spanish review (DECISION REQUIRED above) is
+resolved if Spanish must ship in the same release.
 
 ---
 

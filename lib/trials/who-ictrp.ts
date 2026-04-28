@@ -43,7 +43,7 @@ export async function searchInternationalTrials(
 ): Promise<NormalizedTrial[]> {
   if (!opts.condition?.trim()) return [];
   if (!opts.country) return [];
-  // International only — skip for US patients (covered by clinicaltrials.gov).
+  // International only -- skip for US patients (covered by clinicaltrials.gov).
   if (opts.country.toUpperCase().includes("UNITED STATES") || opts.country.toUpperCase() === "US") {
     return [];
   }

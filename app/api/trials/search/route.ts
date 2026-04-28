@@ -33,8 +33,8 @@ interface EnrichedTrial extends NormalizedTrial {
   saved: boolean;
 }
 
-function cacheKey(condition: string, country: string, phases: string[]): string {
-  const raw = `${condition.toLowerCase()}|${country.toLowerCase()}|${phases.sort().join(",")}`;
+function cacheKey(condition: string, country: string, phases: string[], lang: "en" | "es"): string {
+  const raw = `${condition.toLowerCase()}|${country.toLowerCase()}|${phases.sort().join(",")}|${lang}`;
   return createHash("sha256").update(raw).digest("hex");
 }
 
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as {
     patient_id?: string;
+    language?: "en" | "es";
     filters?: { phases?: Array<"1" | "2" | "3" | "4">; source?: "all" | "us" | "international" };
   } | null;
   if (!body?.patient_id) {
@@ -113,7 +114,17 @@ export async function POST(request: Request) {
   const phases = body.filters?.phases ?? [];
   const source = body.filters?.source ?? "all";
 
-  const key = cacheKey(condition, country, phases);
+  // International persona: surface ICTRP results first and translate to Spanish
+  // when the patient's primary language is Spanish or country is non-US (CCF
+  // demo personas: Panama, Mexico). Caller can override via body.language.
+  const isInternational = !country.toLowerCase().includes("united states");
+  const patientLanguage = (patient.primary_language as string | null) ?? null;
+  const language: "en" | "es" =
+    body.language === "es" || body.language === "en"
+      ? body.language
+      : (patientLanguage === "es" || isInternational ? "es" : "en");
+
+  const key = cacheKey(condition, country, phases, language);
   const svc = serviceClient();
 
   // Cache check
@@ -136,14 +147,18 @@ export async function POST(request: Request) {
     enriched = cachedTrials;
   } else {
     const wantUs = source !== "international";
-    const wantIntl = source !== "us" && !country.toLowerCase().includes("united states");
+    const wantIntl = source !== "us" && isInternational;
     const [usResults, intlResults] = await Promise.all([
       wantUs ? searchTrials({ condition, location: { city, state, country }, phase: phases }) : Promise.resolve([]),
       wantIntl ? searchInternationalTrials({ condition, country }) : Promise.resolve([]),
     ]);
 
-    const merged = dedupeTrials([...usResults, ...intlResults]);
-    const plainLanguage = await renderPlainLanguage(merged);
+    // International persona sees ICTRP first; US-based persona sees CT.gov first.
+    const orderedRaw = isInternational
+      ? [...intlResults, ...usResults]
+      : [...usResults, ...intlResults];
+    const merged = dedupeTrials(orderedRaw);
+    const plainLanguage = await renderPlainLanguage(merged, language);
     enriched = merged.map((t) => ({ ...t, plain_language: plainLanguage[t.nct_id] ?? null, saved: false }));
 
     // Cache write (best-effort)
@@ -190,7 +205,7 @@ export async function POST(request: Request) {
     // ignore
   }
 
-  return NextResponse.json({ trials: enriched, condition, country, source });
+  return NextResponse.json({ trials: enriched, condition, country, source, language });
 }
 
 function dedupeTrials(trials: NormalizedTrial[]): NormalizedTrial[] {
@@ -206,7 +221,8 @@ function dedupeTrials(trials: NormalizedTrial[]): NormalizedTrial[] {
 }
 
 async function renderPlainLanguage(
-  trials: NormalizedTrial[]
+  trials: NormalizedTrial[],
+  language: "en" | "es"
 ): Promise<Record<string, PlainLanguageOutput>> {
   if (!trials.length || !process.env.ANTHROPIC_API_KEY) return {};
 
@@ -216,6 +232,8 @@ async function renderPlainLanguage(
     eligibility: t.eligibility.slice(0, 1500),
     summary: t.brief_summary.slice(0, 600),
   }));
+
+  const outputLanguage = language === "es" ? "Spanish" : "English";
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   let text = "";
@@ -228,6 +246,7 @@ async function renderPlainLanguage(
         "For each trial, identify: the 5 most important requirements in plain language, any " +
         "criteria likely to be disqualifying based on the patient profile, and the next step " +
         "to find out more. Never recommend enrolling or not enrolling. " +
+        `Write all output strings in ${outputLanguage}. ` +
         "Output ONLY a JSON object keyed by nct_id, where each value is " +
         '{"five_things_to_know":[...5 strings...],"possible_disqualifiers":[...0-5 strings...],"next_step":"..."}. ' +
         "No prose outside the JSON.",

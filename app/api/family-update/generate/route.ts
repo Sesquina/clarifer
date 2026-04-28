@@ -14,7 +14,7 @@ import { checkOrigin } from "@/lib/cors";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const ALLOWED_ROLES = ["caregiver", "patient"];
+const ALLOWED_ROLES = ["caregiver"];
 
 const DISCLAIMER_EN = "This update was AI-assisted. Please review before sharing.";
 const DISCLAIMER_ES =

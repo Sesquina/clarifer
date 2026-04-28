@@ -19,21 +19,22 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { supabase } from "@/lib/supabase-client";
+import { colors, radius, touchTarget } from "@/lib/design-tokens";
 
 const tokens = {
-  background: "#F7F2EA",
-  primary: "#2C5F4A",
-  accent: "#C4714A",
-  card: "#FFFFFF",
-  text: "#1A1A1A",
-  muted: "#6B6B6B",
-  border: "#E8E2D9",
-  paleSage: "#F0F5F2",
-  paleTerra: "#FDF3EE",
-  white: "#FFFFFF",
-  radiusCard: 16,
-  radiusPill: 26,
-  touchMin: 48,
+  background: colors.background,
+  primary: colors.primary,
+  accent: colors.accent,
+  card: colors.card,
+  text: colors.text,
+  muted: colors.muted,
+  border: colors.border,
+  paleSage: colors.paleSage,
+  paleTerra: colors.paleTerra,
+  white: colors.white,
+  radiusCard: radius.card,
+  radiusPill: radius.pill,
+  touchMin: touchTarget.minimum,
 };
 
 interface PlainLanguage {
@@ -309,9 +310,9 @@ const styles = StyleSheet.create({
   tabTextActive: { color: tokens.primary },
   pillRow: { flexDirection: "row", gap: 8, marginBottom: 16, flexWrap: "wrap" },
   pill: {
-    paddingHorizontal: 14,
-    minHeight: 36,
-    borderRadius: 18,
+    paddingHorizontal: 16,
+    minHeight: tokens.touchMin,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: tokens.border,
     backgroundColor: tokens.card,
