@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 const ALLOWED_ORIGINS = [
   "https://clarifer.com",
+  "https://www.clarifer.com",
   "https://clarifer.vercel.app",
 ];
 
