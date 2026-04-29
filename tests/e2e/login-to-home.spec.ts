@@ -22,7 +22,7 @@ test('demo login reaches home with patient loaded', async ({ page }) => {
   expect(bodyText).not.toContain('role-select');
 
   // Step 6: Confirm patient data loaded
-  await expect(page.getByText('Carlos Rivera')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('p').filter({ hasText: 'Caring for Carlos Rivera' })).toBeVisible({ timeout: 10000 });
 
   console.log('FINAL URL:', page.url());
   console.log('PASS: demo login reached home with patient loaded');

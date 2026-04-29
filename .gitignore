@@ -65,3 +65,4 @@ supabase/.temp/
 
 # Supabase CLI local state
 .supabase/
+test-results/
