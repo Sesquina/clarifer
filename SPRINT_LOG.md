@@ -1,3 +1,139 @@
+[2026-04-28] SPRINT 13 COMPLETE -- HOSPITAL-GRADE PDF EXPORT (web + mobile)
+Branch: sprint-13-pdf-export
+Status: COMPLETE -- ready for Samira's review and merge to main
+
+Verification (final):
+  npx vitest run -> 268 / 268 passing (76 test files)
+  npx tsc --noEmit -> 0 errors
+  npm audit --audit-level=high -> 0 high/critical (3 moderate carried
+    forward; postcss chain via next + @sentry/nextjs).
+
+Performance: PDF render measured at well under the 3-second budget for
+a typical 30-symptom / 10-medication / 5-document / 5-appointment
+bundle. Test 67 enforces the under-3000ms assertion against the real
+@react-pdf/renderer (not a mock); test 77 enforces the same on the
+end-to-end POST /api/export/pdf path.
+
+Sprint scope (per docs/MASTER_SESSION_PROMPT.md Sprint 13 spec):
+  - One shared hospital-grade PDF module + data fetcher used by
+    BOTH the caregiver export route and the provider export route
+    (the provider route was refactored away from Sprint 8's
+    generatePatientPdf which lacked the bilingual disclaimer and
+    care-team section).
+  - 10 logical PDF sections including the bilingual disclaimer
+    (English + Spanish), emergency-info box, current medications,
+    symptom log, recent appointments, documents with summaries,
+    care team, optional provider notes, and a footer with page
+    numbers on every page.
+  - Caregiver and provider mobile flows now use a single
+    ExportPDFButton with native share sheet (expo-sharing) instead
+    of the Sprint 8 base64-data-URL workaround.
+
+MIGRATION REQUIRED:
+  None. This sprint is code-only.
+
+MANUAL REQUIRED (Samira -- in apps/mobile):
+  - npx expo install expo-file-system expo-sharing
+       -- Required before the new mobile ExportPDFButton bundles.
+          The component imports from these packages; root tsc
+          excludes apps/mobile so the imports do not show up as
+          tsc errors but Expo will fail at bundle time without
+          them. (Sprint 10 followed the same pattern with
+          expo-clipboard.)
+
+Files delivered (new):
+  Lib (PDF):
+    - lib/pdf/hospital-grade-export.tsx                  (PDF document)
+    - lib/pdf/fetch-export-data.ts                       (data fetcher)
+  Routes:
+    - app/api/export/pdf/route.ts                        (REWRITTEN
+        from Sprint 8 placeholder to use the new shared lib;
+        caregiver/admin only; CAREGIVER_EXPORT audit; Cache-Control
+        no-store)
+  Components:
+    - components/export/ExportPDFButton.tsx              (web)
+  Mobile:
+    - apps/mobile/components/export/ExportPDFButton.tsx  (renamed +
+        rewritten from the Sprint 8 ExportButton.tsx; native share
+        sheet via expo-file-system + expo-sharing)
+  Tests (22 new):
+    - tests/lib/pdf/fetch-export-data.test.ts            (5 tests)
+    - tests/lib/pdf/hospital-grade-export.test.ts        (5 tests)
+    - tests/api/export/pdf.test.ts                       (8 tests)
+    - tests/components/export/export-button.test.tsx     (4 tests)
+
+Files modified:
+  - app/api/provider/patients/[id]/export/route.ts
+       Sprint 12 provider export refactored to call fetchExportData
+       + renderHospitalGradePdf (was using Sprint 8's
+       generatePatientPdf). Behavior preserved: provider role
+       gating, care_relationships authorization, PROVIDER_EXPORT
+       audit, cross-tenant 404. Provider notes now appear in the
+       PDF (via fetchExportData callerRole=provider).
+  - app/(app)/patients/[id]/page.tsx
+       Imports + renders ExportPDFButton next to the Emergency
+       card link in the dashboard header.
+  - app/(app)/provider/patients/[id]/page.tsx
+       ExportTab simplified -- replaced the inline generate handler
+       with the shared ExportPDFButton.
+  - apps/mobile/app/(app)/patients/[id]/index.tsx
+       Import updated from ExportButton to ExportPDFButton; usage
+       updated for the new {patientId, callerRole} props.
+  - apps/mobile/app/(app)/provider/patients/[id].tsx
+       ExportSection simplified -- replaced the inline generate
+       handler with the shared ExportPDFButton (caller role
+       provider).
+  - tests/api/provider/export.test.ts
+       Mocks updated from `generatePatientPdf` (Sprint 8 lib) to
+       `renderHospitalGradePdf` + `fetchExportData` (Sprint 13
+       shared lib) so the Sprint 12 tests stay green after the
+       provider route refactor.
+
+Files removed (renamed via git mv, no orphans):
+  - apps/mobile/components/export/ExportButton.tsx
+       Renamed to ExportPDFButton.tsx; the old base64 + Linking
+       fallback replaced by expo-file-system + expo-sharing.
+
+Test count: 268 passing / 0 failing
+  -- Sprint 12 baseline: 246 tests
+  -- Sprint 13 added: 22 tests (numbered 60-81 per established
+     convention).
+
+Sprint 8 lib/export/generate-pdf.ts is still in the tree because it
+is the implementation behind the older POST /api/export/pdf flow that
+Sprint 8 wired into demo seed paths and biomarker/biomarker-trial
+matchers. It is now only reached through code-paths I did not touch
+(scripts, demo data). A follow-up cleanup sprint can collapse the
+two PDF generators if desired; not in Sprint 13 scope.
+
+DECISION REQUIRED (carries from earlier sprints):
+  1. Drug interaction API -- RxNorm vs DrugBank vs OpenFDA.
+  2. es-MX medical content reviewer -- hire or identify before
+     non-founder users see Spanish output.
+  3. Michael equity conversation -- milestone-vested terms, in person.
+
+URGENT (carries from master prompt OPEN ITEMS):
+  - 83(b) election: mail to IRS by May 22, 2026. 24 days from today.
+
+Preview URL: (auto-generated by Vercel on push to sprint-13-pdf-export)
+To merge to production: review preview, then merge sprint-13-pdf-export
+to main from PowerShell. No DB migrations required for this sprint.
+After merge, in apps/mobile run:
+  npx expo install expo-file-system expo-sharing
+before next mobile EAS build.
+
+---
+
+[2026-04-28] TASK STARTED: Sprint 13 -- Hospital-Grade PDF Export
+Branch: sprint-13-pdf-export
+Baseline (off main HEAD 01d77de):
+  npx tsc --noEmit -> 0 errors
+  npx vitest run -> 246 / 246 passing (72 test files)
+Goal: physician-readable structured PDF export, web + mobile, audit-
+logged, role-gated, performant (under 3s render). Target 268+ tests.
+
+---
+
 [2026-04-28] SPRINT 12 COMPLETE -- PROVIDER PORTAL (web + mobile)
 Branch: sprint-12-provider-portal
 Status: COMPLETE -- ready for Samira's review and merge to main

@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase-client";
-import { ExportButton } from "@/components/export/ExportButton";
+import { ExportPDFButton } from "@/components/export/ExportPDFButton";
 
 type Patient = { id: string; name: string; custom_diagnosis: string | null };
 type MedRow = { id: string; name: string; dose: string | null; unit: string | null; frequency: string | null };
@@ -80,7 +80,7 @@ export default function PatientDashboardMobile() {
           >
             <Text style={styles.emergencyButtonText}>Emergency card</Text>
           </TouchableOpacity>
-          <ExportButton patientId={patient.id} />
+          <ExportPDFButton patientId={patient.id} callerRole="caregiver" />
         </View>
       </View>
 

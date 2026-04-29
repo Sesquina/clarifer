@@ -25,6 +25,7 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { supabase } from "@/lib/supabase-client";
 import { colors, radius, spacing, touchTarget, typography } from "@/lib/design-tokens";
+import { ExportPDFButton } from "@/components/export/ExportPDFButton";
 
 interface Patient {
   id: string;
@@ -359,44 +360,17 @@ function NotesSection({
 }
 
 function ExportSection({ patientId }: { patientId: string }) {
-  const [generating, setGenerating] = useState(false);
-
-  async function generate() {
-    setGenerating(true);
-    try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-      const res = await fetch(`${API_BASE}/api/provider/patients/${patientId}/export`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) {
-        Alert.alert("", "We could not generate the report.");
-        return;
-      }
-      // Native share sheet for the PDF blob is wired in the native share
-      // sprint; for now confirm success and rely on the web download path.
-      Alert.alert("PDF ready", "The clinical report has been generated.");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   return (
     <View style={styles.card}>
       <Text style={styles.cardHeading}>Generate clinical PDF report</Text>
       <Text style={styles.muted}>
-        Includes patient demographics, active medications, last 30 days of symptom severity,
-        recent documents, upcoming appointments, and biomarkers.
+        Includes patient demographics, bilingual disclaimer, emergency information,
+        active medications, last 30 days of symptom severity, recent documents,
+        upcoming appointments, care team, and your provider notes.
       </Text>
-      <TouchableOpacity
-        style={[styles.saveButton, styles.exportButton, generating && styles.saveButtonDisabled]}
-        onPress={generate}
-        disabled={generating}
-        accessibilityLabel="generate pdf report"
-      >
-        <Text style={styles.saveButtonText}>{generating ? "Generating..." : "Generate PDF report"}</Text>
-      </TouchableOpacity>
+      <View style={{ marginTop: spacing.sm }}>
+        <ExportPDFButton patientId={patientId} callerRole="provider" label="Generate PDF report" />
+      </View>
     </View>
   );
 }
@@ -498,7 +472,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: spacing.sm,
   },
-  exportButton: { backgroundColor: colors.accent },
   saveButtonDisabled: { opacity: 0.5 },
   saveButtonText: { color: colors.white, fontSize: 14, fontWeight: typography.weightSemibold },
 });

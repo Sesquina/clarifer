@@ -706,6 +706,38 @@ Sprint 25: Performance optimization and load testing
 
 ## SECTION 11 -- CURRENT SPRINT
 
+**SPRINT 13 COMPLETE: Hospital-Grade PDF Export**
+**Branch: sprint-13-pdf-export**
+**Status: Ready for Samira's review and merge to main (April 28, 2026)**
+
+### Sprint 13 Summary
+- lib/pdf/hospital-grade-export.tsx -- @react-pdf/renderer document
+  (single Page with wrap; 10 logical sections: header, EN+ES
+  disclaimer, emergency info, current medications, symptom log,
+  recent appointments, documents, care team, provider notes when
+  caller is a provider, footer on every page with page numbers).
+- lib/pdf/fetch-export-data.ts -- server-side aggregator; cross-org
+  patient returns null (route translates to 404); partial-empty on
+  any per-table error so the PDF still renders.
+- POST /api/export/pdf -- caregiver/admin only (provider gets 403;
+  providers use their own route at
+  /api/provider/patients/[id]/export). audit_log action
+  CAREGIVER_EXPORT. PDF streamed with Cache-Control no-store.
+- Provider export route refactored to share the same hospital-grade
+  PDF + data layer. audit_log action PROVIDER_EXPORT preserved.
+- Web: components/export/ExportPDFButton.tsx wired into the
+  caregiver dashboard header (next to Emergency card) and the
+  provider patient detail Tab 5 (replacing the inline button).
+- Mobile: legacy apps/mobile/components/export/ExportButton.tsx
+  renamed/replaced with ExportPDFButton.tsx using expo-file-system
+  + expo-sharing for native share sheet (web fallback preserved).
+- Performance: PDF renders under 3 seconds for a typical bundle
+  (30 symptom logs + 10 meds + 5 docs + 5 appts) -- enforced by
+  test 67 against the real renderer.
+- Tests: 22 new across 4 files. Suite total 268 / 268 passing.
+
+---
+
 **SPRINT 12 COMPLETE: Provider Portal**
 **Branch: sprint-12-provider-portal**
 **Status: Ready for Samira's review and merge to main (April 28, 2026)**

@@ -1,33 +1,28 @@
 /**
  * app/api/provider/patients/[id]/export/route.ts
- * Generate a structured PDF export for a provider.
- * Tables: patients, symptom_logs, medications, appointments, documents,
- *         care_team, biomarkers, care_relationships, users (read),
- *         provider_notes, audit_log (write)
- * Auth: provider role only
- * Sprint: Sprint 12 -- Provider Portal
+ * Provider-facing hospital-grade PDF export endpoint.
+ * Tables: reads via fetchExportData (patients, medications,
+ *         symptom_logs, documents, appointments, care_team,
+ *         provider_notes, organizations, users) +
+ *         care_relationships (auth gate); audit_log (write)
+ * Auth: provider role only (caregiver/patient/admin -> 403). Provider
+ *       must have a care_relationships row for this patient or the
+ *       request returns 404.
+ * Sprint: Sprint 12 (initial) / Sprint 13 (refactored to shared
+ *         hospital-grade PDF lib)
  *
- * HIPAA: Full PHI export. Org-scoped. audit_log written with action
- * PROVIDER_EXPORT. Reuses Sprint 8 generatePatientPdf() so the
- * footer "care coordination tool, not a medical record" is preserved
- * on every page.
+ * HIPAA: Full PHI export. Org-scoped. Provider notes are included
+ * for the requesting provider only (filtered inside fetchExportData
+ * by callerRole = provider). audit_log written with action
+ * PROVIDER_EXPORT. PDF streamed directly; never written to disk.
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
-import {
-  generatePatientPdf,
-  type PdfBundle,
-  type PdfMedication,
-  type PdfSymptomSummary,
-  type PdfDocument,
-  type PdfAppointment,
-  type PdfBiomarker,
-} from "@/lib/export/generate-pdf";
+import { fetchExportData } from "@/lib/pdf/fetch-export-data";
+import { renderHospitalGradePdf } from "@/lib/pdf/hospital-grade-export";
 
 export const runtime = "nodejs";
-// PDF rendering is CPU-bound; bump the route timeout window so the
-// 3-second budget the test asserts has headroom.
 export const maxDuration = 30;
 
 const ALLOWED_ROLES = ["provider"];
@@ -38,6 +33,11 @@ function forensicColumns(request: Request) {
     user_agent: request.headers.get("user-agent"),
     status: "success",
   };
+}
+
+function safeFilename(name: string | null | undefined): string {
+  const trimmed = (name ?? "patient").trim().toLowerCase();
+  return trimmed.replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "patient";
 }
 
 export async function POST(
@@ -54,7 +54,7 @@ export async function POST(
 
   const { data: userRecord } = await supabase
     .from("users")
-    .select("role, organization_id, full_name")
+    .select("role, organization_id")
     .eq("id", user.id)
     .single();
   if (!userRecord?.organization_id) {
@@ -65,7 +65,8 @@ export async function POST(
   }
   const orgId = userRecord.organization_id;
 
-  // Provider must have a care_relationships row for this patient.
+  // Provider authorization gate: must have a care_relationships row
+  // for this patient. Cross-tenant returns 404 (do not leak).
   const { data: relationship } = await supabase
     .from("care_relationships")
     .select("patient_id")
@@ -77,115 +78,19 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("*")
-    .eq("id", patientId)
-    .eq("organization_id", orgId)
-    .single();
-  if (!patient) {
+  const data = await fetchExportData({
+    supabase,
+    patientId,
+    orgId,
+    callerId: user.id,
+    callerRole: "provider",
+    dateRangeDays: 30,
+  });
+  if (!data) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  const [meds, syms, docs, appts, biomarkers] = await Promise.all([
-    supabase
-      .from("medications")
-      .select("name, dose, unit, frequency, start_date")
-      .eq("patient_id", patientId)
-      .eq("is_active", true)
-      .order("name", { ascending: true }),
-    supabase
-      .from("symptom_logs")
-      .select("created_at, overall_severity")
-      .eq("patient_id", patientId)
-      .gte("created_at", since30)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("documents")
-      .select("title, summary, created_at")
-      .eq("patient_id", patientId)
-      .eq("organization_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("appointments")
-      .select("title, datetime, provider_name, location, appointment_type")
-      .eq("patient_id", patientId)
-      .eq("organization_id", orgId)
-      .gte("datetime", new Date().toISOString())
-      .order("datetime", { ascending: true })
-      .limit(3),
-    supabase
-      .from("biomarkers")
-      .select("biomarker_type, status, value, tested_date, notes")
-      .eq("patient_id", patientId)
-      .eq("organization_id", orgId)
-      .order("tested_date", { ascending: false })
-      .limit(20),
-  ]);
-
-  const medications: PdfMedication[] = (meds.data ?? []).map((m) => ({
-    name: m.name ?? "",
-    dose: m.dose ?? null,
-    unit: m.unit ?? null,
-    frequency: m.frequency ?? null,
-    start_date: m.start_date ?? null,
-  }));
-
-  const symptomSummary: PdfSymptomSummary[] = (syms.data ?? [])
-    .map((s) => ({
-      day: (s.created_at ?? "").slice(0, 10),
-      severity: typeof s.overall_severity === "number" ? s.overall_severity : 0,
-    }))
-    .filter((s) => s.day.length === 10);
-
-  const pdfDocuments: PdfDocument[] = (docs.data ?? []).map((d) => ({
-    title: d.title ?? "Document",
-    summary: d.summary ?? null,
-    uploaded_at: d.created_at ?? null,
-  }));
-
-  const pdfAppointments: PdfAppointment[] = (appts.data ?? []).map((a) => ({
-    title: a.title ?? "Appointment",
-    datetime: a.datetime ?? "",
-    provider_name: a.provider_name ?? null,
-    location: a.location ?? null,
-    appointment_type: a.appointment_type ?? null,
-  }));
-
-  const pdfBiomarkers: PdfBiomarker[] = (biomarkers.data ?? []).map((b) => ({
-    biomarker_type: b.biomarker_type,
-    status: b.status,
-    value: b.value ?? null,
-    tested_date: b.tested_date ?? null,
-    notes: b.notes ?? null,
-  }));
-
-  const bundle: PdfBundle = {
-    patient: {
-      id: patient.id,
-      name: patient.name ?? "Patient",
-      dob: patient.dob ?? null,
-      custom_diagnosis: patient.custom_diagnosis ?? null,
-      diagnosis_date: patient.diagnosis_date ?? null,
-      emergency_contact_name: patient.emergency_contact_name ?? null,
-      emergency_contact_phone: patient.emergency_contact_phone ?? null,
-    },
-    caregiverName: "",
-    primaryOncologist: userRecord.full_name ?? null,
-    biomarkers: pdfBiomarkers,
-    medications,
-    symptomSummary,
-    dpdFluoropyrimidine: false,
-    documents: pdfDocuments,
-    careTeam: [],
-    appointments: pdfAppointments,
-    generatedAt: new Date().toISOString(),
-  };
-
-  const pdfBytes = await generatePatientPdf(bundle);
+  const pdfBytes = await renderHospitalGradePdf(data);
 
   await supabase
     .from("audit_log")
@@ -200,11 +105,16 @@ export async function POST(
     })
     .then(() => undefined, () => undefined);
 
+  const filename = `clarifer-${safeFilename(data.patient.name)}-${new Date()
+    .toISOString()
+    .slice(0, 10)}.pdf`;
+
   return new Response(new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" }), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="patient-${patientId}.pdf"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
     },
   });
 }

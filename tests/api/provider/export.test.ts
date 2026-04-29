@@ -15,8 +15,24 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/cors", () => ({ checkOrigin: vi.fn().mockReturnValue(null) }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
-vi.mock("@/lib/export/generate-pdf", () => ({
-  generatePatientPdf: vi.fn().mockResolvedValue(new Uint8Array([0x25, 0x50, 0x44, 0x46])),
+// Sprint 13: route refactored to use the shared hospital-grade lib.
+vi.mock("@/lib/pdf/hospital-grade-export", () => ({
+  renderHospitalGradePdf: vi.fn().mockResolvedValue(new Uint8Array([0x25, 0x50, 0x44, 0x46])),
+}));
+vi.mock("@/lib/pdf/fetch-export-data", () => ({
+  fetchExportData: vi.fn().mockResolvedValue({
+    patient: { id: "pat-1", name: "Carlos", organization_id: "org-A" },
+    medications: [],
+    symptomLogs: [],
+    documents: [],
+    appointments: [],
+    careTeam: [],
+    providerNotes: [],
+    generatedBy: "Dr. Torres",
+    generatedAt: new Date().toISOString(),
+    dateRangeDays: 30,
+    orgName: "Cleveland Clinic",
+  }),
 }));
 
 const auditInserts: Array<Record<string, unknown>> = [];
