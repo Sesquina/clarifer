@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Header } from "@/components/layout/header";
+import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-full flex-col">
-      <Header userName={profile?.full_name} />
+      <AppHeader userName={profile?.full_name} />
       <div className="flex-1">{children}</div>
       <BottomNav />
     </div>

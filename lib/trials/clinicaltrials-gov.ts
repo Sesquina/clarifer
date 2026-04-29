@@ -41,7 +41,7 @@ export async function searchTrials(opts: TrialSearchOptions): Promise<Normalized
   const params = new URLSearchParams({
     "query.cond": condition,
     pageSize: String(Math.min(Math.max(opts.limit ?? 10, 1), 50)),
-    "filter.overallStatus": "RECRUITING",
+    "filter.overallStatus": "RECRUITING,NOT_YET_RECRUITING,ENROLLING_BY_INVITATION,ACTIVE_NOT_RECRUITING",
     format: "json",
   });
 

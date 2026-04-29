@@ -166,7 +166,7 @@ ${patient.condition_templates?.ai_context || ""}`
       async start(controller) {
         try {
           const response = await anthropic.messages.create({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-sonnet-4-5",
             max_tokens: 1024,
             system: systemBlocks,
             messages: sanitizedMessages,
@@ -182,8 +182,9 @@ ${patient.condition_templates?.ai_context || ""}`
             }
           }
           controller.close();
-        } catch {
-          controller.enqueue(encoder.encode("Sorry, something went wrong."));
+        } catch (error) {
+          console.error('[chat/route] stream error:', error);
+          controller.enqueue(encoder.encode("Sorry, something went wrong. Please try again."));
           controller.close();
         }
       },
