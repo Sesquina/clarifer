@@ -71,8 +71,14 @@ export async function POST(request: Request) {
 
   const organizationId = userRecord.organization_id;
 
-  const { success } = await familyUpdateStreamLimiter.limit(user.id);
-  if (!success) {
+  let rateLimitPassed = true;
+  try {
+    const { success } = await familyUpdateStreamLimiter.limit(user.id);
+    rateLimitPassed = success;
+  } catch {
+    rateLimitPassed = true;
+  }
+  if (!rateLimitPassed) {
     return NextResponse.json(
       { error: "Too many requests. Please wait before trying again.", code: "RATE_LIMITED", status: 429 },
       { status: 429 }
