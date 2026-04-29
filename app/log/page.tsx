@@ -42,6 +42,24 @@ export default function LogPage() {
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // symptom_logs.organization_id is NOT NULL (Sprint 3 multi-tenancy).
+    // Fetch the caller's org from public.users; if missing, fail
+    // gracefully instead of triggering a DB constraint error.
+    const { data: me } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    const organizationId = me?.organization_id ?? null;
+    if (!organizationId) {
+      setLoading(false);
+      return;
+    }
 
     // Get AI summary
     let aiSummary: string | null = null;
@@ -61,7 +79,8 @@ export default function LogPage() {
 
     await supabase.from("symptom_logs").insert({
       patient_id: patientId,
-      logged_by: user?.id || null,
+      logged_by: user.id,
+      organization_id: organizationId,
       symptoms: symptomList,
       overall_severity: severity,
       ai_summary: aiSummary,

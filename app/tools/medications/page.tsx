@@ -61,9 +61,25 @@ export default function MedicationsPage() {
   async function handleAdd() {
     if (!patientId || !name.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    // medications.organization_id is NOT NULL (Sprint 3 multi-tenancy).
+    // Fetch the caller's org from public.users; if missing, abort the
+    // insert instead of triggering a DB constraint error.
+    const { data: me } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    const organizationId = me?.organization_id ?? null;
+    if (!organizationId) return;
     const { data } = await supabase.from("medications").insert({
-      patient_id: patientId, name, dose: dose || null,
-      frequency: frequency || null, is_active: true, added_by: user?.id || null,
+      patient_id: patientId,
+      organization_id: organizationId,
+      name,
+      dose: dose || null,
+      frequency: frequency || null,
+      is_active: true,
+      added_by: user.id,
     }).select().single();
     if (data) setMedications((prev) => [data, ...prev]);
     setShowAdd(false);

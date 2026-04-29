@@ -47,12 +47,32 @@ export default function OnboardingPage() {
         full_name: user.user_metadata?.full_name || null,
       }, { onConflict: "id" });
 
+      // patients.organization_id is NOT NULL (Sprint 3 multi-tenancy
+      // migration). Fetch the caller's org from public.users and stamp
+      // it on the insert. If the user has no org assigned yet, surface
+      // a clear error rather than letting the DB reject the insert
+      // with a 403 that the caregiver cannot interpret.
+      const { data: me } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+      const organizationId = me?.organization_id ?? null;
+      if (!organizationId) {
+        setError(
+          "Your account is not connected to an organization yet. Please contact support so we can finish setting you up."
+        );
+        setLoading(false);
+        return;
+      }
+
       const { error: insertError } = await supabase.from("patients").insert({
         name,
         dob: dob || null,
         sex: sex || null,
         custom_diagnosis: diagnosis || null,
         diagnosis_date: diagnosisDate || null,
+        organization_id: organizationId,
         created_by: user.id,
         status: "active",
       });

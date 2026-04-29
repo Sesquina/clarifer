@@ -45,9 +45,28 @@ export default function CareTeamPage() {
   async function handleAdd() {
     if (!patientId || !name.trim()) return;
     setSaving(true);
+    // care_team.organization_id is NOT NULL (Sprint 10 directory
+    // migration). Fetch the caller's org from public.users so the
+    // insert is org-scoped end-to-end.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setSaving(false);
+      return;
+    }
+    const { data: me } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    const organizationId = me?.organization_id ?? null;
+    if (!organizationId) {
+      setSaving(false);
+      return;
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any).from("care_team").insert({
       patient_id: patientId,
+      organization_id: organizationId,
       name: name.trim(),
       role: role || null,
       phone: phone || null,
