@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test('demo login reaches home with patient loaded', async ({ page }) => {
   // Step 1: Load login page
   await page.goto('https://clarifer.com/login');
