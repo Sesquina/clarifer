@@ -1,3 +1,116 @@
+[2026-04-28] HOTFIX -- onboarding org_id + auth callback + role picker + Sprint 13 mobile deps
+Branch: hotfix-onboarding-org-id
+Status: COMPLETE -- ready for Samira's review and merge to main
+
+This branch carries two commits:
+  c8af61d  fix: pass organization_id in all patient and related table INSERTs
+  (this)   fix(auth): trigger-only user creation, callback redirects,
+           role picker in onboarding, mobile deps
+
+Verification:
+  npx tsc --noEmit -> 0 errors
+  npx vitest run -> 268 / 268 passing (76 test files, unchanged from
+    main; existing suite mocks the supabase client and was not
+    asserting the changed behavior).
+
+Fixes in this commit:
+
+1. Removed duplicate public.users insert from app/signup/page.tsx
+   The handle_new_user() database trigger now creates public.users
+   (and the user's organization) on every signup path -- email/
+   password, Google OAuth, Apple Sign In. The client-side insert
+   was racing the trigger and producing the org_id=null state that
+   broke onboarding. Signup now only calls supabase.auth.signUp()
+   and shows a confirm-email screen on success. Errors mapped to
+   one of two friendly messages -- raw Supabase error strings are
+   never surfaced.
+
+2. Fixed auth callback redirects in app/auth/callback/route.ts
+   - Adds state-based routing after a successful code exchange:
+     no users row or organization_id null -> /onboarding
+     has org but no patients              -> /onboarding
+     has org and at least one patient     -> /home
+     auth error / no code / exception     -> /login?error=auth_failed
+   - Honors ?next=/internal as an explicit admin deep-link override
+     so the command center keeps working.
+   - Note: the spec listed "/dashboard" as the returning-user
+     target, but no /dashboard route exists in this codebase. /home
+     is the actual returning-user landing (it itself redirects to
+     /onboarding when no patient is found, so the chain is
+     consistent end-to-end). Flagged for Samira: if /dashboard is
+     planned, swap the target.
+
+3. Added role card picker to onboarding step 1
+   - Three visual cards (caregiver / patient / provider) with
+     selected-state border (#2C5F4A) and pale-sage fill (#F0F5F2),
+     unselected-state #E8E2D9 / #FFFFFF.
+     Card border radius 16px, min height 64px, 48px+ touch target.
+     Default selected: caregiver.
+   - On submit (Step 2 "Get started"), the role chosen on Step 1
+     is written to public.users.role with .update() before the
+     patient INSERT. This respects a different choice from the
+     trigger's default of "caregiver". Failure here is non-fatal
+     so a user is never blocked from creating a patient by a role
+     update hiccup.
+
+4. Restored Sprint 13 mobile deps from stash
+   - apps/mobile/app.json
+   - apps/mobile/package.json (adds expo-file-system ~55.0.17
+     and expo-sharing ~55.0.18 -- the Sprint 13 MANUAL REQUIRED
+     items that Samira had run npx expo install for)
+   - apps/mobile/package-lock.json
+
+Files changed in this commit (6):
+  - app/signup/page.tsx
+       Removed the supabase.from("users").insert() block. Removed
+       the no-confirmation router.push fallback (the trigger handles
+       both cases now; we always show the email-sent screen). Updated
+       error mapping to two friendly outcomes. Updated success copy
+       to "Check your email to confirm your account. Once confirmed
+       you will be taken to setup."
+  - app/auth/callback/route.ts
+       Added routePostAuth() helper that reads users.organization_id
+       and patients to choose /onboarding vs /home. GET handler now
+       routes by state, with /internal admin override preserved.
+       resolveCallbackRedirect() kept as the open-redirect filter so
+       the existing test stays green.
+  - app/onboarding/page.tsx
+       Added Role type ("caregiver" | "patient" | "provider"), a
+       role state field defaulting to "caregiver", a RolePicker
+       component below the export with three radio-role cards, and
+       a users.update({ role }) call before the patient INSERT.
+       Step 1 heading updated from "Patient information" to "Tell
+       us about you" to match the new content.
+  - apps/mobile/app.json
+       Restored from stash (Samira's local config edits).
+  - apps/mobile/package.json
+       Restored expo-file-system + expo-sharing deps.
+  - apps/mobile/package-lock.json
+       Restored matching lockfile.
+
+DISCOVERED ISSUES (not addressed in this hotfix):
+  1. app/api/auth/callback/route.ts is a parallel callback route
+     left over from an earlier iteration; no caller hits it (login
+     pages and tests reference /auth/callback only). Safe to delete
+     in a separate cleanup commit.
+  2. The /dashboard target referenced in the hotfix spec does not
+     exist as a route. /home is what's wired today; raising for
+     Samira to confirm.
+
+DECISION REQUIRED items (carry from earlier):
+  1. Drug interaction API choice.
+  2. es-MX medical content reviewer.
+  3. Michael equity conversation.
+
+URGENT: 83(b) election to IRS by May 22, 2026 (24 days out).
+
+To merge to production: review preview, then merge
+hotfix-onboarding-org-id to main from PowerShell. No DB migrations
+required (the handle_new_user() trigger this hotfix relies on is
+expected to already be live in production -- confirm before merge).
+
+---
+
 [2026-04-28] SPRINT 13 COMPLETE -- HOSPITAL-GRADE PDF EXPORT (web + mobile)
 Branch: sprint-13-pdf-export
 Status: COMPLETE -- ready for Samira's review and merge to main

@@ -21,25 +21,18 @@ const dmSans = DM_Sans({
 
 function friendlySignupError(msg: string): string {
   const lower = msg.toLowerCase();
-  if (lower.includes("already registered") || lower.includes("already been registered") || lower.includes("duplicate") || lower.includes("unique constraint")) {
+  if (
+    lower.includes("already registered") ||
+    lower.includes("already been registered") ||
+    lower.includes("user already") ||
+    lower.includes("duplicate") ||
+    lower.includes("unique constraint")
+  ) {
     return "An account with this email already exists. Try signing in instead.";
   }
-  if (lower.includes("invalid email") || lower.includes("valid email")) {
-    return "Please enter a valid email address.";
-  }
-  if (lower.includes("password") && (lower.includes("short") || lower.includes("least") || lower.includes("characters") || lower.includes("weak"))) {
-    return "Your password needs to be at least 8 characters.";
-  }
-  if (lower.includes("rate limit") || lower.includes("too many")) {
-    return "Too many attempts. Please wait a minute and try again.";
-  }
-  if (lower.includes("network") || lower.includes("fetch") || lower.includes("failed to fetch") || lower.includes("load failed")) {
-    return "Could not connect. Please check your internet connection and try again.";
-  }
-  if (lower.includes("signup is disabled") || lower.includes("signups not allowed")) {
-    return "Sign-ups are temporarily unavailable. Please try again later.";
-  }
-  return msg;
+  // Per spec: never surface raw Supabase error text. Anything we have
+  // not explicitly classified above falls through to a generic message.
+  return "Something went wrong. Please try again.";
 }
 
 function validatePassword(pw: string): string | null {
@@ -93,28 +86,24 @@ export default function SignupPage() {
         return;
       }
 
-      // Check if email confirmation is required
-      if (data.user && !data.user.email_confirmed_at && data.session === null) {
+      // public.users + organization rows are created by the
+      // handle_new_user() database trigger on every signup path
+      // (email/password, Google OAuth, Apple Sign In). Do not insert
+      // them client-side -- the trigger is the single source of truth.
+      // Always show the confirm-email screen; the auth callback
+      // routes the user to /onboarding after they verify.
+      if (data.user) {
         setEmailSent(true);
         setLoading(false);
         return;
       }
 
-      // Insert into public.users table
-      if (data.user) {
-        await supabase.from("users").insert({
-          id: data.user.id,
-          email: email,
-          full_name: fullName,
-          terms_accepted_at: new Date().toISOString(),
-        });
-      }
-
-      router.push("/onboarding");
-      router.refresh();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      setError(friendlySignupError(msg));
+      // No user returned for some non-error reason -- surface the
+      // generic message rather than silently navigating.
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    } catch {
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
@@ -146,7 +135,7 @@ export default function SignupPage() {
             Check your email
           </h1>
           <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#6B6B6B", marginTop: 12, lineHeight: 1.6 }}>
-            Please check your email inbox to confirm your account before signing in.
+            Check your email to confirm your account. Once confirmed you will be taken to setup.
           </p>
           <Link
             href="/login"

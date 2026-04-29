@@ -16,8 +16,11 @@ function friendlyOnboardingError(msg: string): string {
   return msg;
 }
 
+type Role = "caregiver" | "patient" | "provider";
+
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
+  const [role, setRole] = useState<Role>("caregiver");
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [sex, setSex] = useState("");
@@ -65,6 +68,13 @@ export default function OnboardingPage() {
         setLoading(false);
         return;
       }
+
+      // Persist the role chosen on Step 1 (the database trigger
+      // defaults new users to caregiver; this respects a different
+      // choice). Errors here are non-fatal -- we still create the
+      // patient so the caregiver is not blocked by a role-update
+      // hiccup.
+      await supabase.from("users").update({ role }).eq("id", user.id);
 
       const { error: insertError } = await supabase.from("patients").insert({
         name,
@@ -157,16 +167,24 @@ export default function OnboardingPage() {
               <h2
                 style={{ fontFamily: "var(--font-playfair)", fontSize: 20, color: "#1A1A1A" }}
               >
-                Patient information
+                Tell us about you
               </h2>
               <p
                 className="mt-1"
                 style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#6B6B6B" }}
               >
-                Who are you managing care for?
+                Choose the description that fits best.
               </p>
 
               <div className="mt-5 space-y-4">
+                <RolePicker selected={role} onSelect={setRole} />
+
+                <h3
+                  style={{ fontFamily: "var(--font-playfair)", fontSize: 18, color: "#1A1A1A", marginTop: 24 }}
+                >
+                  Patient information
+                </h3>
+
                 <div>
                   <label
                     htmlFor="name"
@@ -358,6 +376,112 @@ export default function OnboardingPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+interface RoleOption {
+  value: Role;
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+const ROLE_OPTIONS: RoleOption[] = [
+  {
+    value: "caregiver",
+    title: "I am a caregiver",
+    subtitle: "I care for a family member or loved one",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+    ),
+  },
+  {
+    value: "patient",
+    title: "I am managing my own care",
+    subtitle: "I have a condition and track my own health",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+      </svg>
+    ),
+  },
+  {
+    value: "provider",
+    title: "I am a healthcare provider",
+    subtitle: "I support patients in a clinical setting",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 3h4v6h6v4h-6v6h-4v-6H4V9h6V3z" />
+      </svg>
+    ),
+  },
+];
+
+function RolePicker({
+  selected,
+  onSelect,
+}: {
+  selected: Role;
+  onSelect: (r: Role) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Choose your role"
+      style={{ display: "flex", flexDirection: "column", gap: 12 }}
+    >
+      {ROLE_OPTIONS.map((opt) => {
+        const isSelected = selected === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            aria-label={opt.title}
+            onClick={() => onSelect(opt.value)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              minHeight: 64,
+              padding: "12px 16px",
+              borderRadius: 16,
+              border: isSelected ? "2px solid #2C5F4A" : "1.5px solid #E8E2D9",
+              backgroundColor: isSelected ? "#F0F5F2" : "#FFFFFF",
+              cursor: "pointer",
+              textAlign: "left",
+              fontFamily: "var(--font-dm-sans)",
+              transition: "background-color 120ms, border-color 120ms",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: isSelected ? "#FFFFFF" : "#F0F5F2",
+                color: "#2C5F4A",
+                flexShrink: 0,
+              }}
+            >
+              {opt.icon}
+            </span>
+            <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+              <span style={{ fontWeight: 600, fontSize: 16, color: "#1A1A1A" }}>{opt.title}</span>
+              <span style={{ fontWeight: 400, fontSize: 13, color: "#6B6B6B" }}>{opt.subtitle}</span>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
