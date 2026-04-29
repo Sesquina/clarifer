@@ -706,6 +706,37 @@ Sprint 25: Performance optimization and load testing
 
 ## SECTION 11 -- CURRENT SPRINT
 
+**SPRINT 12 COMPLETE: Provider Portal**
+**Branch: sprint-12-provider-portal**
+**Status: Ready for Samira's review and merge to main (April 28, 2026)**
+
+### Sprint 12 Summary
+- Migration 20260428000006_provider_portal.sql adds provider_notes
+  table (with org-isolation RLS) and extends care_relationships with
+  organization_id / access_level / granted_at / granted_by columns.
+- Routes: GET /api/provider/patients (list with alert sort),
+  GET /api/provider/patients/[id] (full record),
+  GET/POST /api/provider/patients/[id]/notes,
+  PATCH/DELETE /api/provider/patients/[id]/notes/[noteId],
+  POST /api/provider/patients/[id]/export (PDF binary).
+- Provider role isolation: 401/403/404 paths covered; cross-tenant
+  patient access returns 404 (do not leak tenant existence).
+- audit_log written on every provider read (PROVIDER_LIST,
+  PROVIDER_VIEW, SELECT) and every write (INSERT, UPDATE, DELETE,
+  PROVIDER_EXPORT) with forensic columns (ip, user_agent, status).
+- Web: app/(app)/provider/page.tsx (patient list with search +
+  empty state), app/(app)/provider/patients/[id]/page.tsx (tabbed
+  detail: Overview, Symptom trends, Documents, Notes, Export). All
+  styles use CSS variables; touch targets >= 48px.
+- Mobile: apps/mobile/app/(app)/provider/index.tsx (FlatList) and
+  apps/mobile/app/(app)/provider/patients/[id].tsx (tabbed detail).
+  Design tokens only; no hex strings.
+- PDF export reuses Sprint 8's generatePatientPdf() so the "care
+  coordination tool, not a medical record" footer is preserved.
+- Tests: 25 new across 6 files. Suite total 246 / 246 passing.
+
+---
+
 **SPRINT 8 COMPLETE: CCF Demo Environment + 10 Integration Features**
 **Status: ✅ COMPLETE (April 23, 2026)**
 **CCF Demo Deadline: June 17, 2026**

@@ -442,6 +442,8 @@ export type Database = {
           access_level: string | null
           can_export: boolean | null
           can_log: boolean | null
+          granted_at: string | null
+          granted_by: string | null
           id: string
           invited_at: string | null
           invited_by: string | null
@@ -457,6 +459,8 @@ export type Database = {
           access_level?: string | null
           can_export?: boolean | null
           can_log?: boolean | null
+          granted_at?: string | null
+          granted_by?: string | null
           id?: string
           invited_at?: string | null
           invited_by?: string | null
@@ -472,6 +476,8 @@ export type Database = {
           access_level?: string | null
           can_export?: boolean | null
           can_log?: boolean | null
+          granted_at?: string | null
+          granted_by?: string | null
           id?: string
           invited_at?: string | null
           invited_by?: string | null
@@ -1155,6 +1161,61 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_notes: {
+        Row: {
+          id: string
+          patient_id: string
+          provider_id: string
+          organization_id: string
+          note_text: string
+          note_type: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          patient_id: string
+          provider_id: string
+          organization_id: string
+          note_text: string
+          note_type?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          patient_id?: string
+          provider_id?: string
+          organization_id?: string
+          note_text?: string
+          note_type?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_notes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_notes_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

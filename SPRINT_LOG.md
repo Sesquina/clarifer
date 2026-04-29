@@ -1,3 +1,134 @@
+[2026-04-28] SPRINT 12 COMPLETE -- PROVIDER PORTAL (web + mobile)
+Branch: sprint-12-provider-portal
+Status: COMPLETE -- ready for Samira's review and merge to main
+
+Verification (final):
+  npx vitest run -> 246 / 246 passing (72 test files)
+  npx tsc --noEmit -> 0 errors
+  npm audit --audit-level=high -> 0 high/critical (3 moderate carried
+    forward; postcss chain via next + @sentry/nextjs).
+
+Sprint scope (per docs/MASTER_SESSION_PROMPT.md Sprint 12 spec):
+  - Provider role isolation enforced at the API layer (401 / 403 /
+    404, cross-tenant returns 404 to avoid leaking tenant existence).
+  - Patient list scoped via care_relationships.user_id; sorted with
+    active alerts first, then alphabetical.
+  - Per-patient detail returns 30-day symptom logs, active
+    medications, next 3 appointments, last 5 documents, active
+    alerts, and provider's own notes.
+  - Provider notes are PRIVATE per provider: GET filters by
+    provider_id = caller; PATCH/DELETE require provider_id = caller
+    on top of the org-isolation RLS policy.
+  - PDF export reuses Sprint 8's generatePatientPdf() so the "care
+    coordination tool, not a medical record" footer is preserved
+    on every page. Returns application/pdf binary.
+
+MIGRATION REQUIRED (Samira runs `npx supabase db push`):
+  1. supabase/migrations/20260428000006_provider_portal.sql
+       -- ALTER TABLE care_relationships ADD organization_id /
+          access_level / granted_at / granted_by (idempotent
+          ADD COLUMN IF NOT EXISTS).
+       -- CREATE TABLE provider_notes (id, patient_id, provider_id,
+          organization_id, note_text, note_type, created_at,
+          updated_at) with FK refs.
+       -- ALTER TABLE provider_notes ENABLE ROW LEVEL SECURITY +
+          policy provider_notes_org_isolation (visible to users in
+          same org). The route layer narrows further to "this
+          provider's own notes" so providers cannot see other
+          providers' clinical notes.
+       -- Two indexes: idx_provider_notes_patient (patient_id,
+          created_at DESC) and idx_provider_notes_provider
+          (provider_id).
+
+Files delivered (new):
+  Migration:
+    - supabase/migrations/20260428000006_provider_portal.sql
+  Routes:
+    - app/api/provider/patients/route.ts                 (GET list)
+    - app/api/provider/patients/[id]/route.ts            (GET detail)
+    - app/api/provider/patients/[id]/notes/route.ts      (GET+POST)
+    - app/api/provider/patients/[id]/notes/[noteId]/route.ts (PATCH+DELETE)
+    - app/api/provider/patients/[id]/export/route.ts     (POST PDF)
+  Web:
+    - app/(app)/provider/page.tsx                        (patient list)
+    - app/(app)/provider/patients/[id]/page.tsx          (tabbed detail)
+  Mobile:
+    - apps/mobile/app/(app)/provider/index.tsx           (patient list)
+    - apps/mobile/app/(app)/provider/patients/[id].tsx   (tabbed detail)
+  Tests (25 new):
+    - tests/api/provider/patients-list.test.ts           (5 tests)
+    - tests/api/provider/patient-detail.test.ts          (4 tests)
+    - tests/api/provider/notes.test.ts                   (4 tests)
+    - tests/api/provider/export.test.ts                  (5 tests)
+    - tests/components/provider/patient-list.test.tsx    (4 tests)
+    - tests/components/provider/patient-detail.test.tsx  (3 tests)
+
+Files modified:
+  - lib/supabase/types.ts
+       -- added provider_notes table (Row / Insert / Update /
+          Relationships).
+       -- extended care_relationships with granted_at / granted_by
+          columns (organization_id and access_level were already
+          present from prior schema baseline).
+  - docs/CLAUDE.md
+       -- Section 11 updated: replaced Sprint 12 IN PROGRESS block
+          with Sprint 12 COMPLETE summary; sprint history below
+          preserved.
+
+Test count: 246 passing / 0 failing
+  -- Sprint 11/11b baseline: 221 tests (after merge to main)
+  -- Sprint 12 added: 25 tests (numbered 35-59 per the established
+     convention; numbers 30-34 were Sprint 11 component tests).
+
+DOCUMENTATION DRIFT NOTED (carries from TASK STARTED):
+  docs/MASTER_SESSION_PROMPT.md tells me to update "docs/CLAUDE.md
+  Section 4" each sprint, but the actual file puts CURRENT SPRINT in
+  Section 11 (Section 4 is AUTONOMOUS OPERATION PROTOCOLS). I added
+  a Sprint 12 IN PROGRESS / COMPLETE block to the top of Section 11
+  (preserving sprint history below). Samira: please reconcile the
+  two when convenient -- this is doc rot, not a blocker.
+
+DECISION REQUIRED (carries from earlier sprints):
+  1. Drug interaction API -- RxNorm vs DrugBank vs OpenFDA.
+  2. es-MX medical content reviewer -- Samira accepted current
+     Spanish output for launch as fluent reviewer; per master prompt,
+     hire/identify before non-founder users.
+  3. Michael equity conversation -- milestone-vested terms, in person.
+
+URGENT (carries from master prompt OPEN ITEMS):
+  - 83(b) election: mail to IRS by May 22, 2026. 24 days from today.
+
+Preview URL: (auto-generated by Vercel on push to
+sprint-12-provider-portal)
+To merge to production: review preview, then merge sprint-12-provider
+-portal to main from PowerShell. Migration 20260428000006 must be
+applied (npx supabase db push) BEFORE the merged code reaches
+production traffic, otherwise GET/POST/PATCH/DELETE on provider notes
+will fail (provider_notes table will not exist) and the provider
+patient list will return rows that have no granted_at/granted_by
+columns yet (those columns are nullable so reads are safe; writes
+that try to set them would fail).
+
+---
+
+[2026-04-28] TASK STARTED: Sprint 12 -- Provider Portal
+Branch: sprint-12-provider-portal
+Baseline (off main HEAD 2c3addf):
+  npx tsc --noEmit -> 0 errors
+  npx vitest run -> 221 / 221 passing (66 test files)
+Goal: Full provider-facing portal, web + mobile, audit-logged, role-
+gated to provider only, tested. Target 246+ tests.
+
+DOCUMENTATION DRIFT NOTED: docs/MASTER_SESSION_PROMPT.md tells me to
+update "docs/CLAUDE.md Section 4" each sprint, but the actual file
+puts CURRENT SPRINT in Section 11 (Section 4 is AUTONOMOUS OPERATION
+PROTOCOLS). Following the spirit, I added a Sprint 12 IN PROGRESS
+block to the top of Section 11 (preserving sprint history below).
+Samira: please reconcile master prompt vs CLAUDE.md section numbering
+when you have a moment -- this is a minor doc-rot item, not a blocker.
+
+---
+
 [2026-04-28] SPRINT 11b CLEANUP COMPLETE -- removed legacy AppointmentForm
 Branch: sprint-11b-cleanup
 Status: COMPLETE -- ready for Samira's review and merge to main
