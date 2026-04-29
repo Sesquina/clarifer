@@ -66,3 +66,4 @@ supabase/.temp/
 # Supabase CLI local state
 .supabase/
 test-results/
+tests/e2e/helpers/.auth-state.json
