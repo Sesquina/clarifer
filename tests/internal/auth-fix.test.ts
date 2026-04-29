@@ -8,13 +8,13 @@ describe("/auth/callback redirect resolution", () => {
     expect(resolveCallbackRedirect("/internal/agents/page")).toBe("/internal");
   });
 
-  it("2. with no next param returns /patients", () => {
-    expect(resolveCallbackRedirect(null)).toBe("/patients");
-    expect(resolveCallbackRedirect(undefined)).toBe("/patients");
-    expect(resolveCallbackRedirect("")).toBe("/patients");
-    // Unknown next values fall back to /patients (open-redirect protection)
-    expect(resolveCallbackRedirect("/home")).toBe("/patients");
-    expect(resolveCallbackRedirect("https://evil.com/internal")).toBe("/patients");
-    expect(resolveCallbackRedirect("//evil.com")).toBe("/patients");
+  it("2. with no next param returns /home", () => {
+    expect(resolveCallbackRedirect(null)).toBe("/home");
+    expect(resolveCallbackRedirect(undefined)).toBe("/home");
+    expect(resolveCallbackRedirect("")).toBe("/home");
+    // Unknown next values fall back to /home (open-redirect protection)
+    expect(resolveCallbackRedirect("/home")).toBe("/home");
+    expect(resolveCallbackRedirect("https://evil.com/internal")).toBe("/home");
+    expect(resolveCallbackRedirect("//evil.com")).toBe("/home");
   });
 });

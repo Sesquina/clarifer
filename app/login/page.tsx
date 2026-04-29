@@ -56,7 +56,7 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push("/patients");
+      router.push("/home");
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";

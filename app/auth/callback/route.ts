@@ -13,7 +13,7 @@ import { NextResponse } from "next/server";
  */
 export function resolveCallbackRedirect(next: string | null | undefined): string {
   if (next && next.startsWith("/internal")) return "/internal";
-  return "/patients";
+  return "/home";
 }
 
 /**

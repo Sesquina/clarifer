@@ -13,7 +13,7 @@ export default function PlatformDashboard() {
     supabase.auth.getUser().then(({ data }) => {
       if (!active) return;
       if (data.user) {
-        router.replace("/patients");
+        router.replace("/home");
       } else {
         router.replace("/login");
       }
