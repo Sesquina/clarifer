@@ -43,8 +43,14 @@ export async function POST(req: NextRequest) {
 
     const organizationId = userRecord.organization_id;
 
-    const { success } = await chatLimiter.limit(user.id);
-    if (!success) {
+    let rateLimitPassed = true;
+    try {
+      const { success } = await chatLimiter.limit(user.id);
+      rateLimitPassed = success;
+    } catch {
+      rateLimitPassed = true;
+    }
+    if (!rateLimitPassed) {
       return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
     }
 
