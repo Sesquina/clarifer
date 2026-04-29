@@ -284,27 +284,31 @@ describe("Cross-tenant isolation", () => {
 
   // ── Test 8: Caregiver from Org A cannot create appointment for Org B patient ─
 
-  it("Test 8: Caregiver from org A cannot create appointment — org_id is always stamped from caller's org", async () => {
-    const mock = makeCrossTenantMock(USER_ORG_A, {});
+  it("Test 8: Caregiver from org A cannot create appointment for an Org B patient — cross-tenant guard returns 404", async () => {
+    // Patient exists with organization_id = ORG_B; caller is USER_ORG_A.
+    // The new POST /api/appointments route looks up the patient and
+    // explicitly compares organization_id to the caller's org BEFORE
+    // inserting; mismatch returns 404 (per master prompt § HIPAA, do
+    // not leak tenant existence with a 403). No appointment is written.
+    const mock = makeCrossTenantMock(USER_ORG_A, {
+      [PATIENT_ORG_B.id]: PATIENT_ORG_B,
+    });
     createClient.mockResolvedValue(mock);
 
-    const { POST } = await import("@/app/api/appointments/create/route");
-    const req = new Request("http://localhost/api/appointments/create", {
+    const { POST } = await import("@/app/api/appointments/route");
+    const req = new Request("http://localhost/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        patientId: PATIENT_ORG_B.id,
+        patient_id: PATIENT_ORG_B.id,
         title: "Neurology consult",
       }),
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(404);
 
-    // org_id is stamped from caller's org (ORG_A), never from the patient's org.
-    // RLS will then reject this insert if patient_id doesn't belong to ORG_A.
-    const insertArg = mock._appointmentInsert.mock.calls[0][0] as Record<string, unknown>;
-    expect(insertArg.organization_id).toBe(ORG_A.id);
-    expect(insertArg.organization_id).not.toBe(ORG_B.id);
+    // Defensive: the route must NOT have inserted anything.
+    expect(mock._appointmentInsert).not.toHaveBeenCalled();
   });
 });
