@@ -300,9 +300,11 @@ POST   /api/medications/add               caregiver
 PUT    /api/medications/:id               caregiver
 GET    /api/medications/:patient_id       caregiver, provider
 
-POST   /api/appointments/create           caregiver
-PUT    /api/appointments/:id              caregiver
-GET    /api/appointments/:patient_id      caregiver, provider
+POST   /api/appointments                  caregiver, admin
+GET    /api/appointments?patient_id=      caregiver, patient, provider, admin
+GET    /api/appointments/:id              caregiver, provider, admin
+PATCH  /api/appointments/:id              caregiver, provider
+DELETE /api/appointments/:id              caregiver, admin
 
 POST   /api/care-team/add                 caregiver
 PUT    /api/care-team/:id                 caregiver
