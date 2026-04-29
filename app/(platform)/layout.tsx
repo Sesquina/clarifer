@@ -6,29 +6,26 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import { Home, Activity, FileText, Wrench, MessageCircle } from "lucide-react";
 
 const BODY: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
 };
 
 const NAV_ITEMS = [
-  { icon: "🏠", label: "Home", href: "/patients" },
-  { icon: "👤", label: "Patients", href: "/patients" },
+  { icon: "🏠", label: "Home", href: "/home" },
+  { icon: "📊", label: "Log", href: "/log" },
   { icon: "📄", label: "Documents", href: "/documents" },
-  { icon: "📊", label: "Symptoms", href: "/symptoms" },
-  { icon: "💊", label: "Medications", href: "/medications" },
-  { icon: "📅", label: "Appointments", href: "/appointments" },
-  { icon: "👥", label: "Care Team", href: "/care-team" },
-  { icon: "🔬", label: "Clinical Trials", href: "/trials" },
-  { icon: "💬", label: "Family Updates", href: "/family-updates" },
+  { icon: "🛠️", label: "Tools", href: "/tools" },
+  { icon: "💬", label: "Chat", href: "/chat" },
 ];
 
 const MOBILE_TABS = [
-  { icon: "🏠", label: "Home", href: "/patients" },
-  { icon: "👤", label: "Patients", href: "/patients" },
-  { icon: "📄", label: "Documents", href: "/documents" },
-  { icon: "💊", label: "Meds", href: "/medications" },
-  { icon: "•••", label: "More", href: "/tools" },
+  { icon: Home, label: "Home", href: "/home" },
+  { icon: Activity, label: "Log", href: "/log" },
+  { icon: FileText, label: "Documents", href: "/documents" },
+  { icon: Wrench, label: "Tools", href: "/tools" },
+  { icon: MessageCircle, label: "Chat", href: "/chat" },
 ];
 
 export default function PlatformLayout({ children }: { children: ReactNode }) {
@@ -238,6 +235,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
         }}
       >
         {MOBILE_TABS.map((tab) => {
+          const Icon = tab.icon;
           const active = isActive(tab.href);
           return (
             <Link
@@ -252,9 +250,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
               }}
               aria-label={tab.label}
             >
-              <span aria-hidden="true" style={{ fontSize: 20 }}>
-                {tab.icon}
-              </span>
+              <Icon size={20} aria-hidden />
               <span style={{ ...BODY, fontSize: 11, fontWeight: 500 }}>
                 {tab.label}
               </span>

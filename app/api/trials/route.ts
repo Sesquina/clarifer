@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const params = new URLSearchParams({
       "query.cond": sanitizedQuery,
       pageSize: "10",
-      "filter.overallStatus": "RECRUITING",
+      "filter.overallStatus": "RECRUITING,NOT_YET_RECRUITING,ENROLLING_BY_INVITATION,ACTIVE_NOT_RECRUITING",
       format: "json",
     });
 
@@ -68,7 +68,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ trials });
-  } catch {
-    return NextResponse.json({ trials: [] });
+  } catch (error) {
+    console.error('[trials/route] ClinicalTrials.gov fetch failed:', error);
+    return NextResponse.json({ error: 'Failed to fetch trials', detail: String(error) }, { status: 500 });
   }
 }
