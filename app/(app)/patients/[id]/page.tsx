@@ -12,6 +12,7 @@ import { SpecialistFinder } from "@/components/care-team/SpecialistFinder";
 import { NutritionGuidance } from "@/components/nutrition/NutritionGuidance";
 import { PatientAdvocateConnect } from "@/components/community/PatientAdvocateConnect";
 import type { NewlyConnectedItem } from "@/lib/ccf/newly-connected-template";
+import { ExportPDFButton } from "@/components/export/ExportPDFButton";
 
 interface DashboardResponse {
   patient: {
@@ -133,13 +134,16 @@ export default function PatientDashboard() {
                 {data.patient.custom_diagnosis ?? "Diagnosis not recorded"}
               </p>
             </div>
-            <Link
-              href={`/patients/${id}/emergency-card`}
-              className="rounded-lg px-4 py-2 text-sm font-semibold"
-              style={{ background: "var(--terracotta)", color: "#FFFFFF", minHeight: 48, display: "inline-flex", alignItems: "center" }}
-            >
-              Emergency card
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <ExportPDFButton patientId={id} callerRole="caregiver" />
+              <Link
+                href={`/patients/${id}/emergency-card`}
+                className="rounded-lg px-4 py-2 text-sm font-semibold"
+                style={{ background: "var(--terracotta)", color: "#FFFFFF", minHeight: 48, display: "inline-flex", alignItems: "center" }}
+              >
+                Emergency card
+              </Link>
+            </div>
           </div>
         )}
       </header>

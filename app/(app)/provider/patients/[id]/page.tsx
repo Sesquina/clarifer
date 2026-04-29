@@ -13,6 +13,7 @@
  */
 "use client";
 import { use, useCallback, useEffect, useState } from "react";
+import { ExportPDFButton } from "@/components/export/ExportPDFButton";
 
 interface Patient {
   id: string;
@@ -400,52 +401,16 @@ function NotesTab({
 }
 
 function ExportTab({ patientId }: { patientId: string }) {
-  const [generating, setGenerating] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function generate() {
-    setGenerating(true);
-    setErr(null);
-    try {
-      const res = await fetch(`/api/provider/patients/${patientId}/export`, { method: "POST" });
-      if (!res.ok) {
-        setErr("We could not generate the report. Please try again.");
-        return;
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `patient-${patientId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      setErr("Something went wrong generating the report.");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   return (
     <section className="rounded-2xl border border-border bg-card p-4">
       <h2 className="font-heading text-lg text-primary">Generate clinical PDF report</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Includes patient demographics, active medications, last 30 days of symptom severity,
-        recent documents, upcoming appointments, and biomarkers. Care coordination tool, not
+      <p className="mt-2 mb-4 text-sm text-muted-foreground">
+        Includes patient demographics, bilingual disclaimer, emergency information,
+        active medications, last 30 days of symptom severity, recent appointments,
+        documents, care team, and your provider notes. Care coordination tool, not
         a medical record.
       </p>
-      {err && <p className="mt-3 text-sm text-accent" role="alert">{err}</p>}
-      <button
-        type="button"
-        onClick={generate}
-        disabled={generating}
-        style={{ minHeight: 48 }}
-        className="mt-4 rounded-full bg-accent px-5 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {generating ? "Generating..." : "Generate PDF report"}
-      </button>
+      <ExportPDFButton patientId={patientId} callerRole="provider" label="Generate PDF report" />
     </section>
   );
 }
