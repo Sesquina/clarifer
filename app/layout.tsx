@@ -16,13 +16,15 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Clarifer",
-  description: "Your AI-powered health companion for chronic condition management",
-  manifest: "/manifest.json",
-  icons: { icon: "/clarifer-logo.png", apple: "/clarifer-logo.png" },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Clarifer",
+  description: "Caregiver intelligence platform. Built for families navigating serious illness.",
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png" }],
+    other: [{ rel: "manifest", url: "/site.webmanifest" }],
   },
 };
 
