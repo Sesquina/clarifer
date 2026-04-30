@@ -33,8 +33,14 @@ export async function POST(request: Request) {
 
   const organizationId = userRecord.organization_id;
 
-  const { success } = await analyzeLimiter.limit(user.id);
-  if (!success) {
+  let rateLimitPassed = true;
+  try {
+    const { success } = await analyzeLimiter.limit(user.id);
+    rateLimitPassed = success;
+  } catch {
+    rateLimitPassed = true;
+  }
+  if (!rateLimitPassed) {
     return NextResponse.json({ error: "Rate limited", code: "RATE_LIMITED" }, { status: 429 });
   }
 
@@ -54,7 +60,7 @@ export async function POST(request: Request) {
 
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, patient_id, document_category, file_path, mime_type")
+    .select("id, patient_id, document_category, file_url, file_type")
     .eq("id", documentId)
     .eq("organization_id", organizationId)
     .single();
@@ -63,20 +69,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Document not found", code: "NOT_FOUND" }, { status: 404 });
   }
 
-  if (!doc.file_path) {
+  if (!doc.file_url) {
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
-  const { data: fileData, error: downloadError } = await supabase.storage
-    .from("documents")
-    .download(doc.file_path);
-
-  if (downloadError || !fileData) {
+  const fileResponse = await fetch(doc.file_url);
+  if (!fileResponse.ok) {
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
-
-  const buffer = Buffer.from(await fileData.arrayBuffer());
-  const documentText = await extractText(buffer, doc.mime_type ?? "application/pdf");
+  const buffer = Buffer.from(await fileResponse.arrayBuffer());
+  const rawType = doc.file_type ?? "pdf";
+  const mimeType = rawType.includes("/") ? rawType : `application/${rawType}`;
+  const documentText = await extractText(buffer, mimeType);
 
   const { data: patient } = await supabase
     .from("patients")
@@ -105,7 +109,7 @@ export async function POST(request: Request) {
       let fullText = "";
       try {
         const stream = anthropicClient.messages.stream({
-          model: "claude-opus-4-6",
+          model: "claude-sonnet-4-5",
           max_tokens: 2048,
           messages: [{ role: "user", content: prompt }],
         });
@@ -125,7 +129,10 @@ export async function POST(request: Request) {
           content: fullText,
         });
 
-        await supabase.from("documents").update({ analysis_status: "completed" }).eq("id", documentId);
+        await supabase.from("documents").update({
+          summary: fullText.slice(0, 1000),
+          analyzed_at: new Date().toISOString(),
+        }).eq("id", documentId);
 
         await supabase.from("audit_log").insert({
           user_id: user.id,

@@ -47,7 +47,7 @@ function makeMockSupabase(userOverride: unknown, roleOverride: unknown, patientO
         return {
           insert: vi.fn().mockReturnThis(),
           select: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { id: "doc-new", file_name: "report.pdf" }, error: null }),
+          single: vi.fn().mockResolvedValue({ data: { id: "doc-new", title: "report.pdf" }, error: null }),
         };
       }
       if (table === "audit_log") return { insert: auditInsert };
@@ -105,7 +105,7 @@ describe("POST /api/documents/upload", () => {
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.id).toBe("doc-new");
-    expect(body.analysis_status).toBe("pending");
+    expect(body.title).toBe("report.pdf");
   });
 
   it("writes audit_log on successful upload", async () => {

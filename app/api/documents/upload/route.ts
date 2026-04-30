@@ -66,11 +66,10 @@ export async function POST(request: Request) {
       patient_id: patientId,
       organization_id: organizationId,
       uploaded_by: user.id,
-      file_name: file.name,
-      file_path: filePath,
-      mime_type: file.type,
+      title: file.name,
+      file_url: filePath,
+      file_type: file.type,
       document_category: documentCategory,
-      analysis_status: "pending",
     })
     .select()
     .single();
@@ -89,7 +88,7 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json(
-    { id: document.id, file_name: document.file_name, analysis_status: "pending" },
+    { id: document.id, title: document.title },
     { status: 201 }
   );
 }

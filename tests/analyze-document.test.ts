@@ -3,7 +3,7 @@
  * Updated in Sprint 5: route migrated to @anthropic-ai/sdk with document download + text extraction.
  * Full coverage in tests/api/ai-analyze-document.test.ts and tests/api/documents-analyze.test.ts
  */
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, expect, vi, beforeEach } from "vitest";
 
 vi.mock("pdf-parse", () => ({
   PDFParse: class {
@@ -31,7 +31,7 @@ vi.mock("@/lib/supabase/server", () => ({
         return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { role: "caregiver", organization_id: "org-1" } }) };
       }
       if (table === "documents") {
-        return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: "doc-1", patient_id: "patient-1", document_category: "lab_result", file_path: "org-1/p-1/uuid.pdf", mime_type: "application/pdf" } }), update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }) };
+        return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: "doc-1", patient_id: "patient-1", document_category: "lab_result", file_url: "org-1/p-1/uuid.pdf", file_type: "application/pdf" } }), update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }) };
       }
       if (table === "patients") {
         return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { condition_template_id: null } }) };
@@ -47,6 +47,10 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("POST /api/ai/analyze-document", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }));
+  });
+
   test("module exports a POST handler", async () => {
     hoistedStream.mockReturnValue({ [Symbol.asyncIterator]: async function* () {} });
     const mod = await import("@/app/api/ai/analyze-document/route");

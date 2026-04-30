@@ -35,7 +35,7 @@ function makeStream(chunks: string[] = ["KEY FINDINGS: Normal."]) {
   };
 }
 
-function makeMockSupabase(userOverride: unknown, roleOverride: unknown, storageError = false) {
+function makeMockSupabase(userOverride: unknown, roleOverride: unknown) {
   const chatInsert = vi.fn().mockResolvedValue({ error: null });
   const auditInsert = vi.fn().mockResolvedValue({ error: null });
   const docUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
@@ -49,7 +49,7 @@ function makeMockSupabase(userOverride: unknown, roleOverride: unknown, storageE
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { id: "doc-1", patient_id: TEST_PATIENT_CARLOS.id, document_category: "pathology report", file_path: "org/patient/uuid.pdf", mime_type: "application/pdf" } }),
+          single: vi.fn().mockResolvedValue({ data: { id: "doc-1", patient_id: TEST_PATIENT_CARLOS.id, document_category: "pathology report", file_url: "org/patient/uuid.pdf", file_type: "application/pdf" } }),
           update: docUpdate,
         };
       }
@@ -60,15 +60,6 @@ function makeMockSupabase(userOverride: unknown, roleOverride: unknown, storageE
       if (table === "audit_log") return { insert: auditInsert };
       return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: null }) };
     }),
-    storage: {
-      from: vi.fn().mockReturnValue({
-        download: vi.fn().mockResolvedValue(
-          storageError
-            ? { data: null, error: new Error("storage error") }
-            : { data: new Blob(["fake pdf content"]), error: null }
-        ),
-      }),
-    },
     _chatInsert: chatInsert,
     _auditInsert: auditInsert,
     _docUpdate: docUpdate,
@@ -83,6 +74,7 @@ describe("POST /api/ai/analyze-document (Sprint 5 — Anthropic SDK)", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     messagesStream.mockReturnValue(makeStream());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }));
     const mod = await import("@/lib/supabase/server");
     createClient = mod.createClient as ReturnType<typeof vi.fn>;
   });
@@ -128,8 +120,9 @@ describe("POST /api/ai/analyze-document (Sprint 5 — Anthropic SDK)", () => {
     expect(chatCall.role).toBe("assistant");
   });
 
-  it("returns 503 when storage download fails", async () => {
-    createClient.mockResolvedValue(makeMockSupabase({ id: TEST_CAREGIVER.id }, { role: "caregiver", organization_id: "org-1" }, true));
+  it("returns 503 when file fetch fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+    createClient.mockResolvedValue(makeMockSupabase({ id: TEST_CAREGIVER.id }, { role: "caregiver", organization_id: "org-1" }));
     const { POST } = await import("@/app/api/ai/analyze-document/route");
     const res = await POST(new Request("http://localhost/api/ai/analyze-document", {
       method: "POST",
