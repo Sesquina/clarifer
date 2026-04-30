@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     });
 
     const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 800,
       system: `Be concise. 3-4 sentences for the summary maximum. Key findings only.
 
@@ -138,7 +138,7 @@ Use "flagged" for abnormal values, "normal" for normal values.`,
 
         try {
           const connectionResult = await anthropic.messages.create({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-sonnet-4-6",
             max_tokens: 300,
             system: "You are a warm, knowledgeable medical assistant helping a family caregiver. Write in plain language. Be practical and caring.",
             messages: [{

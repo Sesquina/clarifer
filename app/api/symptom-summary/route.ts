@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   try {
     const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 256,
       system: "You are a medical symptom summarizer. Given symptoms, severity, and notes, produce a brief 1-2 sentence clinical-style summary suitable for a doctor to quickly review. Be factual and concise.",
       messages: [
