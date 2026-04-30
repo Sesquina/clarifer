@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 interface HeaderProps {
   userName?: string | null;
@@ -33,7 +32,7 @@ export function Header(_props: HeaderProps = {}) {
           style={{ gap: 10 }}
           aria-label="Clarifer home"
         >
-          <Image src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} />
+          <img src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} style={{ objectFit: "contain" }} />
           <span
             className="font-bold"
             style={{

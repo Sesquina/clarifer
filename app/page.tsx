@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { CookieBanner } from "@/components/cookie-banner";
 
@@ -36,7 +35,7 @@ export default function LandingPage() {
           style={{ maxWidth: 720, margin: "0 auto" }}
         >
           <div style={{ marginBottom: 28 }}>
-            <Image src="/clarifer-logo.png" alt="Clarifer" width={72} height={72} />
+            <img src="/clarifer-logo.png" alt="Clarifer" width={72} height={72} style={{ objectFit: "contain" }} />
           </div>
           <h1
             className="text-[36px] md:text-[52px] text-center"
@@ -559,7 +558,7 @@ export default function LandingPage() {
               style={{ gap: 10 }}
               aria-label="Clarifer home"
             >
-              <Image src="/clarifer-logo.png" alt="Clarifer" width={24} height={24} />
+              <img src="/clarifer-logo.png" alt="Clarifer" width={24} height={24} style={{ objectFit: "contain" }} />
               <span
                 style={{
                   ...BODY_FONT,
