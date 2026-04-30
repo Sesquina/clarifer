@@ -194,18 +194,16 @@ export default function ChatPage() {
 
       // Prepare content for summarization
       const ext = origName.split(".").pop()?.toLowerCase() || "";
-      let fileContent = "";
-      if (["txt", "csv", "md"].includes(ext)) {
-        const decoded = atob(fileData);
-        fileContent = decoded;
-      } else {
-        fileContent = `[${ext.toUpperCase()} file: ${origName}, ${(fileSize / 1024).toFixed(1)}KB]`;
-      }
+      const isTextFile = ["txt", "csv", "md"].includes(ext);
+
+      const summarizeBody = isTextFile
+        ? { documentId, content: atob(fileData) }
+        : { documentId, fileData: payload.fileData, fileType: payload.fileType };
 
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, content: fileContent }),
+        body: JSON.stringify(summarizeBody),
       });
 
       if (!res.ok) {
