@@ -1,4 +1,3 @@
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
 import Link from "next/link";
 
 interface AppHeaderProps {
@@ -22,7 +21,7 @@ export function AppHeader({ userName }: AppHeaderProps) {
       }}
     >
       <Link href="/home" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-        <AnchorLogo size={28} />
+        <img src="/clarifer-logo.png" alt="Clarifer" width={32} height={32} />
         <span style={{
           fontFamily: "var(--font-playfair), 'Playfair Display', serif",
           fontSize: 18,

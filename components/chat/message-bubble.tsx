@@ -13,10 +13,14 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
 
   return (
     <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
-      <Avatar
-        fallback={isUser ? "You" : "M"}
-        className={cn("h-8 w-8 shrink-0 text-xs", !isUser && "bg-primary text-primary-foreground")}
-      />
+      {isUser ? (
+        <Avatar
+          fallback="You"
+          className="h-8 w-8 shrink-0 text-xs"
+        />
+      ) : (
+        <img src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} className="rounded-full shrink-0" />
+      )}
       <div
         className={cn(
           "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",

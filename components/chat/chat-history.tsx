@@ -28,7 +28,7 @@ export function ChatHistory({ messages, isLoading }: ChatHistoryProps) {
       {messages.length === 0 && (
         <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <span className="text-lg font-bold text-primary">M</span>
+            <img src="/clarifer-logo.png" alt="Clarifer" width={32} height={32} className="rounded-full" />
           </div>
           <h2 className="text-lg font-semibold">How can I help?</h2>
           <p className="max-w-xs text-sm text-muted-foreground">
