@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { summarizeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
+import { getDocumentAnalyzer } from "@/lib/documents/analyze";
 
 export const maxDuration = 60;
 
@@ -46,27 +47,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
   }
 
-  const { documentId, content } = body;
+  const { documentId, content, fileType, fileData } = body;
 
-  if (!documentId || !content) {
+  if (!documentId || (!content && !fileData)) {
     return NextResponse.json({ error: "Missing documentId or content" }, { status: 400 });
   }
 
-  if (typeof content === "string" && content.length > MAX_CONTENT_LENGTH) {
+  if (!fileData && typeof content === "string" && content.length > MAX_CONTENT_LENGTH) {
     return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
   }
 
-  const sanitizedContent = typeof content === "string" ? stripHtml(content) : content;
+  let headline: string;
+  let keyFindings: Array<{ label: string; value: string; status?: string }>;
+  let fullSummary: string;
 
   try {
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY!,
-    });
+    if (fileData) {
+      const mimeType =
+        typeof fileType === "string" && fileType.includes("/")
+          ? fileType
+          : `application/${fileType ?? "pdf"}`;
+      const result = await getDocumentAnalyzer().analyze(fileData, mimeType);
+      headline = result.headline;
+      keyFindings = result.findings;
+      fullSummary = result.fullSummary;
+    } else {
+      const sanitizedContent = typeof content === "string" ? stripHtml(content) : content;
 
-    const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 800,
-      system: `Be concise. 3-4 sentences for the summary maximum. Key findings only.
+      const anthropic = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY!,
+      });
+
+      const completion = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 800,
+        system: `Be concise. 3-4 sentences for the summary maximum. Key findings only.
 
 You are helping a family caregiver understand a medical document. Analyze and return structured JSON. Use plain, warm language — no jargon without a parenthetical explanation. Start with the most important takeaway.
 
@@ -81,36 +96,37 @@ Return ONLY valid JSON:
 }
 
 Use "flagged" for abnormal values, "normal" for normal values.`,
-      messages: [{ role: "user", content: sanitizedContent }],
-    });
+        messages: [{ role: "user", content: sanitizedContent }],
+      });
 
-    const responseText = completion.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("");
+      const responseText = completion.content
+        .filter((block): block is Anthropic.TextBlock => block.type === "text")
+        .map((block) => block.text)
+        .join("");
 
-    let parsed: {
-      headline?: string;
-      findings?: Array<{ label: string; value: string; status?: string }>;
-      fullSummary?: string;
-      summary?: string;
-      keyFindings?: Array<{ label: string; value: string; status?: string }>;
-    };
-
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
-    } catch {
-      parsed = {
-        headline: "Document analyzed",
-        findings: [],
-        fullSummary: responseText,
+      let parsed: {
+        headline?: string;
+        findings?: Array<{ label: string; value: string; status?: string }>;
+        fullSummary?: string;
+        summary?: string;
+        keyFindings?: Array<{ label: string; value: string; status?: string }>;
       };
-    }
 
-    const headline = parsed.headline || parsed.summary || "Document analyzed";
-    const keyFindings = parsed.findings || parsed.keyFindings || [];
-    const fullSummary = parsed.fullSummary || parsed.summary || responseText;
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
+      } catch {
+        parsed = {
+          headline: "Document analyzed",
+          findings: [],
+          fullSummary: responseText,
+        };
+      }
+
+      headline = parsed.headline || parsed.summary || "Document analyzed";
+      keyFindings = parsed.findings || parsed.keyFindings || [];
+      fullSummary = parsed.fullSummary || parsed.summary || responseText;
+    }
 
     const { data: doc } = await supabase
       .from("documents")
@@ -137,6 +153,7 @@ Use "flagged" for abnormal values, "normal" for normal values.`,
           : "No recent symptom logs available.";
 
         try {
+          const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
           const connectionResult = await anthropic.messages.create({
             model: "claude-sonnet-4-6",
             max_tokens: 300,
