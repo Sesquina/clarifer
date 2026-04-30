@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import Image from "next/image";
 
 interface HeaderProps {
   userName?: string | null;
@@ -33,7 +33,7 @@ export function Header(_props: HeaderProps = {}) {
           style={{ gap: 10 }}
           aria-label="Clarifer home"
         >
-          <AnchorLogo size={28} />
+          <Image src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} />
           <span
             className="font-bold"
             style={{

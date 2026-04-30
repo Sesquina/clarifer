@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { CookieBanner } from "@/components/cookie-banner";
 
@@ -36,7 +36,7 @@ export default function LandingPage() {
           style={{ maxWidth: 720, margin: "0 auto" }}
         >
           <div style={{ marginBottom: 28 }}>
-            <AnchorLogo size={72} />
+            <Image src="/clarifer-logo.png" alt="Clarifer" width={72} height={72} />
           </div>
           <h1
             className="text-[36px] md:text-[52px] text-center"
@@ -559,7 +559,7 @@ export default function LandingPage() {
               style={{ gap: 10 }}
               aria-label="Clarifer home"
             >
-              <AnchorLogo size={24} />
+              <Image src="/clarifer-logo.png" alt="Clarifer" width={24} height={24} />
               <span
                 style={{
                   ...BODY_FONT,

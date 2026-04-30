@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import Image from "next/image";
 import { Home, Activity, FileText, Wrench, MessageCircle } from "lucide-react";
 
 const BODY: React.CSSProperties = {
@@ -104,7 +104,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
           className="flex items-center"
           style={{ padding: "20px 16px", gap: 10 }}
         >
-          <AnchorLogo size={28} color="var(--white)" />
+          <Image src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} style={{ filter: "brightness(0) invert(1)" }} />
           <span
             style={{
               ...BODY,

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
@@ -19,7 +20,7 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
           className="h-8 w-8 shrink-0 text-xs"
         />
       ) : (
-        <img src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} className="rounded-full shrink-0" />
+        <Image src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} className="rounded-full shrink-0" />
       )}
       <div
         className={cn(
