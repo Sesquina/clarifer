@@ -36,63 +36,76 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
+      // Step 1: verify auth session
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setError("You are not signed in. Please go back and sign up again.");
-        setLoading(false);
+        router.push("/login");
         return;
       }
 
-      // Ensure public.users row exists (may not if signup insert failed)
-      await supabase.from("users").upsert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || null,
-      }, { onConflict: "id" });
-
-      // patients.organization_id is NOT NULL (Sprint 3 multi-tenancy
-      // migration). Fetch the caller's org from public.users and stamp
-      // it on the insert. If the user has no org assigned yet, surface
-      // a clear error rather than letting the DB reject the insert
-      // with a 403 that the caregiver cannot interpret.
-      const { data: me } = await supabase
+      // Step 2: check whether the handle_new_user trigger already created
+      // a public.users row with an organization_id
+      const { data: userRecord } = await supabase
         .from("users")
         .select("organization_id")
         .eq("id", user.id)
         .single();
-      const organizationId = me?.organization_id ?? null;
+
+      let organizationId: string | null = userRecord?.organization_id ?? null;
+
+      // Step 4: fallback for race condition or legacy accounts where the
+      // trigger did not run -- create the org and link the user manually
       if (!organizationId) {
-        setError(
-          "Your account is not connected to an organization yet. Please contact support so we can finish setting you up."
-        );
+        const { data: newOrg } = await supabase
+          .from("organizations")
+          .insert({ name: "Personal" })
+          .select("id")
+          .single();
+
+        if (newOrg?.id) {
+          organizationId = newOrg.id;
+          await supabase
+            .from("users")
+            .upsert(
+              { id: user.id, email: user.email, organization_id: organizationId, role: "caregiver" },
+              { onConflict: "id" }
+            );
+        }
+      }
+
+      if (!organizationId) {
+        setError("Something went wrong setting up your account. Please try again.");
         setLoading(false);
         return;
       }
 
-      // Persist the role chosen on Step 1 (the database trigger
-      // defaults new users to caregiver; this respects a different
-      // choice). Errors here are non-fatal -- we still create the
-      // patient so the caregiver is not blocked by a role-update
-      // hiccup.
-      await supabase.from("users").update({ role }).eq("id", user.id);
+      // Step 5: persist role and display name chosen during onboarding
+      await supabase
+        .from("users")
+        .update({ role, full_name: user.user_metadata?.full_name || null })
+        .eq("id", user.id);
 
-      const { error: insertError } = await supabase.from("patients").insert({
-        name,
-        dob: dob || null,
-        sex: sex || null,
-        custom_diagnosis: diagnosis || null,
-        diagnosis_date: diagnosisDate || null,
-        organization_id: organizationId,
-        created_by: user.id,
-        status: "active",
-      });
+      // Step 6: create first patient record for caregiver and patient roles
+      if (role === "caregiver" || role === "patient") {
+        const { error: insertError } = await supabase.from("patients").insert({
+          name,
+          dob: dob || null,
+          sex: sex || null,
+          custom_diagnosis: diagnosis || null,
+          diagnosis_date: diagnosisDate || null,
+          organization_id: organizationId,
+          created_by: user.id,
+          status: "active",
+        });
 
-      if (insertError) {
-        setError(friendlyOnboardingError(insertError.message));
-        setLoading(false);
-        return;
+        if (insertError) {
+          setError(friendlyOnboardingError(insertError.message));
+          setLoading(false);
+          return;
+        }
       }
 
+      // Step 7: onboarding complete
       router.push("/home");
       router.refresh();
     } catch (err) {
