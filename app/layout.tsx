@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: "Clarifer",
   description: "Your AI-powered health companion for chronic condition management",
   manifest: "/manifest.json",
+  icons: { icon: "/clarifer-logo.png", apple: "/clarifer-logo.png" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -30,7 +31,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#6d28d9",
+  themeColor: "#2C5F4A",
 };
 
 export default function RootLayout({
