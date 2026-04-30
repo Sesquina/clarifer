@@ -1,5 +1,5 @@
 # CLARIFER -- MASTER SESSION PROMPT
-# Version: April 28, 2026
+# Version: April 30, 2026
 # Paste this at the start of every Claude Code session.
 # Read every word. Do not summarize. Do not skip sections.
 
@@ -110,7 +110,7 @@ What Clarifer NEVER does -- hard-coded, no exceptions:
 
 ---
 
-## CONFIRMED PRODUCTION STATE (as of April 28, 2026)
+## CONFIRMED PRODUCTION STATE (as of April 30, 2026)
 
 PRODUCTION SCHEMA: 28 tables confirmed live in Supabase
 agent_runs, ai_analysis_consents, anonymized_exports,
@@ -171,9 +171,39 @@ Work exists on disk uncommitted. Run git status to confirm.
 If uncommitted Sprint 10 work exists, complete it before
 starting any new sprint.
 
-CONFIRMED TEST COUNT AT LAST CLEAN COMMIT: 173/173 passing
-TARGET AFTER SPRINT 10: 196+ passing (23 new tests)
+CONFIRMED TEST COUNT AT LAST CLEAN COMMIT: 266/266 passing
 TYPESCRIPT AT LAST CLEAN COMMIT: 0 errors
+
+---
+
+## KNOWN BUGS (as of April 30, 2026)
+
+OPEN -- still needs fixing:
+- 6 client-side PHI writes bypass API routes. Audit gap.
+  Certain components write patient data directly to Supabase
+  from the browser instead of going through /api/* routes,
+  skipping audit_log and role checks. Sprint TBD.
+
+---
+
+## RESOLVED THIS SESSION (April 30, 2026)
+
+- handle_new_user trigger created -- new signups work.
+  Migration: supabase/migrations/20260430000001_handle_new_user_trigger.sql
+  MIGRATION REQUIRED -- Samira runs manually in Supabase SQL Editor.
+
+- Document analysis pipeline fixed -- PDFs analyzed via
+  Anthropic native document API. /api/summarize now fetches
+  the file from Supabase Storage by documentId server-side.
+  Large and image-based PDFs no longer fail silently.
+
+- All Claude model strings standardized to claude-sonnet-4-6.
+
+- Chat AI voice expanded to full knowledgeable companion with
+  CCA awareness and equity notes on jaundice detection across
+  skin tones, urgent escalation thresholds, no-em-dash rule.
+
+- Anthropic API key updated in Vercel production.
 
 ---
 
