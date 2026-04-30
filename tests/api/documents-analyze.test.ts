@@ -49,7 +49,7 @@ function makeMockSupabase(userOverride: unknown, roleOverride: unknown, storageE
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { id: "doc-1", patient_id: TEST_PATIENT_CARLOS.id, document_category: "pathology report", file_path: "org/patient/uuid.pdf", mime_type: "application/pdf" } }),
+          single: vi.fn().mockResolvedValue({ data: { id: "doc-1", patient_id: TEST_PATIENT_CARLOS.id, document_category: "pathology report", file_url: "org/patient/uuid.pdf", file_type: "application/pdf" } }),
           update: docUpdate,
         };
       }

@@ -28,8 +28,8 @@ const mockDoc = {
   id: "doc-1",
   patient_id: TEST_PATIENT_CARLOS.id,
   document_category: "pathology report",
-  file_path: "org-1/patient-1/uuid.pdf",
-  mime_type: "application/pdf",
+  file_url: "org-1/patient-1/uuid.pdf",
+  file_type: "application/pdf",
 };
 
 function makeStream(chunks: string[] = ["KEY FINDINGS"]) {
