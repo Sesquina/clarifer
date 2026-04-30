@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { Eye, EyeOff, Loader2, Check } from "lucide-react";
 
 function friendlyLoginError(msg: string): string {
@@ -110,7 +109,7 @@ export default function LoginPage() {
       >
         <div className="hidden md:block" style={{ width: "100%" }}>
           <div style={{ marginBottom: 32 }}>
-            <Image src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} />
+            <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
           </div>
           <h1
             style={{
@@ -193,7 +192,7 @@ export default function LoginPage() {
       >
         <div style={{ maxWidth: 420, margin: "0 auto", width: "100%" }}>
           <div className="md:hidden" style={{ marginBottom: 24 }}>
-            <Image src="/clarifer-logo.png" alt="Clarifer" width={40} height={40} />
+            <img src="/clarifer-logo.png" alt="Clarifer" width={40} height={40} style={{ objectFit: "contain" }} />
           </div>
           <h2
             style={{

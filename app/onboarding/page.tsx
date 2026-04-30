@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -146,7 +145,7 @@ export default function OnboardingPage() {
       <div className="w-full" style={{ maxWidth: 400 }}>
         {/* Logo */}
         <div className="flex justify-center">
-          <Image src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} />
+          <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
         </div>
 
         <h1

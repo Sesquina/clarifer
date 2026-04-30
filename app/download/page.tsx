@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/layout/header";
 
 export const metadata = {
@@ -23,7 +22,7 @@ export default function DownloadPage() {
         style={{ maxWidth: 600, margin: "0 auto", padding: "80px 24px" }}
       >
         <div style={{ marginBottom: 24 }}>
-          <Image src="/clarifer-logo.png" alt="Clarifer" width={64} height={64} />
+          <img src="/clarifer-logo.png" alt="Clarifer" width={64} height={64} style={{ objectFit: "contain" }} />
         </div>
         <h1
           style={{

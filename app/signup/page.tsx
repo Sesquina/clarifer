@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Playfair_Display, DM_Sans } from "next/font/google";
@@ -126,7 +125,7 @@ export default function SignupPage() {
             textAlign: "center",
           }}
         >
-          <Image src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ margin: "0 auto" }} />
+          <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ margin: "0 auto", objectFit: "contain" }} />
           <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 24, color: "#1A1A1A", marginTop: 16 }}>
             Check your email
           </h1>
@@ -174,7 +173,7 @@ export default function SignupPage() {
       >
         {/* Logo */}
         <div className="flex justify-center">
-          <Image src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} />
+          <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
         </div>
 
         <h1 className="text-center" style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "#1A1A1A", marginTop: 16 }}>
