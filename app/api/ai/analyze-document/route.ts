@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       let fullText = "";
       try {
         const stream = anthropicClient.messages.stream({
-          model: "claude-sonnet-4-5",
+          model: "claude-sonnet-4-6",
           max_tokens: 2048,
           messages: [{ role: "user", content: prompt }],
         });
