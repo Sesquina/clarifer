@@ -76,6 +76,12 @@ export async function POST(request: Request) {
     patient_id?: string;
     language?: "en" | "es";
     filters?: { phases?: Array<"1" | "2" | "3" | "4">; source?: "all" | "us" | "international" };
+    tumor_location?: string;
+    ca19_9_level?: string;
+    treatment_history?: string;
+    fgfr2_status?: string;
+    idh1_status?: string;
+    extra_keywords?: string;
   } | null;
   if (!body?.patient_id) {
     return NextResponse.json({ error: "patient_id required" }, { status: 400 });
@@ -106,6 +112,30 @@ export async function POST(request: Request) {
   }
   if (!condition.trim()) {
     return NextResponse.json({ error: "Patient has no diagnosis" }, { status: 400 });
+  }
+
+  // CCA biomarker filter context -- append to condition before cache key computation
+  // so different filter combinations produce distinct cache entries.
+  const tumorLocation = body?.tumor_location ?? null;
+  const fgfr2Status = body?.fgfr2_status ?? null;
+  const idh1Status = body?.idh1_status ?? null;
+  const treatmentHistory = body?.treatment_history ?? null;
+  const extraKeywords = body?.extra_keywords?.trim() ?? null;
+
+  if (tumorLocation && tumorLocation !== "Not sure") {
+    condition = `${tumorLocation} ${condition}`;
+  }
+  if (fgfr2Status === "Positive") {
+    condition += " FGFR2 fusion";
+  }
+  if (idh1Status === "Positive") {
+    condition += " IDH1 mutation ivosidenib";
+  }
+  if (treatmentHistory === "First stopped working" || treatmentHistory === "Two or more tried") {
+    condition += " second line refractory";
+  }
+  if (extraKeywords) {
+    condition += ` ${extraKeywords}`;
   }
 
   const country = ((patient.country as string | null) ?? "United States").trim();
