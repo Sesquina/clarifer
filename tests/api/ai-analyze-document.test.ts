@@ -89,6 +89,7 @@ describe("POST /api/ai/analyze-document", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     messagesStream.mockReturnValue(makeStream());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }));
     const mod = await import("@/lib/supabase/server");
     createClient = mod.createClient as ReturnType<typeof vi.fn>;
   });

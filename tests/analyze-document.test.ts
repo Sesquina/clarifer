@@ -3,7 +3,7 @@
  * Updated in Sprint 5: route migrated to @anthropic-ai/sdk with document download + text extraction.
  * Full coverage in tests/api/ai-analyze-document.test.ts and tests/api/documents-analyze.test.ts
  */
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, expect, vi, beforeEach } from "vitest";
 
 vi.mock("pdf-parse", () => ({
   PDFParse: class {
@@ -47,6 +47,10 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("POST /api/ai/analyze-document", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }));
+  });
+
   test("module exports a POST handler", async () => {
     hoistedStream.mockReturnValue({ [Symbol.asyncIterator]: async function* () {} });
     const mod = await import("@/app/api/ai/analyze-document/route");

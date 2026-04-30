@@ -73,16 +73,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
-  const { data: fileData, error: downloadError } = await supabase.storage
-    .from("documents")
-    .download(doc.file_url);
-
-  if (downloadError || !fileData) {
+  const fileResponse = await fetch(doc.file_url);
+  if (!fileResponse.ok) {
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
-
-  const buffer = Buffer.from(await fileData.arrayBuffer());
-  const documentText = await extractText(buffer, doc.file_type ?? "application/pdf");
+  const buffer = Buffer.from(await fileResponse.arrayBuffer());
+  const rawType = doc.file_type ?? "pdf";
+  const mimeType = rawType.includes("/") ? rawType : `application/${rawType}`;
+  const documentText = await extractText(buffer, mimeType);
 
   const { data: patient } = await supabase
     .from("patients")
