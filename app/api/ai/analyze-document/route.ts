@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { analyzeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
-import { extractText } from "@/lib/documents/extract";
+import { extractContent } from "@/lib/documents/extract";
 import { buildAnalysisPrompt } from "@/lib/documents/prompt";
 
 export const runtime = "nodejs";
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   const buffer = Buffer.from(await fileResponse.arrayBuffer());
   const rawType = doc.file_type ?? "pdf";
   const mimeType = rawType.includes("/") ? rawType : `application/${rawType}`;
-  const documentText = await extractText(buffer, mimeType);
+  const extracted = extractContent(buffer.toString("base64"), mimeType);
 
   const { data: patient } = await supabase
     .from("patients")
@@ -100,7 +100,27 @@ export async function POST(request: Request) {
   }
 
   const documentType = doc.document_category ?? "medical document";
-  const prompt = buildAnalysisPrompt(documentText, documentType, conditionContext);
+
+  // For PDFs and images send as native document/vision blocks so Claude can read them
+  // directly. For text-based files use the plain-text prompt path as before.
+  let messageContent: Anthropic.MessageParam["content"];
+  if (extracted.type === "base64" && extracted.mediaType) {
+    const contextPrompt = buildAnalysisPrompt("[See attached document]", documentType, conditionContext);
+    if (extracted.mediaType.startsWith("image/")) {
+      messageContent = [
+        { type: "image" as const, source: { type: "base64" as const, media_type: extracted.mediaType as Anthropic.Base64ImageSource["media_type"], data: extracted.content } },
+        { type: "text" as const, text: contextPrompt },
+      ];
+    } else {
+      messageContent = [
+        { type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: extracted.content } },
+        { type: "text" as const, text: contextPrompt },
+      ];
+    }
+  } else {
+    messageContent = buildAnalysisPrompt(extracted.content, documentType, conditionContext);
+  }
+
   const anthropicClient = new Anthropic();
   const encoder = new TextEncoder();
 
@@ -111,7 +131,7 @@ export async function POST(request: Request) {
         const stream = anthropicClient.messages.stream({
           model: "claude-sonnet-4-6",
           max_tokens: 2048,
-          messages: [{ role: "user", content: prompt }],
+          messages: [{ role: "user", content: messageContent }],
         });
 
         for await (const chunk of stream) {

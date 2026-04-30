@@ -152,8 +152,13 @@ describe("POST /api/ai/analyze-document", () => {
       body: JSON.stringify({ documentId: "doc-1", patientId: TEST_PATIENT_CARLOS.id }),
     });
     await POST(req);
-    const callArgs = messagesStream.mock.calls[0][0] as { messages: Array<{ content: string }> };
-    expect(callArgs.messages[0].content).toMatch(/DO NOT diagnose/i);
-    expect(callArgs.messages[0].content).toMatch(/DO NOT recommend medications/i);
+    const callArgs = messagesStream.mock.calls[0][0] as { messages: Array<{ content: unknown }> };
+    const raw = callArgs.messages[0].content;
+    // content is either a plain string (text files) or a ContentBlockParam[] (PDFs/images)
+    const textContent = Array.isArray(raw)
+      ? (raw as Array<{ type: string; text?: string }>).map((b) => b.text ?? "").join("\n")
+      : String(raw);
+    expect(textContent).toMatch(/DO NOT diagnose/i);
+    expect(textContent).toMatch(/DO NOT recommend medications/i);
   });
 });

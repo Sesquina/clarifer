@@ -1,21 +1,21 @@
-import { PDFParse } from "pdf-parse";
+/**
+ * extract.ts
+ * Converts uploaded file content into a format suitable for Anthropic API consumption.
+ * PDFs and images are returned as base64 for native Claude vision/document analysis.
+ * Text files are decoded from base64 to UTF-8.
+ * Tables: none
+ * Auth: none (pure utility)
+ * Sprint: fix/document-pipeline
+ * HIPAA: No PHI in this file
+ */
 
-export async function extractText(
-  input: File | Buffer,
-  mimeType: string
-): Promise<string> {
-  const buffer =
-    input instanceof Buffer ? input : Buffer.from(await (input as File).arrayBuffer());
-
-  if (mimeType === "application/pdf") {
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    return result.text.trim();
+export function extractContent(
+  fileData: string,
+  fileType: string
+): { type: "text" | "base64"; content: string; mediaType?: string } {
+  if (fileType === "application/pdf" || fileType.startsWith("image/")) {
+    return { type: "base64", content: fileData, mediaType: fileType };
   }
-
-  if (mimeType.startsWith("image/")) {
-    return "[Image document — OCR text extraction available in Sprint 8]";
-  }
-
-  return buffer.toString("utf8").trim();
+  const decoded = Buffer.from(fileData, "base64").toString("utf8");
+  return { type: "text", content: decoded };
 }

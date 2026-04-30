@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { summarizeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
+import { extractContent } from "@/lib/documents/extract";
 
 export const maxDuration = 60;
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many attempts. Please wait before trying again." }, { status: 429 });
   }
 
-  const { documentId, content } = body;
+  const { documentId, content, fileType } = body;
 
   if (!documentId || !content) {
     return NextResponse.json({ error: "Missing documentId or content" }, { status: 400 });
@@ -56,7 +57,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
   }
 
-  const sanitizedContent = typeof content === "string" ? stripHtml(content) : content;
+  // Build Anthropic message content. When fileType is provided alongside base64 content,
+  // send PDFs as native document blocks and images as vision blocks so Claude can read
+  // them directly without a text extraction step. Fall back to plain text for all other
+  // types and for legacy callers that do not send fileType.
+  let messageContent: Anthropic.MessageParam["content"];
+  if (typeof fileType === "string" && fileType && typeof content === "string") {
+    const extracted = extractContent(content, fileType);
+    if (extracted.type === "base64" && extracted.mediaType) {
+      if (extracted.mediaType.startsWith("image/")) {
+        messageContent = [
+          {
+            type: "image" as const,
+            source: {
+              type: "base64" as const,
+              media_type: extracted.mediaType as Anthropic.Base64ImageSource["media_type"],
+              data: extracted.content,
+            },
+          },
+        ];
+      } else {
+        // PDF -- send as native document block
+        messageContent = [
+          {
+            type: "document" as const,
+            source: {
+              type: "base64" as const,
+              media_type: "application/pdf" as const,
+              data: extracted.content,
+            },
+          },
+        ];
+      }
+    } else {
+      messageContent = stripHtml(extracted.content);
+    }
+  } else {
+    messageContent = typeof content === "string" ? stripHtml(content) : content;
+  }
 
   try {
     const anthropic = new Anthropic({
@@ -81,7 +119,7 @@ Return ONLY valid JSON:
 }
 
 Use "flagged" for abnormal values, "normal" for normal values.`,
-      messages: [{ role: "user", content: sanitizedContent }],
+      messages: [{ role: "user", content: messageContent }],
     });
 
     const responseText = completion.content
