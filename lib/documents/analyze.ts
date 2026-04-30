@@ -32,6 +32,8 @@ Return ONLY valid JSON:
 Use "flagged" for abnormal values, "normal" for normal values, "info" for neutral context.
 Be concise — 3-4 sentences for the summary maximum. Key findings only.`;
 
+    // Build message content based on MIME type:
+    // image/* → image block, text/* → decoded UTF-8 string, all else → PDF document block.
     const messageContent: Anthropic.MessageParam["content"] = mediaType.startsWith("image/")
       ? [
           {
@@ -44,6 +46,8 @@ Be concise — 3-4 sentences for the summary maximum. Key findings only.`;
           },
           { type: "text" as const, text: "Please analyze this medical document." },
         ]
+      : mediaType.startsWith("text/")
+      ? Buffer.from(fileData, "base64").toString("utf8") + "\n\nPlease analyze this medical document."
       : [
           {
             type: "document" as const,

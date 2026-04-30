@@ -173,7 +173,7 @@ export default function ChatPage() {
         return;
       }
 
-      const { documentId, fileName, fileType } = await uploadRes.json();
+      const { documentId } = await uploadRes.json();
 
       // Step 2: Analyze document
       setMessages((prev) =>
@@ -192,18 +192,10 @@ export default function ChatPage() {
         },
       ]);
 
-      // Prepare content for summarization
-      const ext = origName.split(".").pop()?.toLowerCase() || "";
-      const isTextFile = ["txt", "csv", "md"].includes(ext);
-
-      const summarizeBody = isTextFile
-        ? { documentId, content: atob(fileData) }
-        : { documentId, fileData: payload.fileData, fileType: payload.fileType };
-
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(summarizeBody),
+        body: JSON.stringify({ documentId }),
       });
 
       if (!res.ok) {
