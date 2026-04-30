@@ -1,5 +1,9 @@
 # CLARIFER -- MASTER SESSION PROMPT
 # Version: April 30, 2026
+
+MANDATORY: Read docs/DESIGN_SYSTEM.md before writing
+any UI component, page, or style. Every visual and
+interaction decision is defined there. No exceptions.
 # Paste this at the start of every Claude Code session.
 # Read every word. Do not summarize. Do not skip sections.
 
