@@ -129,6 +129,7 @@ export async function POST(request: Request) {
       fileUrl,
       fileName,
       fileType: ext,
+      fileData: buffer.toString("base64"),
     });
   } catch {
     return NextResponse.json(
