@@ -23,15 +23,18 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
       )}
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+          "max-w-[80%]",
           isUser
-            ? "rounded-tr-sm bg-primary text-primary-foreground"
-            : "rounded-tl-sm"
+            ? "rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm bg-primary text-primary-foreground"
+            : ""
         )}
         style={!isUser ? {
-          backgroundColor: "var(--card)",
-          border: "0.5px solid var(--border)",
-          color: "var(--text)",
+          backgroundColor: "#FFFFFF",
+          border: "0.5px solid #E8E2D9",
+          color: "#1A1A1A",
+          borderRadius: "14px",
+          padding: "12px 16px",
+          fontSize: 14,
         } : undefined}
       >
         {isUser ? (
