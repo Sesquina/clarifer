@@ -15,6 +15,7 @@ interface Message {
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClient();
@@ -175,22 +176,11 @@ export default function ChatPage() {
 
       const { documentId } = await uploadRes.json();
 
-      // Step 2: Analyze document
+      // Step 2: Analyze document -- show pulsing state immediately
       setMessages((prev) =>
         prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded. Analyzing...` } : m)
       );
-
-      // Show immediate feedback
-      const analyzingMsgId = crypto.randomUUID();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: analyzingMsgId,
-          role: "assistant",
-          content: "Analyzing your document... This may take a moment.",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      setIsAnalyzing(true);
 
       const res = await fetch("/api/summarize", {
         method: "POST",
@@ -199,6 +189,7 @@ export default function ChatPage() {
       });
 
       if (!res.ok) {
+        setIsAnalyzing(false);
         setMessages((prev) =>
           prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded (analysis failed: ${res.status})` } : m)
         );
@@ -208,13 +199,14 @@ export default function ChatPage() {
       const summaryData = await res.json();
 
       if (summaryData.error) {
+        setIsAnalyzing(false);
         setMessages((prev) =>
           prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded (analysis error: ${summaryData.error})` } : m)
         );
         return;
       }
 
-      // Show AI summary as assistant message
+      // Show AI summary as assistant message, replacing the pulsing state
       const findings = summaryData.keyFindings || [];
       const findingsText = findings
         .map((f: { label: string; value: string; status?: string }) =>
@@ -222,31 +214,30 @@ export default function ChatPage() {
         )
         .join("\n");
 
+      setIsAnalyzing(false);
       setMessages((prev) => [
-        ...prev
-          .filter((m) => m.id !== analyzingMsgId)
-          .map((m) =>
-            m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded & analyzed` } : m
-          ),
+        ...prev.map((m) =>
+          m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded & analyzed` } : m
+        ),
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `📋 **Document Summary: ${origName}**\n\n${summaryData.summary || "No summary available."}\n\n${findingsText ? `**Key Findings:**\n${findingsText}` : ""}`,
+          content: `Document summary: ${origName}\n\n${summaryData.summary || "No summary available."}\n\n${findingsText ? `Key Findings:\n${findingsText}` : ""}`,
           created_at: new Date().toISOString(),
         },
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      console.error("Upload error:", err);
+      setIsAnalyzing(false);
       setMessages((prev) =>
-        prev.map((m) => m.id === docMsgId ? { ...m, content: `❌ Upload failed: ${msg}` } : m)
+        prev.map((m) => m.id === docMsgId ? { ...m, content: `Upload failed: ${msg}` } : m)
       );
     }
   }, [patientId, userId, supabase]);
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 7.5rem)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
-      <ChatHistory messages={messages} isLoading={isLoading} />
+      <ChatHistory messages={messages} isLoading={isLoading} isAnalyzing={isAnalyzing} />
       <ChatInput
         onSend={handleSend}
         onFileSelect={handleFileUpload}
