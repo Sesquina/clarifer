@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/privacy", "/terms", "/about", "/security"];
+  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/privacy", "/terms", "/about", "/security", "/ccf"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || (route !== "/" && pathname.startsWith(route))
   );
