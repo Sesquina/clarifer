@@ -1939,3 +1939,50 @@ Review /internal/login (Google Sign In gate), /internal (Overview),
 /internal/agents.
 Until the migration runs, all data calls return empty arrays.
 Review the preview URL before merging to main.
+
+---
+
+[2026-04-30] SPRINT sprint-ccf-3-foundation-dashboard -- COMPLETE
+Branch: sprint-ccf-3-foundation-dashboard
+
+TASK 1 COMPLETE: 5 UI bug fixes
+  BUG 1: Provider option removed from caregiver onboarding
+  BUG 2: AI chat bubble -- white bg, 0.5px border, dark text (no dark bg)
+  BUG 3: Sign out button added to app-header (44px touch target, ghost style)
+  BUG 4: Family update ** markdown stripped on text accumulation
+  BUG 5: Pulsing "Reading your document..." state added to chat during analysis
+
+TASK 2 COMPLETE: CCF co-branded landing page at /ccf
+  File: app/ccf/page.tsx
+  Public page, no auth required.
+  Header: Clarifer logo + "In partnership with Cholangiocarcinoma Foundation"
+  Hero: "For families navigating bile duct cancer" + CTA to /signup?condition=cholangiocarcinoma
+  Founding note: warm linen card with Samira's story
+  Three value props: Understand labs, Find trials, Never walk in unprepared
+  Bottom CTA: same button, "Free for caregivers and patients. Always."
+
+TASK 3 COMPLETE: Full demo smoke test
+
+  Step 1 -- /ccf loads without errors:            PASS
+    tsc reports 0 errors in app/ccf/page.tsx
+
+  Step 2 -- Sign out button in app-header:        PASS
+    signOut found at line 16 in components/layout/app-header.tsx
+
+  Step 3 -- Provider option removed from onboarding: PASS
+    grep for "provider|Provider" in app/onboarding/page.tsx -- no results
+
+  Step 4 -- Symptom logger has color chips + functional status: PASS
+    COLOR_CHIPS defined, colorValue state, sensations state, functionalStatus state
+
+  Step 5 -- Trial search has CCA filters:         PASS
+    fgfr2Status, tumor_location, FGFR2 all present in app/tools/trials/page.tsx
+
+  Step 6 -- lib/documents/analyze.ts exists:      PASS
+    File confirmed at lib/documents/analyze.ts
+
+  Step 7 -- docs/DESIGN_SYSTEM.md exists:         PASS
+    Confirmed in docs/
+
+TEST STATUS: 266 / 266 passing
+TYPESCRIPT: 0 new errors (2 pre-existing in tests/api/rate-limiting-auth.test.ts @/proxy)
