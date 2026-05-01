@@ -14,9 +14,10 @@ interface Message {
 interface ChatHistoryProps {
   messages: Message[];
   isLoading?: boolean;
+  isAnalyzing?: boolean;
 }
 
-export function ChatHistory({ messages, isLoading }: ChatHistoryProps) {
+export function ChatHistory({ messages, isLoading, isAnalyzing }: ChatHistoryProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,6 +46,32 @@ export function ChatHistory({ messages, isLoading }: ChatHistoryProps) {
             timestamp={msg.created_at}
           />
         ))}
+        {isAnalyzing && (
+          <div className="flex gap-3">
+            <img
+              src="/clarifer-logo.png"
+              alt="Clarifer"
+              width={28}
+              height={28}
+              className="rounded-full shrink-0 animate-pulse"
+              style={{ objectFit: "contain" }}
+            />
+            <div
+              className="animate-pulse"
+              style={{
+                backgroundColor: "var(--card)",
+                border: "0.5px solid var(--border)",
+                borderRadius: 16,
+                padding: "10px 16px",
+                fontSize: 14,
+                color: "var(--muted)",
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              }}
+            >
+              Reading your document...
+            </div>
+          </div>
+        )}
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />

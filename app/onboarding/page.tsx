@@ -16,7 +16,7 @@ function friendlyOnboardingError(msg: string): string {
   return msg;
 }
 
-type Role = "caregiver" | "patient" | "provider";
+type Role = "caregiver" | "patient";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
@@ -414,16 +414,6 @@ const ROLE_OPTIONS: RoleOption[] = [
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="8" r="4" />
         <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
-      </svg>
-    ),
-  },
-  {
-    value: "provider",
-    title: "I am a healthcare provider",
-    subtitle: "I support patients in a clinical setting",
-    icon: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 3h4v6h6v4h-6v6h-4v-6H4V9h6V3z" />
       </svg>
     ),
   },

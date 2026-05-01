@@ -26,8 +26,13 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
           "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
           isUser
             ? "rounded-tr-sm bg-primary text-primary-foreground"
-            : "rounded-tl-sm bg-muted"
+            : "rounded-tl-sm"
         )}
+        style={!isUser ? {
+          backgroundColor: "var(--card)",
+          border: "0.5px solid var(--border)",
+          color: "var(--text)",
+        } : undefined}
       >
         {isUser ? (
           <p className="whitespace-pre-wrap">{content}</p>
