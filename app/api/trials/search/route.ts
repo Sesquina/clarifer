@@ -114,29 +114,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Patient has no diagnosis" }, { status: 400 });
   }
 
-  // CCA biomarker filter context -- append to condition before cache key computation
-  // so different filter combinations produce distinct cache entries.
+  // Build a ClinicalTrials.gov-compatible query from the biomarker filters.
+  // CA 19-9 is NOT sent to the API -- CT.gov does not index by that biomarker.
+  // Keep the query simple: base condition + optional location subtype + biomarker.
   const tumorLocation = body?.tumor_location ?? null;
   const fgfr2Status = body?.fgfr2_status ?? null;
   const idh1Status = body?.idh1_status ?? null;
   const treatmentHistory = body?.treatment_history ?? null;
   const extraKeywords = body?.extra_keywords?.trim() ?? null;
 
-  if (tumorLocation && tumorLocation !== "Not sure") {
-    condition = `${tumorLocation} ${condition}`;
+  // Base is always "cholangiocarcinoma"; append intrahepatic subtype if specified
+  if (tumorLocation === "intrahepatic") {
+    condition = "intrahepatic cholangiocarcinoma";
+  } else {
+    condition = "cholangiocarcinoma";
   }
+
+  // Append biomarker terms that CT.gov indexes (FGFR2 and IDH1 have indexed trials)
   if (fgfr2Status === "Positive") {
-    condition += " FGFR2 fusion";
+    condition += " FGFR2";
   }
   if (idh1Status === "Positive") {
-    condition += " IDH1 mutation ivosidenib";
+    condition += " IDH1";
   }
-  if (treatmentHistory === "First stopped working" || treatmentHistory === "Two or more tried") {
-    condition += " second line refractory";
-  }
+
+  // Extra keywords (free text) appended as-is
   if (extraKeywords) {
     condition += ` ${extraKeywords}`;
   }
+
+  // treatmentHistory used for UI context only; CT.gov does not support line-of-therapy queries
 
   const country = ((patient.country as string | null) ?? "United States").trim();
   const city = (patient.city as string | null) ?? null;
