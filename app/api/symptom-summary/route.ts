@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
 
+export const maxDuration = 60;
+
 const anthropic = new Anthropic();
 
 export async function POST(request: Request) {
@@ -31,17 +33,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 256,
-      system: "You are a medical symptom summarizer. Given symptoms, severity, and notes, produce a brief 1-2 sentence clinical-style summary suitable for a doctor to quickly review. Be factual and concise.",
-      messages: [
-        {
-          role: "user",
-          content: `Symptoms: ${sanitizedSymptoms}\nSeverity: ${severity}/10\nNotes: ${sanitizedNotes}`,
-        },
-      ],
-    });
+    const completion = await Promise.race([
+      anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 256,
+        system: "You are a medical symptom summarizer. Given symptoms, severity, and notes, produce a brief 1-2 sentence clinical-style summary suitable for a doctor to quickly review. Be factual and concise.",
+        messages: [
+          {
+            role: "user",
+            content: `Symptoms: ${sanitizedSymptoms}\nSeverity: ${severity}/10\nNotes: ${sanitizedNotes}`,
+          },
+        ],
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("AI timeout")), 25000)
+      ),
+    ]);
 
     const summary = completion.content
       .filter((block): block is Anthropic.TextBlock => block.type === "text")

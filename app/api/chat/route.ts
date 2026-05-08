@@ -5,6 +5,8 @@ import { chatLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
 
+export const maxDuration = 60;
+
 const MAX_MESSAGE_LENGTH = 10000;
 const MAX_TOTAL_CONTENT = 50000;
 
@@ -180,22 +182,29 @@ ${patient.condition_templates?.ai_context || ""}`
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const response = await anthropic.messages.create({
-            model: "claude-sonnet-4-6",
-            max_tokens: 1024,
-            system: systemBlocks,
-            messages: sanitizedMessages,
-            stream: true,
-          });
+          await Promise.race([
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("AI timeout")), 25000)
+            ),
+            (async () => {
+              const response = await anthropic.messages.create({
+                model: "claude-sonnet-4-6",
+                max_tokens: 1000,
+                system: systemBlocks,
+                messages: sanitizedMessages,
+                stream: true,
+              });
 
-          for await (const event of response) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
-          }
+              for await (const event of response) {
+                if (
+                  event.type === "content_block_delta" &&
+                  event.delta.type === "text_delta"
+                ) {
+                  controller.enqueue(encoder.encode(event.delta.text));
+                }
+              }
+            })(),
+          ]);
           controller.close();
         } catch (error) {
           console.error('[chat/route] stream error:', error);

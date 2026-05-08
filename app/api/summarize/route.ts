@@ -98,7 +98,12 @@ export async function POST(request: Request) {
       ? rawType
       : (EXT_TO_MIME[rawType] ?? "application/pdf");
 
-    const result = await getDocumentAnalyzer().analyze(base64, mimeType);
+    const result = await Promise.race([
+      getDocumentAnalyzer().analyze(base64, mimeType),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("AI timeout")), 25000)
+      ),
+    ]);
     const headline = result.headline;
     const keyFindings = result.findings;
     const fullSummary = result.fullSummary;
@@ -122,21 +127,26 @@ export async function POST(request: Request) {
 
         try {
           const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-          const connectionResult = await anthropic.messages.create({
-            model: "claude-sonnet-4-6",
-            max_tokens: 300,
-            system: "You are a warm, knowledgeable medical assistant helping a family caregiver. Write in plain language. Be practical and caring.",
-            messages: [{
-              role: "user",
-              content: `Based on these lab findings: ${findingsText}
+          const connectionResult = await Promise.race([
+            anthropic.messages.create({
+              model: "claude-sonnet-4-6",
+              max_tokens: 300,
+              system: "You are a warm, knowledgeable medical assistant helping a family caregiver. Write in plain language. Be practical and caring.",
+              messages: [{
+                role: "user",
+                content: `Based on these lab findings: ${findingsText}
 
 And this patient's diagnosis of ${patient.custom_diagnosis}:
 
 ${symptomsText}
 
 What symptoms might ${patient.name || "the patient"} be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
-            }],
-          });
+              }],
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("AI timeout")), 25000)
+            ),
+          ]);
 
           symptomConnection = connectionResult.content
             .filter((block): block is Anthropic.TextBlock => block.type === "text")

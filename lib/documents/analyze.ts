@@ -60,12 +60,17 @@ Be concise. 3-4 sentences for the summary maximum. Key findings only.`;
           { type: "text" as const, text: "Please analyze this medical document." },
         ];
 
-    const completion = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 800,
-      system: systemPrompt,
-      messages: [{ role: "user", content: messageContent }],
-    });
+    const completion = await Promise.race([
+      anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 800,
+        system: systemPrompt,
+        messages: [{ role: "user", content: messageContent }],
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("AI timeout")), 25000)
+      ),
+    ]);
 
     const responseText = completion.content
       .filter((block): block is Anthropic.TextBlock => block.type === "text")
