@@ -24,6 +24,9 @@ export default function ForgotPasswordPage() {
         return;
       }
       setSent(true);
+    } catch (err) {
+      console.error("[forgot-password] submit error:", err);
+      setError("Could not send reset email. Please try again.");
     } finally {
       setLoading(false);
     }

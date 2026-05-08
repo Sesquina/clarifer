@@ -9,7 +9,7 @@ import { checkOrigin } from "@/lib/cors";
 import { resetLimiter } from "@/lib/ratelimit";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const RESET_REDIRECT = "https://clarifer.com/auth/callback?next=/update-password";
+const RESET_REDIRECT = `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`;
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
