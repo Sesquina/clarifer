@@ -11,6 +11,7 @@ import { internalSupabase } from "@/lib/internal/supabase";
 import { createClient } from "@/lib/supabase/server";
 import { isAllowedEmail } from "@/lib/internal/types";
 import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import { ReachCommunity } from "./ReachCommunity";
 
 export const dynamic = "force-dynamic";
 
@@ -683,101 +684,6 @@ function MostSavedTrialsSection({ trials }: { trials: SavedTrialEntry[] }) {
   );
 }
 
-function ReachCommunitySection() {
-  const trialSubject = encodeURIComponent("New CCA trial alert from CCF");
-  const welcomeSubject = encodeURIComponent("Welcome to the CCF caregiver community");
-
-  return (
-    <section
-      aria-label="Send to your community"
-      style={{
-        backgroundColor: "var(--card)",
-        border: "2px solid var(--primary)",
-        borderRadius: 14,
-        padding: 28,
-        marginTop: 20,
-        marginBottom: 32,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-      }}
-    >
-      <h2
-        style={{
-          ...HEADING,
-          fontSize: 20,
-          fontWeight: 600,
-          color: "var(--primary)",
-          marginBottom: 6,
-        }}
-      >
-        Send to your community
-      </h2>
-      <p style={{ ...BODY, fontSize: 14, color: "var(--muted)", marginBottom: 24, lineHeight: 1.6 }}>
-        When a new trial opens or CCF publishes resources, send directly to matched caregivers.
-        Opt-in only.
-      </p>
-
-      <div className="flex flex-wrap" style={{ gap: 12, marginBottom: 24 }}>
-        <a
-          href={`mailto:?subject=${trialSubject}`}
-          aria-label="Send a trial alert to matched caregivers"
-          style={{
-            ...BODY,
-            display: "inline-flex",
-            alignItems: "center",
-            height: 52,
-            padding: "0 24px",
-            borderRadius: 10,
-            backgroundColor: "var(--primary)",
-            color: "var(--white)",
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Send a trial alert to matched caregivers
-        </a>
-        <a
-          href={`mailto:?subject=${welcomeSubject}`}
-          aria-label="Send a welcome resource to new members"
-          style={{
-            ...BODY,
-            display: "inline-flex",
-            alignItems: "center",
-            height: 52,
-            padding: "0 24px",
-            borderRadius: 10,
-            backgroundColor: "transparent",
-            border: "2px solid var(--primary)",
-            color: "var(--primary)",
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Send a welcome resource to new members
-        </a>
-      </div>
-
-      <p
-        style={{
-          ...BODY,
-          fontSize: 12,
-          color: "var(--muted)",
-          lineHeight: 1.6,
-          borderTop: "1px solid var(--border)",
-          paddingTop: 16,
-        }}
-      >
-        All data is aggregated and anonymized. No individual patients are ever identified.
-        Minimum 5 patients per data point shown.
-      </p>
-    </section>
-  );
-}
 
 // ─── Loading skeleton ─────────────────────────────────────────────────────────
 
@@ -833,7 +739,7 @@ async function DashboardContent() {
       <MetricCards data={data} />
       <TopSymptomsSection symptoms={data.topSymptoms} />
       <MostSavedTrialsSection trials={data.mostSavedTrials} />
-      <ReachCommunitySection />
+      <ReachCommunity />
     </main>
   );
 }
