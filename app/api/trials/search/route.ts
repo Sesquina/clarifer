@@ -17,7 +17,7 @@ import { searchTrials, type NormalizedTrial } from "@/lib/trials/clinicaltrials-
 import { searchInternationalTrials } from "@/lib/trials/who-ictrp";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const ALLOWED_ROLES = ["caregiver", "patient", "provider"] as const;
 const CACHE_TTL_HOURS = 24;
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
     const wantUs = source !== "international";
     const wantIntl = source !== "us" && isInternational;
     const [usResults, intlResults] = await Promise.all([
-      wantUs ? searchTrials({ condition, location: { city, state, country }, phase: phases }) : Promise.resolve([]),
+      wantUs ? searchTrials({ condition, location: { city, state, country }, phase: phases, limit: 10 }) : Promise.resolve([]),
       wantIntl ? searchInternationalTrials({ condition, country }) : Promise.resolve([]),
     ]);
 
@@ -195,7 +195,12 @@ export async function POST(request: Request) {
       ? [...intlResults, ...usResults]
       : [...usResults, ...intlResults];
     const merged = dedupeTrials(orderedRaw);
-    const plainLanguage = await renderPlainLanguage(merged, language);
+    // Race Claude against 10s; if it loses, trials are returned without plain-language enrichment.
+    const plainLanguagePromise = renderPlainLanguage(merged, language);
+    const timeoutPromise = new Promise<Record<string, PlainLanguageOutput>>(
+      (resolve) => setTimeout(() => resolve({}), 10000)
+    );
+    const plainLanguage = await Promise.race([plainLanguagePromise, timeoutPromise]);
     enriched = merged.map((t) => ({ ...t, plain_language: plainLanguage[t.nct_id] ?? null, saved: false }));
 
     // Cache write (best-effort)
