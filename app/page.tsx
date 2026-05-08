@@ -708,6 +708,7 @@ export default function LandingPage() {
                 { label: "Privacy Policy", href: "/privacy" },
                 { label: "Terms", href: "/terms" },
                 { label: "Medical Disclaimer", href: "/disclaimer" },
+                { label: "Data and Privacy", href: "/data" },
                 { label: "Support", href: "mailto:team@clarifer.com" },
               ].map((l) => (
                 <Link
