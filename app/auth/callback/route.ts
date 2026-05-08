@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
  */
 export function resolveCallbackRedirect(next: string | null | undefined): string {
   if (next && next.startsWith("/internal")) return "/internal";
+  if (next === "/update-password") return "/update-password";
   return "/home";
 }
 
@@ -63,6 +64,12 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  }
+
+  // Password-reset recovery flow: redirect to the update-password page so
+  // the user can set a new password with their active recovery session.
+  if (next === "/update-password") {
+    return NextResponse.redirect(`${origin}/update-password`);
   }
 
   // Honor the admin /internal deep-link override only when it was
