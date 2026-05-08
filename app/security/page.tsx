@@ -1,18 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Security – Clarifer",
-  description: "How Clarifer protects your data — encryption, access controls, and your rights.",
+  title: "Security -- Clarifer",
+  description: "How Clarifer protects your data: encryption, access controls, and your rights.",
 };
-
-const AnchorIcon = ({ size = 48, color = "#2C5F4A" }: { size?: number; color?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" width={size} height={size}>
-    <circle cx="12" cy="5" r="3" />
-    <line x1="12" y1="8" x2="12" y2="22" />
-    <path d="M5 15l7 7 7-7" />
-    <path d="M5 12h4M15 12h4" />
-  </svg>
-);
 
 const sections = [
   {
@@ -29,7 +20,7 @@ const sections = [
   },
   {
     heading: "How AI processing works",
-    body: "When you upload a document or send a message, the content is sent to Anthropic\u2019s Claude API to generate a response. Anthropic does not use your data to train AI models. Your data is processed and discarded. Anthropic\u2019s full data handling policy is available at anthropic.com/privacy.",
+    body: "When you upload a document or send a message, the content is sent to Anthropic’s Claude API to generate a response. Anthropic does not use your data to train AI models. Your data is processed and discarded. Anthropic’s full data handling policy is available at anthropic.com/privacy.",
   },
   {
     heading: "What we will never do",
@@ -45,22 +36,22 @@ const sections = [
   },
   {
     heading: "Disclaimer",
-    body: "Clarifer is not a HIPAA covered entity. We apply security practices consistent with HIPAA standards but have not signed a Business Associate Agreement with our infrastructure providers. If you require formal HIPAA compliance please contact samira@cassinidesigngroup.com.",
+    body: "Clarifer is not a HIPAA covered entity. We apply security practices consistent with HIPAA standards but have not signed a Business Associate Agreement with our infrastructure providers. If you require formal HIPAA compliance please contact team@clarifer.com.",
   },
   {
     heading: "Questions",
-    body: "samira@cassinidesigngroup.com. We respond within 24 hours.",
+    body: "Reach us at team@clarifer.com. We respond within 24 hours.",
   },
 ];
 
 export default function SecurityPage() {
   return (
-    <div style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", color: "#1A1A1A" }}>
-      <main style={{ backgroundColor: "#FAF7F2", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", color: "var(--text)" }}>
+      <main style={{ backgroundColor: "var(--background)", minHeight: "100vh" }}>
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 24px 60px" }}>
           <Link
             href="/"
-            style={{ fontSize: 14, color: "#2C5F4A", textDecoration: "underline" }}
+            style={{ fontSize: 14, color: "var(--primary)", textDecoration: "underline" }}
           >
             &larr; Back to home
           </Link>
@@ -68,7 +59,7 @@ export default function SecurityPage() {
           <p
             style={{
               fontSize: 13,
-              color: "#6B6B6B",
+              color: "var(--muted)",
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               marginTop: 48,
@@ -81,7 +72,7 @@ export default function SecurityPage() {
             style={{
               fontFamily: "var(--font-playfair), serif",
               fontSize: "clamp(32px, 5vw, 44px)",
-              color: "#1A1A1A",
+              color: "var(--text)",
               marginTop: 12,
               lineHeight: 1.2,
             }}
@@ -96,13 +87,13 @@ export default function SecurityPage() {
                   style={{
                     fontFamily: "var(--font-playfair), serif",
                     fontSize: 22,
-                    color: "#2C5F4A",
+                    color: "var(--primary)",
                     marginBottom: 8,
                   }}
                 >
                   {section.heading}
                 </h2>
-                <p style={{ fontSize: 16, color: "#1A1A1A", lineHeight: 1.75 }}>
+                <p style={{ fontSize: 16, color: "var(--text)", lineHeight: 1.75 }}>
                   {section.body}
                 </p>
               </div>
@@ -111,29 +102,15 @@ export default function SecurityPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer
-        style={{
-          backgroundColor: "#1A1A1A",
-          padding: "40px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <AnchorIcon size={24} color="#FFFFFF" />
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
-            Clarifer by Cassini Design Group
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <a href="/about" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>About</a>
-          <a href="/security" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>Security</a>
-          <a href="/privacy" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>Privacy Policy</a>
-          <a href="/terms" style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textDecoration: "underline" }}>Terms</a>
+      <footer style={{ borderTop: "1px solid var(--border)", padding: "32px 24px", backgroundColor: "var(--background)" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+          <span style={{ fontSize: 13, color: "var(--muted)" }}>© 2026 Clarifer Corp. Los Angeles, CA.</span>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+            <a href="/privacy" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Privacy</a>
+            <a href="/terms" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Terms</a>
+            <a href="/disclaimer" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Medical Disclaimer</a>
+            <a href="/security" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Security</a>
+          </div>
         </div>
       </footer>
     </div>

@@ -275,7 +275,7 @@ export default function AboutPage() {
           For partnerships, press, or questions:
         </p>
         <a
-          href="mailto:support@clarifer.com"
+          href="mailto:team@clarifer.com"
           style={{
             ...BODY,
             fontSize: 16,
@@ -283,7 +283,7 @@ export default function AboutPage() {
             fontWeight: 500,
           }}
         >
-          support@clarifer.com
+          team@clarifer.com
         </a>
       </section>
     </div>

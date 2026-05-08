@@ -58,10 +58,12 @@ export async function searchTrials(opts: TrialSearchOptions): Promise<Normalized
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const url = `${ENDPOINT}?${params.toString()}`;
+  console.log("Fetching:", url);
   let res: Response;
   try {
-    res = await fetch(`${ENDPOINT}?${params.toString()}`, {
+    res = await fetch(url, {
       signal: controller.signal,
       next: { revalidate: 3600 },
     });
