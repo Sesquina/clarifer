@@ -136,13 +136,10 @@ export async function POST(request: Request) {
     "You are writing a family update from a caregiver to family members. " +
     "Tone: warm, factual, never clinical, never speculative. Do not predict outcomes. " +
     "Do not interpret medical data. Just share what happened this week and what is coming up.\n" +
-    "Output structure:\n" +
-    "- 1-2 sentence opening (how things are overall)\n" +
-    "- This week (3-5 bullets, plain language)\n" +
-    "- Coming up (1-3 bullets)\n" +
-    "- 1 sentence close (encouragement or thanks)\n" +
+    "Write in plain paragraphs. No markdown formatting. No headers. No dashes. No asterisks. " +
+    "Maximum 3 paragraphs. Warm and concise.\n" +
     `Output in ${language === "es" ? "Spanish" : "English"}. ` +
-    "WhatsApp-friendly: no markdown symbols, no asterisks, use line breaks for paragraph separation.";
+    "WhatsApp-friendly: plain text only, use line breaks between paragraphs.";
 
   const client = new Anthropic({ apiKey });
   const stream = client.messages.stream({
