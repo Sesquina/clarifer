@@ -259,8 +259,20 @@ export default function LandingPage() {
                   height: "100%",
                 }}
               >
-                <div style={{ fontSize: 32, marginBottom: 16 }} aria-hidden="true">
-                  {card.icon}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    marginBottom: 16,
+                    backgroundColor: "var(--pale-sage)",
+                  }}
+                  aria-hidden="true"
+                >
+                  <span style={{ fontSize: 24 }}>{card.icon}</span>
                 </div>
                 <h3
                   style={{
@@ -352,19 +364,19 @@ export default function LandingPage() {
           >
             {[
               {
-                title: "Cancer caregivers",
+                title: "Families navigating cancer",
                 body:
-                  "AI document analysis, biomarker tracking, clinical trial finder with international coverage, and automatic alerts for critical drug interactions.",
+                  "Upload lab results and get plain-language explanations. Find clinical trials matched to your loved one's biomarker profile. Prepare for every oncology appointment with specific questions generated from what has changed since the last visit.",
               },
               {
-                title: "Dementia and Alzheimer's caregivers",
+                title: "Families navigating dementia and Alzheimer's",
                 body:
-                  "Condition-aware symptom logging, medication management, care coordination tools, and family updates for the long journey ahead.",
+                  "Track how your loved one is doing day by day. Coordinate medications, care team visits, and family communication. Build a shared record that every family member can see, no matter where they are.",
               },
               {
-                title: "All conditions",
+                title: "Every caregiving journey",
                 body:
-                  "Clarifer adapts to any diagnosis. Whatever your family is navigating, the tools work the same way. Organized, private, and free.",
+                  "Clarifer adapts to any diagnosis. The tools work the same way whether you are navigating a new diagnosis or years into the journey. Organized, private, and free. Always.",
               },
             ].map((card) => (
               <div
@@ -502,7 +514,7 @@ export default function LandingPage() {
                 { label: "Privacy Policy", href: "/privacy" },
                 { label: "Terms", href: "/terms" },
                 { label: "Medical Disclaimer", href: "/disclaimer" },
-                { label: "Support", href: "/support" },
+                { label: "Support", href: "mailto:team@clarifer.com" },
               ].map((l) => (
                 <Link
                   key={l.href}
@@ -542,7 +554,7 @@ export default function LandingPage() {
               marginTop: 8,
             }}
           >
-            © 2026 Clarifer Corp. All rights reserved. support@clarifer.com
+            © 2026 Clarifer Corp. Los Angeles, CA. All rights reserved.
           </p>
         </div>
       </footer>
