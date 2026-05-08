@@ -57,12 +57,17 @@ export async function searchTrials(opts: TrialSearchOptions): Promise<Normalized
     params.set("filter.advanced", `AREA[Phase](${phaseFilter})`);
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
   let res: Response;
   try {
     res = await fetch(`${ENDPOINT}?${params.toString()}`, {
+      signal: controller.signal,
       next: { revalidate: 3600 },
     });
+    clearTimeout(timeoutId);
   } catch {
+    clearTimeout(timeoutId);
     return [];
   }
   if (!res.ok) return [];
