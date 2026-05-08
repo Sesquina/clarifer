@@ -70,9 +70,11 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // /ccf-dashboard is intentionally absent -- it is protected and requires isAllowedEmail.
   const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/update-password", "/privacy", "/terms", "/about", "/security", "/ccf"];
+  // Use startsWith(route + "/") not startsWith(route) to prevent /ccf from matching /ccf-dashboard.
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || (route !== "/" && pathname.startsWith(route))
+    (route) => pathname === route || (route !== "/" && pathname.startsWith(route + "/"))
   );
 
   if (!user && !isPublicRoute) {
