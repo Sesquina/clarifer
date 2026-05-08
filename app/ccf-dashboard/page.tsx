@@ -1,19 +1,16 @@
 /**
  * app/ccf-dashboard/page.tsx
- * Standalone CCF Foundation dashboard with no internal command center sidebar.
- * Intended for CCF Chief Patient Officer and ALLOWED_EMAILS only.
- * Tables: patients, users, symptom_logs, trial_saves, documents, audit_log
- * Auth: isAllowedEmail check from lib/internal/types -- redirects to /login if not allowed
- * Sprint: fix/ccf-standalone-dashboard
- * HIPAA: No individual PHI. All data aggregated. Counts 1-4 shown as "< 5". Audit log on view.
+ * Standalone CCF Foundation dashboard -- no internal command center sidebar.
+ * Auth: isAllowedEmail check, redirects to /login if not authenticated or not allowed.
+ * HIPAA: No individual PHI. All data aggregated. Counts 1-4 shown as "< 5". Page view written to audit_log.
  */
 
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { internalSupabase } from "@/lib/internal/supabase";
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
+import { createClient } from "@/lib/supabase/server";
 import { isAllowedEmail } from "@/lib/internal/types";
+import { AnchorLogo } from "@/components/ui/AnchorLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -53,13 +50,11 @@ interface CCFDashboardData {
 
 // ─── Privacy helpers ──────────────────────────────────────────────────────────
 
-/** Replace counts 1-4 with "< 5" per minimum anonymization policy. */
 function privacyCount(n: number): string {
   if (n >= 1 && n <= 4) return "< 5";
   return n.toLocaleString();
 }
 
-/** Format percentage safely. */
 function privacyPct(pct: number): string {
   if (pct <= 0) return "0%";
   return `${Math.round(pct)}%`;
@@ -67,10 +62,6 @@ function privacyPct(pct: number): string {
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
-/**
- * Fetches all dashboard metrics using the service role client (bypasses RLS for aggregate queries).
- * Each sub-query is wrapped in try/catch so one failure never crashes the whole dashboard.
- */
 async function fetchCCFData(): Promise<CCFDashboardData> {
   const supabase = internalSupabase();
 
@@ -203,9 +194,14 @@ async function fetchCCFData(): Promise<CCFDashboardData> {
           hadStructuredSymptoms = true;
           for (const [key, val] of Object.entries(log.symptoms as Record<string, unknown>)) {
             const active =
-              val !== null && val !== false && val !== 0 && val !== "" &&
+              val !== null &&
+              val !== false &&
+              val !== 0 &&
+              val !== "" &&
               !(Array.isArray(val) && val.length === 0);
-            if (active) counts[key] = (counts[key] ?? 0) + 1;
+            if (active) {
+              counts[key] = (counts[key] ?? 0) + 1;
+            }
           }
           continue;
         }
@@ -293,10 +289,9 @@ async function fetchCCFData(): Promise<CCFDashboardData> {
   };
 }
 
-// ─── Standalone header ────────────────────────────────────────────────────────
+// ─── Section components ───────────────────────────────────────────────────────
 
-/** Full-width sticky header. No negative margins -- this page has no sidebar container. */
-function DashboardHeader() {
+function StandaloneHeader() {
   return (
     <header
       aria-label="CCF Community Overview dashboard header"
@@ -336,7 +331,7 @@ function DashboardHeader() {
             width: 8,
             height: 8,
             borderRadius: "50%",
-            backgroundColor: "var(--pale-sage)",
+            backgroundColor: "var(--success)",
             flexShrink: 0,
           }}
         />
@@ -347,8 +342,6 @@ function DashboardHeader() {
     </header>
   );
 }
-
-// ─── Section components ───────────────────────────────────────────────────────
 
 function HeroMetricCard({ data }: { data: CCFDashboardData }) {
   return (
@@ -402,7 +395,7 @@ function HeroMetricCard({ data }: { data: CCFDashboardData }) {
             marginTop: 8,
           }}
         >
-          <span style={{ ...BODY, fontSize: 13, fontWeight: 600, color: "var(--pale-sage)" }}>
+          <span style={{ ...BODY, fontSize: 13, fontWeight: 600, color: "var(--success)" }}>
             +{privacyCount(data.newUsers)}
           </span>
           <span style={{ ...BODY, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
@@ -486,7 +479,15 @@ function TopSymptomsSection({ symptoms }: { symptoms: SymptomEntry[] }) {
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
-      <h2 style={{ ...HEADING, fontSize: 20, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
+      <h2
+        style={{
+          ...HEADING,
+          fontSize: 20,
+          fontWeight: 600,
+          color: "var(--text)",
+          marginBottom: 4,
+        }}
+      >
         What your community is experiencing
       </h2>
       <p style={{ ...BODY, fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>
@@ -568,7 +569,15 @@ function MostSavedTrialsSection({ trials }: { trials: SavedTrialEntry[] }) {
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
-      <h2 style={{ ...HEADING, fontSize: 20, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
+      <h2
+        style={{
+          ...HEADING,
+          fontSize: 20,
+          fontWeight: 600,
+          color: "var(--text)",
+          marginBottom: 4,
+        }}
+      >
         Trials your community is tracking
       </h2>
       <p style={{ ...BODY, fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>
@@ -691,7 +700,15 @@ function ReachCommunitySection() {
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
-      <h2 style={{ ...HEADING, fontSize: 20, fontWeight: 600, color: "var(--primary)", marginBottom: 6 }}>
+      <h2
+        style={{
+          ...HEADING,
+          fontSize: 20,
+          fontWeight: 600,
+          color: "var(--primary)",
+          marginBottom: 6,
+        }}
+      >
         Send to your community
       </h2>
       <p style={{ ...BODY, fontSize: 14, color: "var(--muted)", marginBottom: 24, lineHeight: 1.6 }}>
@@ -715,6 +732,7 @@ function ReachCommunitySection() {
             fontSize: 14,
             fontWeight: 600,
             textDecoration: "none",
+            cursor: "pointer",
             whiteSpace: "nowrap",
           }}
         >
@@ -736,6 +754,7 @@ function ReachCommunitySection() {
             fontSize: 14,
             fontWeight: 600,
             textDecoration: "none",
+            cursor: "pointer",
             whiteSpace: "nowrap",
           }}
         >
@@ -764,7 +783,7 @@ function ReachCommunitySection() {
 
 function DashboardSkeleton() {
   return (
-    <div aria-label="Loading dashboard" aria-busy="true">
+    <div aria-label="Loading dashboard" aria-busy="true" style={{ padding: "0 24px" }}>
       <div
         style={{
           backgroundColor: "var(--pale-sage)",
@@ -809,19 +828,19 @@ async function DashboardContent() {
   const data = await fetchCCFData();
 
   return (
-    <>
+    <main style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
       <HeroMetricCard data={data} />
       <MetricCards data={data} />
       <TopSymptomsSection symptoms={data.topSymptoms} />
       <MostSavedTrialsSection trials={data.mostSavedTrials} />
       <ReachCommunitySection />
-    </>
+    </main>
   );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function CCFStandaloneDashboardPage() {
+export default async function CCFDashboardPage() {
   const serverSupabase = await createClient();
   const { data: { user } } = await serverSupabase.auth.getUser();
 
@@ -844,12 +863,10 @@ export default async function CCFStandaloneDashboardPage() {
 
   return (
     <div style={{ backgroundColor: "var(--background)", minHeight: "100vh", ...BODY }}>
-      <DashboardHeader />
-      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
-        <Suspense fallback={<DashboardSkeleton />}>
-          <DashboardContent />
-        </Suspense>
-      </main>
+      <StandaloneHeader />
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardContent />
+      </Suspense>
     </div>
   );
 }
