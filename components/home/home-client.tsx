@@ -64,8 +64,9 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
   const [apptSaving, setApptSaving] = useState(false);
 
   const supabase = createClient();
+  const firstName = patient.name.split(" ")[0];
   const dayIndex = new Date().getDate() % 30;
-  const caregiverMsg = CAREGIVER_MESSAGES[dayIndex].replace(/PATIENT_NAME/g, patient.name);
+  const caregiverMsg = CAREGIVER_MESSAGES[dayIndex].replace(/PATIENT_NAME/g, firstName);
 
   async function handleFamilyUpdate() {
     setShowUpdateModal(true);
@@ -157,7 +158,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
         {/* Greeting */}
         <div>
           <p style={{ fontSize: 14, color: "#2C5F4A", fontWeight: 500 }}>
-            Caring for {patient.name}
+            Caring for {firstName}
           </p>
           <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 4 }}>
             {statusLine}
@@ -175,7 +176,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             }}
           >
             <p style={{ fontSize: 16, fontWeight: 600, color: "#1A1A1A" }}>
-              How is {patient.name} doing today?
+              How is {firstName} doing today?
             </p>
             <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 6, fontStyle: "italic" }}>
               {caregiverMsg}
@@ -323,7 +324,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
               href="/log"
               style={{ fontSize: 14, color: "#2C5F4A", fontWeight: 500, padding: "8px 0", display: "block", textDecoration: "none" }}
             >
-              Nothing logged yet. How is {patient.name} feeling?
+              Nothing logged yet. How is {firstName} feeling?
             </Link>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
