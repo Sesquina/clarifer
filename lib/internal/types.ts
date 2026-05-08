@@ -66,11 +66,13 @@ export type AccessLevel = "full" | "growth";
 export const ALLOWED_EMAILS = [
   "samira.esquina@clarifer.com",
   "michael.barbara@clarifer.com",
+  "demo@clarifer.com",
 ] as const;
 
 export const ACCESS_LEVELS: Record<string, AccessLevel> = {
   "samira.esquina@clarifer.com": "full",
   "michael.barbara@clarifer.com": "growth",
+  "demo@clarifer.com": "growth",
 };
 
 export function accessLevelFor(email: string | null | undefined): AccessLevel | null {

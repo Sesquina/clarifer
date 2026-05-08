@@ -111,7 +111,13 @@ export default function FamilyUpdatePage() {
             continue;
           }
           if (evt.kind === "meta") setMeta(evt);
-          else if (evt.kind === "text") setText((prev) => prev + evt.text.replace(/\*\*/g, ""));
+          else if (evt.kind === "text") {
+            const clean = evt.text
+              .replace(/\*\*/g, "")
+              .replace(/---/g, "")
+              .replace(/#{1,6}\s/g, "");
+            setText((prev) => prev + clean);
+          }
           else if (evt.kind === "error") setError(evt.message || t.error);
         }
       }
@@ -255,7 +261,7 @@ export default function FamilyUpdatePage() {
         )}
         {(text || busy) && (
           <textarea
-            value={text}
+            value={text.trim()}
             onChange={(e) => setText(e.target.value)}
             data-testid="family-update-text"
             aria-label="Family update text"

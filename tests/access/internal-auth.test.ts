@@ -18,10 +18,11 @@ describe("internal access allowlist", () => {
     expect(isAllowedEmail(undefined)).toBe(false);
   });
 
-  it("15. allowlist is exactly the two internal users and no more", () => {
+  it("15. allowlist contains exactly the permitted internal users", () => {
     expect([...ALLOWED_EMAILS]).toEqual([
       "samira.esquina@clarifer.com",
       "michael.barbara@clarifer.com",
+      "demo@clarifer.com",
     ]);
   });
 });
