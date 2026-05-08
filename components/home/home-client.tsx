@@ -6,6 +6,34 @@ import { createClient } from "@/lib/supabase/client";
 import { PageContainer } from "@/components/layout/page-container";
 import { Activity, MessageCircle, UploadCloud, Search, Calendar, MapPin, Plus, X, Loader2, Copy, Check } from "lucide-react";
 
+const CCF_GROUPS = [
+  {
+    title: "Caregiver Support Group",
+    date: "Wed, May 21",
+    url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjAiQIArwM41HYbM0RQPPXgSkB2UWWszsUQ9FG1r27nC4vwLUcgpuSSYSEZmdzF4JxuJblViMUmNlxo_JUVOe_HmvC-4XEXzYG4AELnnOd4jPOwHhKkf72Ow=",
+  },
+  {
+    title: "Patient Support Group",
+    date: "Sun, May 18",
+    url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjGoOqTr68jfYyoO_j76NuicBdPn50IBpulbzvfjKw9OR5FbXRTUaoYHiz6XApwXOTG3QCJgKLicMUIZ9AmenH02uw5hPDRz9nfPv_ejDvtaIQM7S8KfNYCDlRbfUurEmQQ==",
+  },
+  {
+    title: "Spanish Support Group",
+    date: "Tue, May 13",
+    url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjBvnHVdN1ZeRnjCCyuz1wuWtVWSnfGJx503Zh_0iNXS0kny0XIGlRFRJJ0VHrR8_q8z6aSOOZQiOs5QO_zRQjA1wsY6zx793dQMbXmbkpSNK",
+  },
+  {
+    title: "Bereaved Support Group",
+    date: "Mon, May 20",
+    url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjF6SJlk8pFOa6_GzeFX5x1fChoEArzMOuWChFEpgjRpAPa5BPS95UoNQqxOkoI-IhGtHli58DVYEZ-jm6hpGUSaZp2dMfBXOH0IAnO8Rfaqv",
+  },
+  {
+    title: "Young Adult Support Group",
+    date: "Mon, May 26",
+    url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjNkEQlBZJIdzLUC3Ujct-mgMvBlSRmbNgYvgnagrW1BEKZWOUj28QgaNrrORA9xnLf5hQLjIBdEdEl_geMeGbUksJcyhT1GTprgf3HJR2e8S",
+  },
+];
+
 const CAREGIVER_MESSAGES = [
   "Have you had water today?",
   "When did you last eat a real meal?",
@@ -64,8 +92,9 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
   const [apptSaving, setApptSaving] = useState(false);
 
   const supabase = createClient();
+  const firstName = patient.name.split(" ")[0];
   const dayIndex = new Date().getDate() % 30;
-  const caregiverMsg = CAREGIVER_MESSAGES[dayIndex].replace(/PATIENT_NAME/g, patient.name);
+  const caregiverMsg = CAREGIVER_MESSAGES[dayIndex].replace(/PATIENT_NAME/g, firstName);
 
   async function handleFamilyUpdate() {
     setShowUpdateModal(true);
@@ -157,7 +186,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
         {/* Greeting */}
         <div>
           <p style={{ fontSize: 14, color: "#2C5F4A", fontWeight: 500 }}>
-            Caring for {patient.name}
+            Caring for {firstName}
           </p>
           <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 4 }}>
             {statusLine}
@@ -175,7 +204,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             }}
           >
             <p style={{ fontSize: 16, fontWeight: 600, color: "#1A1A1A" }}>
-              How is {patient.name} doing today?
+              How is {firstName} doing today?
             </p>
             <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 6, fontStyle: "italic" }}>
               {caregiverMsg}
@@ -323,7 +352,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
               href="/log"
               style={{ fontSize: 14, color: "#2C5F4A", fontWeight: 500, padding: "8px 0", display: "block", textDecoration: "none" }}
             >
-              Nothing logged yet. How is {patient.name} feeling?
+              Nothing logged yet. How is {firstName} feeling?
             </Link>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
@@ -361,6 +390,134 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             </div>
           )}
         </div>
+
+        {/* CCF sections -- only shown for cholangiocarcinoma patients */}
+        {patient.diagnosis?.toLowerCase().includes("cholangiocarcinoma") && (
+          <>
+            {/* Newly Connected program card */}
+            <div
+              style={{
+                backgroundColor: "#FFFFFF",
+                borderRadius: 14,
+                border: "1.5px solid #2C5F4A",
+                padding: "20px",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "#6B6B6B",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: 8,
+                }}
+              >
+                FROM CCF
+              </p>
+              <p style={{ fontSize: 18, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>
+                Are you newly diagnosed?
+              </p>
+              <p style={{ fontSize: 16, color: "#6B6B6B", lineHeight: 1.6, marginBottom: 16 }}>
+                CCF offers a free care kit, a 1:1 meeting with a patient advocate, and a resource roadmap for families navigating this diagnosis.
+              </p>
+              <a
+                href="https://www.cholangiocarcinoma.org/newly-diagnosed/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  height: 52,
+                  borderRadius: 10,
+                  backgroundColor: "#2C5F4A",
+                  color: "#FFFFFF",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  fontFamily: "var(--font-dm-sans)",
+                  boxSizing: "border-box",
+                }}
+              >
+                Connect with CCF
+              </a>
+            </div>
+
+            {/* CCF Community support groups */}
+            <div>
+              <h2
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#6B6B6B",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  marginBottom: 8,
+                }}
+              >
+                CCF COMMUNITY
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {CCF_GROUPS.map((group) => (
+                  <div
+                    key={group.title}
+                    style={{
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: 14,
+                      border: "0.5px solid #E8E2D9",
+                      padding: "16px 20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 16, fontWeight: 500, color: "#1A1A1A" }}>
+                        {group.title}
+                      </p>
+                      <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 2 }}>
+                        {group.date}
+                      </p>
+                      <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 2 }}>
+                        Hosted by CCF
+                      </p>
+                    </div>
+                    <a
+                      href={group.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: 44,
+                        paddingLeft: 16,
+                        paddingRight: 16,
+                        borderRadius: 10,
+                        border: "1.5px solid #2C5F4A",
+                        color: "#2C5F4A",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        fontFamily: "var(--font-dm-sans)",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Register
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 12, lineHeight: 1.6 }}>
+                Support groups are hosted by the Cholangiocarcinoma Foundation. Clarifer is not affiliated with CCF.
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Appointment modal */}

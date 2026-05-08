@@ -37,7 +37,7 @@ export default function LandingPage() {
           style={{ maxWidth: 720, margin: "0 auto" }}
         >
           <div style={{ marginBottom: 28 }}>
-            <img src="/clarifer-logo.png" alt="Clarifer" width={72} height={72} style={{ objectFit: "contain" }} />
+            <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
           </div>
           <h1
             className="text-[36px] md:text-[52px] text-center"

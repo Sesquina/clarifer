@@ -48,6 +48,8 @@ export default async function HomePage() {
   const logs = logsResult.data || [];
   const loggedToday = (todayLogResult.data || []).length > 0;
 
+  const firstName = patient.name.split(" ")[0];
+
   let statusLine = "Nothing on the schedule today.";
   const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
@@ -55,11 +57,11 @@ export default async function HomePage() {
     if (!appt.datetime) continue;
     const apptDate = new Date(appt.datetime);
     if (apptDate.toDateString() === now.toDateString()) {
-      statusLine = `${patient.name} has an appointment today.`;
+      statusLine = `${firstName} has an appointment today.`;
       break;
     }
     if (apptDate.toDateString() === tomorrow.toDateString()) {
-      statusLine = `${patient.name} has an appointment tomorrow.`;
+      statusLine = `${firstName} has an appointment tomorrow.`;
       break;
     }
   }
@@ -71,7 +73,7 @@ export default async function HomePage() {
       const lastLog = new Date(logs[0].created_at);
       const daysSince = Math.floor((now.getTime() - lastLog.getTime()) / (1000 * 60 * 60 * 24));
       if (daysSince >= 3) {
-        statusLine = `How has ${patient.name} been feeling lately?`;
+        statusLine = `How has ${firstName} been feeling lately?`;
       }
     }
   }

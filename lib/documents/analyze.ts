@@ -15,7 +15,7 @@ class AnthropicDocumentAnalyzer implements DocumentAnalyzer {
   async analyze(fileData: string, mediaType: string, patientContext?: string): Promise<AnalysisResult> {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-    const systemPrompt = `You are helping a family caregiver understand a medical document. Analyze it and return structured JSON in plain, warm language — no jargon without a parenthetical explanation. Start with the most important takeaway.
+    const systemPrompt = `You are helping a family caregiver understand a medical document. Analyze it and return structured JSON in plain, warm language. No jargon without a parenthetical explanation. Start with the most important takeaway. Never use em dashes or en dashes. Use plain sentences. Use colons where a pause is needed.
 
 ${patientContext ? `Patient context: ${patientContext}` : ""}
 
@@ -30,7 +30,7 @@ Return ONLY valid JSON:
 }
 
 Use "flagged" for abnormal values, "normal" for normal values, "info" for neutral context.
-Be concise — 3-4 sentences for the summary maximum. Key findings only.`;
+Be concise. 3-4 sentences for the summary maximum. Key findings only.`;
 
     // Build message content based on MIME type:
     // image/* → image block, text/* → decoded UTF-8 string, all else → PDF document block.
@@ -72,20 +72,31 @@ Be concise — 3-4 sentences for the summary maximum. Key findings only.`;
       .map((block) => block.text)
       .join("");
 
+    const stripDashes = (text: string): string =>
+      text
+        .replace(/—/g, ",")
+        .replace(/–/g, " to ")
+        .replace(/ -- /g, ", ")
+        .replace(/ - /g, ", ");
+
     try {
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
+      const findings = (parsed.findings || []).map((f: { label: string; value: string; status: string }) => ({
+        ...f,
+        value: stripDashes(f.value),
+      }));
       return {
-        headline: parsed.headline || "Document analyzed",
-        findings: parsed.findings || [],
-        fullSummary: parsed.fullSummary || responseText,
-        symptomConnection: parsed.symptomConnection,
+        headline: stripDashes(parsed.headline || "Document analyzed"),
+        findings,
+        fullSummary: stripDashes(parsed.fullSummary || responseText),
+        symptomConnection: parsed.symptomConnection ? stripDashes(parsed.symptomConnection) : undefined,
       };
     } catch {
       return {
         headline: "Document analyzed",
         findings: [],
-        fullSummary: responseText,
+        fullSummary: stripDashes(responseText),
       };
     }
   }

@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 
 const COLOR_CHIPS = [
   { value: 1, label: "Very mild", bg: "#E3F2FD", color: "#0D3B6E" },
-  { value: 2, label: "Mild", bg: "#FEF8E1", color: "#5C3D00" },
+  { value: 2, label: "Mild", bg: "#FEF8E1", color: "#7A4F00" },
   { value: 3, label: "Moderate", bg: "#FEF0E1", color: "#7A3B00" },
   { value: 4, label: "Significant", bg: "#FDECEA", color: "#8B1A1A" },
   { value: 5, label: "Severe", bg: "#F5E0DE", color: "#5C0F0F" },
@@ -54,7 +54,7 @@ function SectionCard({ title, required, children }: { title: string; required?: 
     <div
       style={{
         backgroundColor: "var(--card)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md, 10px)",
         border: "1px solid var(--border)",
         padding: "20px 16px",
       }}
@@ -62,9 +62,11 @@ function SectionCard({ title, required, children }: { title: string; required?: 
       <p
         style={{
           fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "var(--text)",
+          fontSize: 11,
+          fontWeight: 500,
+          color: "var(--muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
           marginBottom: 12,
         }}
       >
@@ -110,6 +112,7 @@ export default function LogPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [patientName, setPatientName] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [lastAppetite, setLastAppetite] = useState<string | null>(null);
@@ -125,11 +128,14 @@ export default function LogPage() {
       setUserId(user.id);
 
       const [{ data: patient }, { data: me }] = await Promise.all([
-        supabase.from("patients").select("id").eq("created_by", user.id).limit(1).single(),
+        supabase.from("patients").select("id, name").eq("created_by", user.id).limit(1).single(),
         supabase.from("users").select("organization_id").eq("id", user.id).single(),
       ]);
 
-      if (patient) setPatientId(patient.id);
+      if (patient) {
+        setPatientId(patient.id);
+        setPatientName(patient.name ?? null);
+      }
       if (me?.organization_id) setOrganizationId(me.organization_id);
 
       if (patient) {
@@ -213,10 +219,12 @@ export default function LogPage() {
             marginBottom: 20,
           }}
         >
-          How are they feeling?
+          {patientName
+            ? `How is ${patientName.split(" ")[0]} doing today?`
+            : "How are they doing today?"}
         </h1>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {/* Section 1: Color scale */}
           <SectionCard title="How would you describe the overall level?" required>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -227,15 +235,17 @@ export default function LogPage() {
                   onClick={() => setColorValue(colorValue === chip.value ? null : chip.value)}
                   style={{
                     ...chipBase,
+                    width: "100%",
                     minHeight: 52,
-                    borderRadius: 10,
-                    outline: colorValue === chip.value ? `2px solid ${chip.color}` : "2px solid transparent",
-                    outlineOffset: -2,
+                    borderRadius: "var(--radius-md, 10px)",
+                    border: colorValue === chip.value
+                      ? `2px solid ${chip.color}`
+                      : "1.5px solid var(--border)",
                     backgroundColor: chip.bg,
                     color: chip.color,
-                    fontSize: 15,
-                    fontWeight: colorValue === chip.value ? 600 : 400,
-                    padding: "0 16px",
+                    fontSize: 16,
+                    fontWeight: colorValue === chip.value ? 500 : 400,
+                    padding: "14px 16px",
                     textAlign: "left",
                   }}
                 >
@@ -258,13 +268,13 @@ export default function LogPage() {
                     style={{
                       ...chipBase,
                       minHeight: 52,
-                      borderRadius: 10,
-                      border: `1.5px solid ${active ? "var(--primary)" : "var(--border)"}`,
+                      borderRadius: "var(--radius-md, 10px)",
+                      border: active ? "2px solid var(--primary)" : "1px solid var(--border)",
                       backgroundColor: active ? "var(--pale-sage)" : "var(--background)",
                       color: active ? "var(--primary)" : "var(--text)",
                       fontSize: 13,
                       fontWeight: active ? 500 : 400,
-                      padding: "8px 6px",
+                      padding: "12px 8px",
                       justifyContent: "center",
                       textAlign: "center",
                     }}
@@ -317,15 +327,16 @@ export default function LogPage() {
                     onClick={() => setFunctionalStatus(active ? null : opt)}
                     style={{
                       ...chipBase,
+                      width: "100%",
                       minHeight: 52,
-                      borderRadius: 10,
+                      borderRadius: "var(--radius-md, 10px)",
                       border: active
                         ? "2px solid var(--primary)"
-                        : "1.5px solid var(--border)",
+                        : "1px solid var(--border)",
                       backgroundColor: active ? "var(--pale-sage)" : "var(--card)",
-                      color: "var(--text)",
-                      fontSize: 15,
-                      fontWeight: active ? 600 : 400,
+                      color: active ? "var(--primary)" : "var(--text)",
+                      fontSize: 16,
+                      fontWeight: active ? 500 : 400,
                       padding: "0 16px",
                       textAlign: "left",
                     }}
@@ -356,15 +367,16 @@ export default function LogPage() {
                     onClick={() => setAppetite(active ? null : opt)}
                     style={{
                       ...chipBase,
+                      width: "100%",
                       minHeight: 52,
-                      borderRadius: 10,
+                      borderRadius: "var(--radius-md, 10px)",
                       border: active
                         ? "2px solid var(--primary)"
-                        : "1.5px solid var(--border)",
+                        : "1px solid var(--border)",
                       backgroundColor: active ? "var(--pale-sage)" : "var(--card)",
-                      color: "var(--text)",
-                      fontSize: 15,
-                      fontWeight: active ? 600 : 400,
+                      color: active ? "var(--primary)" : "var(--text)",
+                      fontSize: 16,
+                      fontWeight: active ? 500 : 400,
                       padding: "0 16px",
                       textAlign: "left",
                     }}
