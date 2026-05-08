@@ -67,41 +67,24 @@ export function Header(_props: HeaderProps = {}) {
         </nav>
 
         {/* RIGHT: Actions */}
-        <div className="hidden md:flex items-center" style={{ gap: 12 }}>
+        <div className="hidden md:flex items-center">
           <Link
-            href="/login"
-            aria-label="Sign in"
+            href="/#waitlist"
+            aria-label="Join the waitlist"
             className="inline-flex items-center"
             style={{
               height: 40,
               padding: "0 20px",
               borderRadius: 26,
-              border: "1px solid var(--primary)",
+              border: "1.5px solid var(--primary)",
               color: "var(--primary)",
               backgroundColor: "transparent",
-              fontSize: 14,
-              fontWeight: 500,
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            }}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/download"
-            aria-label="Get the app"
-            className="inline-flex items-center"
-            style={{
-              height: 40,
-              padding: "0 20px",
-              borderRadius: 26,
-              backgroundColor: "var(--primary)",
-              color: "var(--white)",
               fontSize: 14,
               fontWeight: 600,
               fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             }}
           >
-            Get the App
+            Join the waitlist
           </Link>
         </div>
 
@@ -167,41 +150,25 @@ export function Header(_props: HeaderProps = {}) {
               {link.label}
             </Link>
           ))}
-          <div className="flex flex-col" style={{ gap: 12, padding: "12px 24px 0" }}>
+          <div style={{ padding: "12px 24px 0" }}>
             <Link
-              href="/login"
+              href="/#waitlist"
               onClick={() => setMenuOpen(false)}
-              aria-label="Sign in"
+              aria-label="Join the waitlist"
               className="inline-flex items-center justify-center"
               style={{
                 height: 48,
+                width: "100%",
                 borderRadius: 26,
-                border: "1px solid var(--primary)",
+                border: "1.5px solid var(--primary)",
                 color: "var(--primary)",
                 backgroundColor: "transparent",
-                fontSize: 15,
-                fontWeight: 500,
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              }}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/download"
-              onClick={() => setMenuOpen(false)}
-              aria-label="Get the app"
-              className="inline-flex items-center justify-center"
-              style={{
-                height: 48,
-                borderRadius: 26,
-                backgroundColor: "var(--primary)",
-                color: "var(--white)",
                 fontSize: 15,
                 fontWeight: 600,
                 fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
               }}
             >
-              Get the App
+              Join the waitlist
             </Link>
           </div>
         </div>

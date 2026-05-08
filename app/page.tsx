@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { CookieBanner } from "@/components/cookie-banner";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata = {
   title: "Clarifer. Care coordination for caregivers.",
@@ -21,8 +22,9 @@ export default function LandingPage() {
     <div style={{ backgroundColor: "var(--background)", color: "var(--text)", ...BODY_FONT }}>
       <Header />
 
-      {/* HERO */}
+      {/* HERO + WAITLIST */}
       <section
+        id="waitlist"
         className="flex flex-col items-center justify-center text-center"
         style={{
           backgroundColor: "var(--background)",
@@ -66,55 +68,7 @@ export default function LandingPage() {
             documents, track symptoms, and keep family informed. All in one
             place.
           </p>
-          <div
-            className="flex flex-wrap justify-center"
-            style={{ gap: 14 }}
-          >
-            <Link
-              href="/download"
-              className="inline-flex items-center justify-center"
-              style={{
-                height: 52,
-                padding: "0 28px",
-                borderRadius: 26,
-                backgroundColor: "var(--primary)",
-                color: "var(--white)",
-                fontSize: 16,
-                fontWeight: 600,
-                ...BODY_FONT,
-              }}
-            >
-              Download the App
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center"
-              style={{
-                height: 52,
-                padding: "0 28px",
-                borderRadius: 26,
-                border: "1.5px solid var(--primary)",
-                color: "var(--primary)",
-                backgroundColor: "transparent",
-                fontSize: 16,
-                fontWeight: 600,
-                ...BODY_FONT,
-              }}
-            >
-              Sign In
-            </Link>
-          </div>
-          <p
-            className="text-center"
-            style={{
-              ...BODY_FONT,
-              fontSize: 13,
-              color: "var(--muted)",
-              marginTop: 20,
-            }}
-          >
-            Free for caregivers. HIPAA compliant. iOS, Android and Web.
-          </p>
+          <WaitlistForm />
         </div>
       </section>
 
@@ -249,7 +203,7 @@ export default function LandingPage() {
               margin: "0 auto 48px",
             }}
           >
-            From the first diagnosis to the daily routine of care.
+            From the first appointment to the daily routine of care.
           </p>
           <div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
@@ -332,6 +286,45 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ACL GRANT */}
+      <section style={{ backgroundColor: "var(--background)", padding: "48px 24px 0" }}>
+        <div
+          style={{
+            maxWidth: 680,
+            margin: "0 auto",
+            textAlign: "center",
+            borderTop: "1px solid var(--border)",
+            paddingTop: 48,
+          }}
+        >
+          <p
+            style={{
+              ...BODY_FONT,
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 12,
+            }}
+          >
+            Built with support from
+          </p>
+          <p
+            style={{
+              ...BODY_FONT,
+              fontSize: 15,
+              color: "var(--muted)",
+              lineHeight: 1.7,
+            }}
+          >
+            Clarifer has applied for the Administration for Community Living
+            Caregiver AI Challenge grant to expand access to AI-powered caregiver
+            support for families across the United States.
+          </p>
         </div>
       </section>
 
@@ -467,75 +460,6 @@ export default function LandingPage() {
               care team. No one else.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section
-        style={{
-          backgroundColor: "var(--primary)",
-          padding: "80px 24px",
-          textAlign: "center",
-          color: "var(--white)",
-        }}
-      >
-        <h2
-          style={{
-            ...SECTION_HEADING,
-            fontSize: 38,
-            color: "var(--white)",
-            marginBottom: 16,
-            fontWeight: 700,
-          }}
-        >
-          Start organizing care today
-        </h2>
-        <p
-          style={{
-            ...BODY_FONT,
-            fontSize: 18,
-            color: "rgba(255,255,255,0.75)",
-            marginBottom: 36,
-          }}
-        >
-          Free for caregivers. Available on iOS, Android, and web.
-        </p>
-        <div
-          className="flex flex-wrap justify-center"
-          style={{ gap: 16 }}
-        >
-          <Link
-            href="/download"
-            className="inline-flex items-center justify-center"
-            style={{
-              height: 52,
-              padding: "0 28px",
-              borderRadius: 26,
-              backgroundColor: "var(--white)",
-              color: "var(--primary)",
-              fontSize: 16,
-              fontWeight: 600,
-              ...BODY_FONT,
-            }}
-          >
-            Download on App Store
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center"
-            style={{
-              height: 52,
-              padding: "0 28px",
-              borderRadius: 26,
-              backgroundColor: "var(--white)",
-              color: "var(--primary)",
-              fontSize: 16,
-              fontWeight: 600,
-              ...BODY_FONT,
-            }}
-          >
-            Open Web App
-          </Link>
         </div>
       </section>
 
