@@ -34,38 +34,6 @@ const CCF_GROUPS = [
   },
 ];
 
-const CAREGIVER_MESSAGES = [
-  "Have you had water today?",
-  "When did you last eat a real meal?",
-  "It is okay to not have all the answers.",
-  "You are doing more than you know.",
-  "Is there someone you can call today, just to talk?",
-  "Step outside for 10 minutes if you can.",
-  "Rest is not giving up. Rest is how you keep going.",
-  "You do not have to be strong every minute.",
-  "It is okay to feel overwhelmed. This is overwhelming.",
-  "PATIENT_NAME is lucky to have you.",
-  "Have you slept? Even a little?",
-  "One thing at a time. Just today.",
-  "You are allowed to ask for help.",
-  "Breathing slowly actually helps. Try it right now.",
-  "You showed up today. That matters.",
-  "Is there anything you need that no one has asked about?",
-  "The hard moments do not erase the good ones.",
-  "You can fall apart sometimes. You always put yourself back together.",
-  "Drink some water. Seriously.",
-  "What would you tell a friend in your position? Tell yourself that.",
-  "You are not alone in this, even when it feels that way.",
-  "Small wins count. What was yours today?",
-  "It is okay to laugh. Joy does not mean you are not taking this seriously.",
-  "You have carried a lot. Put something down today if you can.",
-  "Has anyone checked on you today? We are checking on you.",
-  "Even 5 minutes of quiet is worth taking.",
-  "You are the expert on PATIENT_NAME. Trust yourself.",
-  "Grief and love can exist at the same time.",
-  "You do not have to explain your feelings to anyone today.",
-  "We see you. Keep going.",
-];
 
 interface HomeClientProps {
   patient: { id: string; name: string; diagnosis: string | null };
@@ -93,8 +61,6 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
 
   const supabase = createClient();
   const firstName = patient.name.split(" ")[0];
-  const dayIndex = new Date().getDate() % 30;
-  const caregiverMsg = CAREGIVER_MESSAGES[dayIndex].replace(/PATIENT_NAME/g, firstName);
 
   async function handleFamilyUpdate() {
     setShowUpdateModal(true);
@@ -192,25 +158,6 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             {statusLine}
           </p>
         </div>
-
-        {/* Caregiver check-in */}
-        <Link href="/log" style={{ textDecoration: "none" }}>
-          <div
-            style={{
-              backgroundColor: "#F7F2EA",
-              border: "1.5px solid #C4714A",
-              borderRadius: 16,
-              padding: "20px 20px",
-            }}
-          >
-            <p style={{ fontSize: 16, fontWeight: 600, color: "#1A1A1A" }}>
-              How is {firstName} doing today?
-            </p>
-            <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 6, fontStyle: "italic" }}>
-              {caregiverMsg}
-            </p>
-          </div>
-        </Link>
 
         {/* Quick actions 2x2 */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
