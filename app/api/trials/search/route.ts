@@ -282,7 +282,7 @@ async function renderPlainLanguage(
   try {
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 4000,
+      max_tokens: 1500,
       system:
         "You are translating clinical trial eligibility into plain language for a caregiver. " +
         "For each trial, identify: the 5 most important requirements in plain language, any " +

@@ -144,7 +144,7 @@ export async function POST(request: Request) {
   const client = new Anthropic({ apiKey });
   const stream = client.messages.stream({
     model: "claude-sonnet-4-6",
-    max_tokens: 1200,
+    max_tokens: 800,
     system,
     messages: [
       {
@@ -167,13 +167,20 @@ export async function POST(request: Request) {
         )
       );
       try {
-        for await (const event of stream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            const chunk = event.delta.text;
-            fullText += chunk;
-            controller.enqueue(encoder.encode(JSON.stringify({ kind: "text", text: chunk }) + "\n"));
-          }
-        }
+        await Promise.race([
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("AI timeout")), 25000)
+          ),
+          (async () => {
+            for await (const event of stream) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                const chunk = event.delta.text;
+                fullText += chunk;
+                controller.enqueue(encoder.encode(JSON.stringify({ kind: "text", text: chunk }) + "\n"));
+              }
+            }
+          })(),
+        ]);
       } catch (err) {
         controller.enqueue(
           encoder.encode(

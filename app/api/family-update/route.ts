@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { familyUpdateLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const MAX_CONTENT_LENGTH = 50000;
 
@@ -91,19 +91,26 @@ export async function POST(request: Request) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const response = await anthropic.messages.create({
-            model: "claude-sonnet-4-6",
-            max_tokens: 300,
-            system: [{ type: "text", text: "Write a warm, plain-language family update from a caregiver's perspective in under 150 words. Keep it conversational, hopeful where honest, and end with an invitation for family to reach out with questions.", cache_control: { type: "ephemeral" } }],
-            messages: [{ role: "user", content: userMessage }],
-            stream: true,
-          });
+          await Promise.race([
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("AI timeout")), 25000)
+            ),
+            (async () => {
+              const response = await anthropic.messages.create({
+                model: "claude-sonnet-4-6",
+                max_tokens: 300,
+                system: [{ type: "text", text: "Write a warm, plain-language family update from a caregiver's perspective in under 150 words. Keep it conversational, hopeful where honest, and end with an invitation for family to reach out with questions.", cache_control: { type: "ephemeral" } }],
+                messages: [{ role: "user", content: userMessage }],
+                stream: true,
+              });
 
-          for await (const event of response) {
-            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
-          }
+              for await (const event of response) {
+                if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                  controller.enqueue(encoder.encode(event.delta.text));
+                }
+              }
+            })(),
+          ]);
           controller.close();
         } catch {
           controller.enqueue(encoder.encode("Sorry, something went wrong generating the update."));

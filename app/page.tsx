@@ -340,6 +340,200 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* COMMITMENT */}
+      <section
+        id="commitment"
+        style={{ backgroundColor: "var(--pale-sage)", padding: "80px 24px" }}
+      >
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <p
+            style={{
+              ...BODY_FONT,
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--primary)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              textAlign: "center",
+              marginBottom: 16,
+            }}
+          >
+            Our Mission
+          </p>
+          <h2
+            className="text-[32px] md:text-[40px] text-center"
+            style={{
+              ...SECTION_HEADING,
+              color: "var(--primary)",
+              fontWeight: 700,
+              lineHeight: 1.25,
+              maxWidth: 680,
+              margin: "0 auto 48px",
+            }}
+          >
+            Care is hard enough.
+            <br />
+            The information that helps families navigate it should be free.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 20 }}>
+            <div
+              style={{
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: 14,
+                padding: 28,
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: "var(--pale-sage)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                }}
+                aria-hidden="true"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </div>
+              <h3
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 17,
+                  fontWeight: 600,
+                  color: "var(--text)",
+                  marginBottom: 10,
+                }}
+              >
+                Free for caregivers. Always.
+              </h3>
+              <p
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 15,
+                  color: "var(--muted)",
+                  lineHeight: 1.7,
+                }}
+              >
+                Clarifer is free for every family navigating a caregiving journey. It will
+                never cost caregivers anything to use. We generate revenue through hospital
+                licensing and research partnerships. Never from the people who need this most.
+              </p>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: 14,
+                padding: 28,
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: "var(--pale-sage)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                }}
+                aria-hidden="true"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <h3
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 17,
+                  fontWeight: 600,
+                  color: "var(--text)",
+                  marginBottom: 10,
+                }}
+              >
+                Your data belongs to you.
+              </h3>
+              <p
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 15,
+                  color: "var(--muted)",
+                  lineHeight: 1.7,
+                }}
+              >
+                Everything you store in Clarifer is yours. We never sell individual data.
+                You can export or delete your information at any time. Period.
+              </p>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: 14,
+                padding: 28,
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: "var(--pale-sage)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                }}
+                aria-hidden="true"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <h3
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 17,
+                  fontWeight: 600,
+                  color: "var(--text)",
+                  marginBottom: 10,
+                }}
+              >
+                The Caregiver Support Fund.
+              </h3>
+              <p
+                style={{
+                  ...BODY_FONT,
+                  fontSize: 15,
+                  color: "var(--muted)",
+                  lineHeight: 1.7,
+                }}
+              >
+                Families who choose to contribute anonymized data to medical research benefit
+                directly. A minimum of 5% of all research licensing revenue goes into the
+                Caregiver Support Fund, covering transportation costs, respite care, and
+                direct assistance for caregiving families. Opt-in only. Governed by
+                caregivers themselves.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* WHO IT IS FOR */}
       <section
         id="hospitals"

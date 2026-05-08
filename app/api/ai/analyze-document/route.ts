@@ -7,6 +7,7 @@ import { extractText } from "@/lib/documents/extract";
 import { buildAnalysisPrompt } from "@/lib/documents/prompt";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const ALLOWED_ROLES = ["caregiver"];
 
@@ -108,41 +109,47 @@ export async function POST(request: Request) {
     async start(controller) {
       let fullText = "";
       try {
-        const stream = anthropicClient.messages.stream({
-          model: "claude-sonnet-4-6",
-          max_tokens: 2048,
-          messages: [{ role: "user", content: prompt }],
-        });
+        await Promise.race([
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("AI timeout")), 25000)
+          ),
+          (async () => {
+            const stream = anthropicClient.messages.stream({
+              model: "claude-sonnet-4-6",
+              max_tokens: 1000,
+              messages: [{ role: "user", content: prompt }],
+            });
 
-        for await (const chunk of stream) {
-          if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-            fullText += chunk.delta.text;
-            controller.enqueue(encoder.encode(chunk.delta.text));
-          }
-        }
+            for await (const chunk of stream) {
+              if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+                fullText += chunk.delta.text;
+                controller.enqueue(encoder.encode(chunk.delta.text));
+              }
+            }
 
-        await supabase.from("chat_messages").insert({
-          document_id: documentId,
-          organization_id: organizationId,
-          patient_id: doc.patient_id,
-          role: "assistant",
-          content: fullText,
-        });
+            await supabase.from("chat_messages").insert({
+              document_id: documentId,
+              organization_id: organizationId,
+              patient_id: doc.patient_id,
+              role: "assistant",
+              content: fullText,
+            });
 
-        await supabase.from("documents").update({
-          summary: fullText.slice(0, 1000),
-          analyzed_at: new Date().toISOString(),
-        }).eq("id", documentId);
+            await supabase.from("documents").update({
+              summary: fullText.slice(0, 1000),
+              analyzed_at: new Date().toISOString(),
+            }).eq("id", documentId);
 
-        await supabase.from("audit_log").insert({
-          user_id: user.id,
-          patient_id: doc.patient_id,
-          action: "AI_ANALYSIS",
-          resource_type: "documents",
-          resource_id: documentId,
-          organization_id: organizationId,
-        });
-
+            await supabase.from("audit_log").insert({
+              user_id: user.id,
+              patient_id: doc.patient_id,
+              action: "AI_ANALYSIS",
+              resource_type: "documents",
+              resource_id: documentId,
+              organization_id: organizationId,
+            });
+          })(),
+        ]);
         controller.close();
       } catch {
         controller.enqueue(
