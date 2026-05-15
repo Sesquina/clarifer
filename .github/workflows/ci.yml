@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main, staging]
+    branches: ['**']
   pull_request:
     branches: [main]
 
@@ -22,8 +22,19 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
       - run: npx tsc --noEmit
       - run: npm audit --audit-level=high
+      - name: CI Summary
+        if: always()
+        run: |
+          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| TypeScript | $(npx tsc --noEmit 2>&1 | grep -c 'error TS' || echo 0) errors |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | $(cat test-results.txt 2>/dev/null | grep -E 'passed|failed' | tail -1 || echo 'see logs') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Audit | $(npm audit --audit-level=high 2>&1 | tail -1) |" >> $GITHUB_STEP_SUMMARY
 
   mobile-test:
     runs-on: ubuntu-latest
