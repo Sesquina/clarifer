@@ -1,3 +1,22 @@
+---
+[2026-05-15] SPRINT: Analytics Embed + CI Improvements
+Branch: sprint-analytics-and-ci | Status: COMPLETE, merged to main
+
+COMPLETED:
+- Installed posthog-js, created PostHogProvider component with env vars
+- Added Google Analytics (G-PNWK59ZSJW) via next/script in app/layout.tsx
+- Updated CI workflow to run on all branches (was main/staging only)
+- Added NEXT_PUBLIC_POSTHOG_KEY and NEXT_PUBLIC_POSTHOG_HOST to CI env
+- Added CI summary step posting results to GitHub Step Summary
+- Fixed CSP in next.config.ts to allow PostHog and Google Analytics domains
+
+DISCOVERED ISSUES (assigned to future sprints):
+- 2 moderate + 2 high npm vulnerabilities (pre-existing, not caused by posthog-js)
+- 2 pre-existing TS errors in tests/api/rate-limiting-auth.test.ts (@/proxy missing)
+- 1 pre-existing failing test file (same file)
+
+NEXT: fix/user-facing-bugs -- appointments, document summaries, care team emails, password reset
+---
 [2026-04-28] HOTFIX -- onboarding org_id + auth callback + role picker + Sprint 13 mobile deps
 Branch: hotfix-onboarding-org-id
 Status: COMPLETE -- ready for Samira's review and merge to main
