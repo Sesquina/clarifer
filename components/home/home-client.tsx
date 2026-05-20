@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { PageContainer } from "@/components/layout/page-container";
 import { Activity, MessageCircle, UploadCloud, Search, Calendar, MapPin, Plus, X, Loader2, Copy, Check } from "lucide-react";
 
@@ -59,7 +58,6 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
   const [apptNotes, setApptNotes] = useState("");
   const [apptSaving, setApptSaving] = useState(false);
 
-  const supabase = createClient();
   const firstName = patient.name.split(" ")[0];
 
   async function handleFamilyUpdate() {
@@ -112,15 +110,22 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
   async function handleSaveAppt() {
     if (!apptTitle.trim() || !apptDate) return;
     setApptSaving(true);
-    const datetime = apptTime ? `${apptDate}T${apptTime}:00` : `${apptDate}T09:00:00`;
-    await supabase.from("appointments").insert({
-      patient_id: patient.id,
-      title: apptTitle,
-      provider_name: apptDoctor || null,
-      location: apptLocation || null,
-      datetime,
-      notes: apptNotes || null,
+    const res = await fetch("/api/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patient_id: patient.id,
+        title: apptTitle,
+        provider_name: apptDoctor || null,
+        location: apptLocation || null,
+        datetime: apptTime ? `${apptDate}T${apptTime}:00` : `${apptDate}T09:00:00`,
+        notes: apptNotes || null,
+      }),
     });
+    if (!res.ok) {
+      setApptSaving(false);
+      return;
+    }
     setApptSaving(false);
     setShowApptModal(false);
     setApptTitle("");
@@ -164,7 +169,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
           {[
             { href: "/log", icon: Activity, label: "Log Symptoms", bg: "#F0F5F2", color: "#2C5F4A" },
             { href: "/chat", icon: MessageCircle, label: "Ask Clarifer", bg: "#F0F5F2", color: "#2C5F4A" },
-            { href: "/chat", icon: UploadCloud, label: "Upload Doc", bg: "#FDF3EE", color: "#C4714A" },
+            { href: "/documents/upload", icon: UploadCloud, label: "Upload Doc", bg: "#FDF3EE", color: "#C4714A" },
             { href: "/tools/trials", icon: Search, label: "Find Trials", bg: "#FDF3EE", color: "#C4714A" },
           ].map((a) => (
             <Link
