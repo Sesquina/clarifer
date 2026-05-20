@@ -124,6 +124,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
+    await serviceClient.from("audit_log").insert({
+      user_id: user.id,
+      action: "UPLOAD_DOCUMENT",
+      resource_type: "document",
+      resource_id: doc.id,
+      organization_id: organizationId,
+      ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+      user_agent: request.headers.get("user-agent"),
+      status: "success",
+    });
+
     return NextResponse.json({
       documentId: doc.id,
       fileUrl,
