@@ -69,7 +69,7 @@ export function Header(_props: HeaderProps = {}) {
         {/* RIGHT: Actions */}
         <div className="hidden md:flex items-center">
           <Link
-            href="/#waitlist"
+            href="/waitlist"
             aria-label="Join the waitlist"
             className="inline-flex items-center"
             style={{
@@ -152,7 +152,7 @@ export function Header(_props: HeaderProps = {}) {
           ))}
           <div style={{ padding: "12px 24px 0" }}>
             <Link
-              href="/#waitlist"
+              href="/waitlist"
               onClick={() => setMenuOpen(false)}
               aria-label="Join the waitlist"
               className="inline-flex items-center justify-center"
