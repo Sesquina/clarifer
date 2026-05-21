@@ -68,6 +68,18 @@ export async function DELETE(request: Request) {
     }
   }
 
+  // Audit log: record account deletion before removing the auth user
+  await admin.from("audit_log").insert({
+    user_id: user.id,
+    action: "DELETE_ACCOUNT",
+    resource_type: "account",
+    resource_id: user.id,
+    organization_id: null,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  });
+
   // Delete the auth user
   await admin.auth.admin.deleteUser(user.id);
 
@@ -87,6 +99,18 @@ export async function GET(request: Request) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = getAdmin() as any;
+
+  // Audit log: record data export
+  await admin.from("audit_log").insert({
+    user_id: user.id,
+    action: "EXPORT_ACCOUNT_DATA",
+    resource_type: "account",
+    resource_id: user.id,
+    organization_id: null,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  });
 
   // Get patient IDs
   const { data: patients } = await admin

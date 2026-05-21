@@ -39,6 +39,15 @@ export function WaitlistForm() {
         return;
       }
       setSuccess(true);
+      if (typeof window !== "undefined") {
+        const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+        if (typeof gtag === "function") {
+          gtag("event", "waitlist_signup", {
+            event_category: "engagement",
+            event_label: "waitlist_form",
+          });
+        }
+      }
     } catch (err) {
       console.error("[waitlist] submit error:", err);
       setError("Something went wrong. Please try again.");

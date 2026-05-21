@@ -31,7 +31,7 @@ describe("Sprint 6 — auth rate limiting", () => {
       .mockResolvedValueOnce({ success: true, reset: Date.now() + 900_000 })
       .mockResolvedValueOnce({ success: false, reset: Date.now() + 900_000 });
 
-    const { proxy } = await import("@/proxy");
+    const { middleware: proxy } = await import("@/middleware");
 
     function makeReq() {
       const req = new Request("http://localhost/login", {
@@ -55,7 +55,7 @@ describe("Sprint 6 — auth rate limiting", () => {
   it("429 response includes Retry-After header", async () => {
     loginLimit.mockResolvedValueOnce({ success: false, reset: Date.now() + 600_000 });
 
-    const { proxy } = await import("@/proxy");
+    const { middleware: proxy } = await import("@/middleware");
     const req = Object.assign(
       new Request("http://localhost/login", {
         method: "POST",
