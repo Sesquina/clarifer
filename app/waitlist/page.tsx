@@ -63,16 +63,7 @@ export default function WaitlistPage() {
           Enter your details and we will notify you when Clarifer launches.
         </p>
 
-        <div
-          style={{
-            backgroundColor: "var(--card)",
-            borderRadius: 16,
-            border: "1px solid var(--border)",
-            padding: "28px 24px",
-          }}
-        >
-          <BrevoFormEmbed />
-        </div>
+        <BrevoFormEmbed />
 
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <a
