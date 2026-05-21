@@ -1,6 +1,12 @@
+/**
+ * app/waitlist/page.tsx
+ * Public marketing page -- Brevo waitlist embed.
+ * No auth, no sidebar, no app nav.
+ * Mobile exception: confirmed by Samira (web-only marketing page).
+ */
 import type { Metadata } from "next";
 import Image from "next/image";
-import { WaitlistForm } from "@/components/waitlist-form";
+import { BrevoFormEmbed } from "@/components/waitlist/BrevoFormEmbed";
 
 export const metadata: Metadata = {
   title: "Join the Clarifer waitlist",
@@ -19,12 +25,8 @@ export default function WaitlistPage() {
         padding: "40px 24px",
       }}
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 480,
-        }}
-      >
+      <div style={{ width: "100%", maxWidth: 480 }}>
+
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
           <Image
             src="/clarifer-logo.png"
@@ -34,11 +36,47 @@ export default function WaitlistPage() {
           />
         </div>
 
-        <WaitlistForm />
+        <h1
+          style={{
+            fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+            fontSize: 28,
+            fontWeight: 700,
+            color: "var(--primary)",
+            textAlign: "center",
+            marginBottom: 12,
+            lineHeight: 1.25,
+          }}
+        >
+          Join the Clarifer waitlist
+        </h1>
 
-        <div style={{ textAlign: "center", marginTop: 32 }}>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: 15,
+            color: "var(--muted)",
+            textAlign: "center",
+            lineHeight: 1.6,
+            marginBottom: 28,
+          }}
+        >
+          Enter your details and we will notify you when Clarifer launches.
+        </p>
+
+        <div
+          style={{
+            backgroundColor: "var(--card)",
+            borderRadius: 16,
+            border: "1px solid var(--border)",
+            padding: "28px 24px",
+          }}
+        >
+          <BrevoFormEmbed />
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: 24 }}>
           <a
-            href="https://clarifer.com"
+            href="/"
             style={{
               fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
               fontSize: 13,
@@ -49,6 +87,7 @@ export default function WaitlistPage() {
             Learn more about Clarifer
           </a>
         </div>
+
       </div>
     </main>
   );
