@@ -39,6 +39,8 @@ export async function DELETE(request: Request) {
     { table: "documents", column: "uploaded_by" },
     { table: "trial_saves", column: "patient_id", via: "patients" },
     { table: "care_team", column: "patient_id", via: "patients" },
+    { table: "appointments", column: "patient_id", via: "patients" },
+    { table: "biomarkers", column: "patient_id", via: "patients" },
     { table: "patients", column: "created_by" },
     { table: "users", column: "id" },
   ];
@@ -57,8 +59,16 @@ export async function DELETE(request: Request) {
 
   // Delete storage files
   if (patientIds.length > 0) {
+    const { data: userRecord } = await admin
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    const orgId = userRecord?.organization_id;
+
     for (const pid of patientIds) {
-      const prefix = `${user.id}/${pid}/`;
+      const prefix = orgId ? `${orgId}/${pid}/` : null;
+      if (!prefix) continue;
       const { data: files } = await admin.storage.from("documents").list(prefix);
       if (files && files.length > 0) {
         await admin.storage
