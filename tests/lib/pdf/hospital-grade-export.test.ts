@@ -42,6 +42,9 @@ function makeBundle(): ExportData {
       emergency_notes: null,
       dpd_deficiency_screened: true,
       dpd_deficiency_status: "negative",
+      city: null,
+      state: null,
+      language_preference: "en",
     },
     medications: Array.from({ length: 10 }, (_, i) => ({
       id: `m-${i}`,

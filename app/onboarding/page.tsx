@@ -26,6 +26,8 @@ export default function OnboardingPage() {
   const [sex, setSex] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
   const [diagnosisDate, setDiagnosisDate] = useState("");
+  const [cityState, setCityState] = useState("");
+  const [languagePreference, setLanguagePreference] = useState("en");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -87,12 +89,19 @@ export default function OnboardingPage() {
 
       // Step 6: create first patient record for caregiver and patient roles
       if (role === "caregiver" || role === "patient") {
+        const parts = cityState.split(",");
+        const cityVal = parts.slice(0, -1).join(",").trim() || cityState.trim();
+        const stateVal = parts.length > 1 ? parts[parts.length - 1].trim() : null;
+
         const { error: insertError } = await supabase.from("patients").insert({
           name,
           dob: dob || null,
           sex: sex || null,
           custom_diagnosis: diagnosis || null,
           diagnosis_date: diagnosisDate || null,
+          city: cityVal || null,
+          state: stateVal,
+          language_preference: languagePreference,
           organization_id: organizationId,
           created_by: user.id,
           status: "active",
@@ -251,6 +260,59 @@ export default function OnboardingPage() {
                     <option value="male">Male</option>
                     <option value="other">Other</option>
                   </select>
+                </div>
+
+                {/* City and state (optional) */}
+                <div>
+                  <label
+                    htmlFor="cityState"
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
+                  >
+                    City and state
+                  </label>
+                  <input
+                    id="cityState"
+                    value={cityState}
+                    onChange={(e) => setCityState(e.target.value)}
+                    placeholder="e.g. Los Angeles, CA"
+                    className="mt-1.5"
+                    style={inputStyle}
+                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
+                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                  />
+                </div>
+
+                {/* Language preference */}
+                <div>
+                  <label
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
+                  >
+                    Preferred language
+                  </label>
+                  <div className="mt-1.5" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {(["en", "es"] as const).map((lang) => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => setLanguagePreference(lang)}
+                        style={{
+                          height: 52,
+                          borderRadius: 12,
+                          border: languagePreference === lang ? "2px solid var(--primary)" : "1.5px solid var(--border)",
+                          backgroundColor: languagePreference === lang ? "var(--pale-sage)" : "var(--card)",
+                          color: "var(--text)",
+                          fontFamily: "var(--font-dm-sans)",
+                          fontSize: 16,
+                          fontWeight: 500,
+                          width: "100%",
+                          cursor: "pointer",
+                          textAlign: "center" as const,
+                        }}
+                      >
+                        {lang === "en" ? "English" : "Español"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <button
