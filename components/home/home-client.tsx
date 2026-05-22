@@ -8,27 +8,22 @@ import { Activity, MessageCircle, UploadCloud, Search, Calendar, MapPin, Plus, X
 const CCF_GROUPS = [
   {
     title: "Caregiver Support Group",
-    date: "Wed, May 21",
     url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjAiQIArwM41HYbM0RQPPXgSkB2UWWszsUQ9FG1r27nC4vwLUcgpuSSYSEZmdzF4JxuJblViMUmNlxo_JUVOe_HmvC-4XEXzYG4AELnnOd4jPOwHhKkf72Ow=",
   },
   {
     title: "Patient Support Group",
-    date: "Sun, May 18",
     url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjGoOqTr68jfYyoO_j76NuicBdPn50IBpulbzvfjKw9OR5FbXRTUaoYHiz6XApwXOTG3QCJgKLicMUIZ9AmenH02uw5hPDRz9nfPv_ejDvtaIQM7S8KfNYCDlRbfUurEmQQ==",
   },
   {
     title: "Spanish Support Group",
-    date: "Tue, May 13",
     url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjBvnHVdN1ZeRnjCCyuz1wuWtVWSnfGJx503Zh_0iNXS0kny0XIGlRFRJJ0VHrR8_q8z6aSOOZQiOs5QO_zRQjA1wsY6zx793dQMbXmbkpSNK",
   },
   {
     title: "Bereaved Support Group",
-    date: "Mon, May 20",
     url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjF6SJlk8pFOa6_GzeFX5x1fChoEArzMOuWChFEpgjRpAPa5BPS95UoNQqxOkoI-IhGtHli58DVYEZ-jm6hpGUSaZp2dMfBXOH0IAnO8Rfaqv",
   },
   {
     title: "Young Adult Support Group",
-    date: "Mon, May 26",
     url: "https://dshutlxab.cc.rs6.net/tn.jsp?f=001nNt4QfQRuy00wvw0ZB4RwFxVBUi4xunslSX1QWhXE45K8eiveaHOjNkEQlBZJIdzLUC3Ujct-mgMvBlSRmbNgYvgnagrW1BEKZWOUj28QgaNrrORA9xnLf5hQLjIBdEdEl_geMeGbUksJcyhT1GTprgf3HJR2e8S",
   },
 ];
@@ -431,7 +426,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                         {group.title}
                       </p>
                       <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 2 }}>
-                        {group.date}
+                        Weekly — register to see upcoming dates
                       </p>
                       <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 2 }}>
                         Hosted by CCF
