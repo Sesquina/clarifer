@@ -1,12 +1,17 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-export const metadata: Metadata = {
-  title: "You are all set — Clarifer",
-};
+import { DisclaimerModal } from "@/components/onboarding/DisclaimerModal";
 
 export default function OnboardingCompletePage() {
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+
+  if (!disclaimerAccepted) {
+    return <DisclaimerModal onAccept={() => setDisclaimerAccepted(true)} />;
+  }
+
   return (
     <main
       style={{

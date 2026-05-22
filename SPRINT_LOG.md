@@ -2072,3 +2072,34 @@ Samira: confirm whether to add --severity-high / --severity-medium / --severity-
 or map to --accent / --muted / --primary, before this file is fully remediated.
 
 Do not fix inline. Assign to a future sprint.
+
+---
+
+[2026-05-22] SPRINT: feat/medical-disclaimer-modal
+Branch: feat/medical-disclaimer-modal | Status: COMPLETE, pending Samira review
+
+COMPLETED:
+- Created supabase/migrations/20260522000001_add_disclaimer_accepted.sql
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS disclaimer_accepted_at timestamptz
+    Tracks when each user accepted the medical disclaimer.
+- Created components/onboarding/DisclaimerModal.tsx
+    Client component. Fixed overlay, checkbox gate, POST to /api/users/disclaimer on accept.
+- Rewrote app/onboarding/complete/page.tsx
+    Converted server -> client component. Wires DisclaimerModal before the "You are all set" screen.
+    export const metadata removed (incompatible with "use client" -- Samira confirmed removal acceptable).
+- Created app/api/users/disclaimer/route.ts
+    POST only. Auth check, updates users.disclaimer_accepted_at, audit_log ACCEPT_DISCLAIMER.
+
+MIGRATION REQUIRED (Samira runs manually in Supabase SQL Editor before merging):
+  supabase/migrations/20260522000001_add_disclaimer_accepted.sql
+  -- Adds disclaimer_accepted_at timestamptz column to public.users.
+  -- Idempotent (ADD COLUMN IF NOT EXISTS). Safe to run on live DB.
+  -- DO NOT MERGE this branch until the migration has been applied in production.
+
+DISCOVERED ISSUE: app/onboarding/complete/page.tsx line 67
+  color: "#FFFFFF" is a hardcoded hex string violating the design system.
+  The Upload button uses color: "#FFFFFF" (white text on --primary background).
+  No current CSS variable maps to pure white. Options:
+    A. Add --white: #FFFFFF to the design system and use it here.
+    B. Use color: "var(--card)" (card is #FFFFFF in light mode -- semantically wrong but functionally correct).
+  Do not fix inline. Assign to a future design-system sprint or resolve with option A/B decision from Samira.
