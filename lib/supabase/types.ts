@@ -1099,6 +1099,9 @@ export type Database = {
           emergency_notes: string | null
           dpd_deficiency_screened: boolean | null
           dpd_deficiency_status: string | null
+          city: string | null
+          state: string | null
+          language_preference: string | null
         }
         Insert: {
           condition_template_id?: string | null
@@ -1123,6 +1126,9 @@ export type Database = {
           emergency_notes?: string | null
           dpd_deficiency_screened?: boolean | null
           dpd_deficiency_status?: string | null
+          city?: string | null
+          state?: string | null
+          language_preference?: string | null
         }
         Update: {
           condition_template_id?: string | null
@@ -1147,6 +1153,9 @@ export type Database = {
           emergency_notes?: string | null
           dpd_deficiency_screened?: boolean | null
           dpd_deficiency_status?: string | null
+          city?: string | null
+          state?: string | null
+          language_preference?: string | null
         }
         Relationships: [
           {
