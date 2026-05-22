@@ -167,10 +167,10 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
         {/* Quick actions 2x2 */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {[
-            { href: "/log", icon: Activity, label: "Log Symptoms", bg: "#F0F5F2", color: "#2C5F4A" },
-            { href: "/chat", icon: MessageCircle, label: "Ask Clarifer", bg: "#F0F5F2", color: "#2C5F4A" },
-            { href: "/documents/upload", icon: UploadCloud, label: "Upload Doc", bg: "#FDF3EE", color: "#C4714A" },
-            { href: "/tools/trials", icon: Search, label: "Find Trials", bg: "#FDF3EE", color: "#C4714A" },
+            { href: "/log", icon: Activity, label: "Log Symptoms", bg: "var(--pale-sage)", color: "var(--primary)" },
+            { href: "/chat", icon: MessageCircle, label: "Ask Clarifer", bg: "var(--pale-sage)", color: "var(--primary)" },
+            { href: "/documents/upload", icon: UploadCloud, label: "Upload Doc", bg: "var(--pale-terra)", color: "var(--accent)" },
+            { href: "/tools/trials", icon: Search, label: "Find Trials", bg: "var(--pale-terra)", color: "var(--accent)" },
           ].map((a) => (
             <Link
               key={a.label}
