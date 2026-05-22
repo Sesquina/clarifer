@@ -18,7 +18,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Clarifer",
-  description: "Caregiver intelligence platform. Built for families navigating serious illness.",
+  description: "Caregiver intelligence platform. Built for families doing everything they can.",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
