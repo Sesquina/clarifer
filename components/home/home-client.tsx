@@ -35,9 +35,10 @@ interface HomeClientProps {
   logs: Array<{ id: string; created_at: string | null; overall_severity: number | null; ai_summary: string | null; [key: string]: unknown }>;
   appointments: Array<{ id: string; title: string | null; datetime: string | null; location: string | null; provider_name?: string | null }>;
   loggedToday: boolean;
+  documentsCount: number;
 }
 
-export function HomeClient({ patient, statusLine, logs, appointments, loggedToday }: HomeClientProps) {
+export function HomeClient({ patient, statusLine, logs, appointments, loggedToday, documentsCount }: HomeClientProps) {
   const [showApptModal, setShowApptModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateText, setUpdateText] = useState("");
@@ -54,6 +55,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
   const [apptSaving, setApptSaving] = useState(false);
 
   const firstName = patient.name.split(" ")[0];
+  const isFirstTime = logs.length === 0 && documentsCount === 0;
 
   async function handleFamilyUpdate() {
     setShowUpdateModal(true);
@@ -158,6 +160,60 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             {statusLine}
           </p>
         </div>
+
+        {/* First-time welcome nudge */}
+        {isFirstTime && (
+          <div
+            style={{
+              backgroundColor: "var(--pale-sage)",
+              borderRadius: 12,
+              padding: "20px 24px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+                fontSize: 18,
+                fontWeight: 700,
+                color: "var(--primary)",
+                marginBottom: 6,
+              }}
+            >
+              Welcome. You are set up.
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontSize: 14,
+                color: "var(--muted)",
+                marginBottom: 8,
+              }}
+            >
+              Pick something to start with.
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontSize: 14,
+                color: "var(--muted)",
+              }}
+            >
+              <Link
+                href="/documents/upload"
+                style={{ color: "var(--primary)", fontWeight: 500, textDecoration: "none" }}
+              >
+                Upload a document
+              </Link>
+              {" or "}
+              <Link
+                href="/chat"
+                style={{ color: "var(--primary)", fontWeight: 500, textDecoration: "none" }}
+              >
+                Ask a question
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* Quick actions 2x2 */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
