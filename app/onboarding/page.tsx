@@ -114,7 +114,19 @@ export default function OnboardingPage() {
         }
       }
 
-      // Step 7: onboarding complete
+      // Step 7: send welcome email (fire-and-forget, non-fatal)
+      fetch("/api/email/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: name.split(" ")[0] || "there",
+          email: user.email ?? "",
+        }),
+      }).catch(() => {
+        // Non-fatal: email failure does not block onboarding
+      });
+
+      // Step 8: onboarding complete
       router.push("/onboarding/complete");
       router.refresh();
     } catch (err) {
