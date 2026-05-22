@@ -106,7 +106,7 @@ export default function OnboardingPage() {
       }
 
       // Step 7: onboarding complete
-      router.push("/home");
+      router.push("/onboarding/complete");
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
