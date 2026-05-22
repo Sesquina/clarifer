@@ -2005,3 +2005,70 @@ TASK 3 COMPLETE: Full demo smoke test
 
 TEST STATUS: 266 / 266 passing
 TYPESCRIPT: 0 new errors (2 pre-existing in tests/api/rate-limiting-auth.test.ts @/proxy)
+
+---
+
+[2026-05-22] DISCOVERED ISSUE: components/home/home-client.tsx — remaining hex strings
+Branch: fix/home-client-design-system
+
+The assigned task (fix/home-client-design-system) replaced 8 hex string occurrences on
+lines 170-173 (the quick actions array) with CSS variables. The following 50 lines still
+contain hex strings in violation of the design system rule (never use hex in component files):
+
+  143: #E8E2D9 (inputStyle border)
+  147: #1A1A1A (inputStyle color)
+  148: #FFFFFF (inputStyle backgroundColor)
+  159: #2C5F4A (greeting "Caring for" label color)
+  162: #6B6B6B (statusLine color)
+  182: #FFFFFF (quick action link backgroundColor)
+  187: #1A1A1A (quick action link color)
+  215: #2C5F4A (family update button backgroundColor)
+  216: #FFFFFF (family update button color)
+  229: #6B6B6B (Upcoming section heading color)
+  240: #2C5F4A (add appointment button color)
+  254: #FFFFFF (appointment card backgroundColor)
+  261: #6B6B6B (appointment date/location metadata color)
+  284: #2C5F4A (add another button color)
+  299: #6B6B6B (Recent symptoms heading color)
+  305: #2C5F4A (symptom log empty-state link color)
+  315: #FFFFFF (symptom log card backgroundColor)
+  322: #6B6B6B (symptom log date color)
+  329: #ef4444 / #f59e0b / #22c55e (severity color conditional -- not in design system)
+  336: #6B6B6B (ai_summary text color)
+  352: #FFFFFF (CCF card backgroundColor)
+  354: #2C5F4A (CCF card border)
+  362: #6B6B6B (CCF FROM label color)
+  370: #1A1A1A (CCF heading color)
+  373: #6B6B6B (CCF body color)
+  387: #2C5F4A (CCF CTA button backgroundColor)
+  388: #FFFFFF (CCF CTA button color)
+  406: #6B6B6B (CCF community heading color)
+  419: #FFFFFF (CCF group card backgroundColor)
+  421: #E8E2D9 (CCF group card border)
+  430: #1A1A1A (CCF group title color)
+  433: #6B6B6B (CCF group date color)
+  436: #6B6B6B (CCF group host color)
+  452: #2C5F4A (CCF register button border)
+  453: #2C5F4A (CCF register button color)
+  467: #6B6B6B (CCF disclaimer color)
+  479: #FFFFFF (appointment modal backgroundColor)
+  483: #6B6B6B (appointment modal close X color)
+  501: #2C5F4A (save appointment button backgroundColor)
+  502: #FFFFFF (save appointment button color)
+  523: #FFFFFF (family update modal backgroundColor)
+  530: #6B6B6B (family update modal close X color)
+  535: #2C5F4A (Loader2 spinner color)
+  536: #6B6B6B (writing update label color)
+  546: #E8E2D9 (textarea border)
+  547: #1A1A1A (textarea color)
+  550: #2C5F4A (textarea onFocus borderColor)
+  551: #E8E2D9 (textarea onBlur borderColor)
+  562: #22c55e / #2C5F4A (copy button backgroundColor conditional)
+  563: #FFFFFF (copy button color)
+
+Additionally, line 329 uses #ef4444 / #f59e0b / #22c55e for severity color coding.
+These colors have no CSS variable equivalent in the current design system.
+Samira: confirm whether to add --severity-high / --severity-medium / --severity-ok variables,
+or map to --accent / --muted / --primary, before this file is fully remediated.
+
+Do not fix inline. Assign to a future sprint.
