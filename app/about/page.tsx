@@ -85,7 +85,7 @@ export default function AboutPage() {
               lineHeight: 1.8,
             }}
           >
-            Clarifer was built from direct experience with serious illness.
+            Clarifer was built from direct experience with complex medical situations.
             That experience drives every product decision we make. Every
             screen, every feature, and every word is written for the caregiver
             sitting in a hospital parking lot at 2am.
