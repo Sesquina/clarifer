@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -41,8 +41,6 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-  const searchParams = useSearchParams();
-  const sessionExpired = searchParams.get("reason") === "session_timeout";
 
   async function handleSignIn() {
     if (loading || googleLoading) return;
@@ -134,8 +132,7 @@ export default function LoginPage() {
               lineHeight: 1.6,
             }}
           >
-            The care coordination platform for families navigating serious
-            illness.
+            The care coordination platform for families doing everything they can.
           </p>
           <ul
             className="flex flex-col"
@@ -209,24 +206,9 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
 
-          {sessionExpired && (
-            <div
-              role="alert"
-              style={{
-                backgroundColor: "var(--pale-sage)",
-                border: "1px solid var(--border)",
-                borderRadius: 10,
-                padding: "12px 16px",
-                marginBottom: 20,
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                fontSize: 14,
-                color: "var(--primary)",
-                lineHeight: 1.5,
-              }}
-            >
-              You were signed out after 30 minutes of inactivity. Please sign in again.
-            </div>
-          )}
+          <Suspense fallback={null}>
+            <SessionTimeoutBanner />
+          </Suspense>
 
           {/* Email */}
           <label
@@ -464,6 +446,30 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SessionTimeoutBanner() {
+  const searchParams = useSearchParams();
+  const sessionExpired = searchParams.get("reason") === "session_timeout";
+  if (!sessionExpired) return null;
+  return (
+    <div
+      role="alert"
+      style={{
+        backgroundColor: "var(--pale-sage)",
+        border: "1px solid var(--border)",
+        borderRadius: 10,
+        padding: "12px 16px",
+        marginBottom: 20,
+        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+        fontSize: 14,
+        color: "var(--primary)",
+        lineHeight: 1.5,
+      }}
+    >
+      You were signed out after 30 minutes of inactivity. Please sign in again.
     </div>
   );
 }
