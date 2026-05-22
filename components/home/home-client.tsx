@@ -460,7 +460,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 ))}
               </div>
               <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 12, lineHeight: 1.6 }}>
-                Support groups are hosted by the Cholangiocarcinoma Foundation. Clarifer is not affiliated with CCF.
+                Support groups are hosted by CCF. Clarifer is not affiliated with CCF.
               </p>
             </div>
           </>
