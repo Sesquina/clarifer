@@ -20,7 +20,7 @@ export default async function HomePage() {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString();
 
-  const [logsResult, apptsResult, todayLogResult] = await Promise.all([
+  const [logsResult, apptsResult, todayLogResult, docsResult] = await Promise.all([
     supabase
       .from("symptom_logs")
       .select("*")
@@ -41,12 +41,18 @@ export default async function HomePage() {
       .eq("patient_id", patient.id)
       .gte("created_at", todayStart)
       .limit(1),
+    supabase
+      .from("documents")
+      .select("id")
+      .eq("uploaded_by", user.id)
+      .limit(1),
   ]);
 
   // Determine status line
   const appointments = apptsResult.data || [];
   const logs = logsResult.data || [];
   const loggedToday = (todayLogResult.data || []).length > 0;
+  const documentsCount = (docsResult.data || []).length;
 
   const firstName = patient.name.split(" ")[0];
 
@@ -85,6 +91,7 @@ export default async function HomePage() {
       logs={logs}
       appointments={appointments}
       loggedToday={loggedToday}
+      documentsCount={documentsCount}
     />
   );
 }
