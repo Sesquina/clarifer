@@ -143,6 +143,7 @@ export default function PrivacyPage() {
           <span style={{ fontSize: 13, color: "var(--muted)" }}>© 2026 Clarifer Corp. Los Angeles, CA.</span>
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
             <a href="/privacy" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Privacy</a>
+            <a href="/privacy-notice" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Notice of Privacy Practices</a>
             <a href="/terms" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Terms</a>
             <a href="/disclaimer" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Medical Disclaimer</a>
             <a href="/security" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "underline" }}>Security</a>

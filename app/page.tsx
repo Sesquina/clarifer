@@ -706,6 +706,7 @@ export default function LandingPage() {
             >
               {[
                 { label: "Privacy Policy", href: "/privacy" },
+                { label: "Notice of Privacy Practices", href: "/privacy-notice" },
                 { label: "Terms", href: "/terms" },
                 { label: "Medical Disclaimer", href: "/disclaimer" },
                 { label: "Data and Privacy", href: "/data" },
