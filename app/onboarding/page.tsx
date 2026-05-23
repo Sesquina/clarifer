@@ -19,7 +19,7 @@ function friendlyOnboardingError(msg: string): string {
 type Role = "caregiver" | "patient";
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [role, setRole] = useState<Role>("caregiver");
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
@@ -164,23 +164,29 @@ export default function OnboardingPage() {
       style={{ backgroundColor: "#F7F2EA" }}
     >
       <div className="w-full" style={{ maxWidth: 400 }}>
-        {/* Logo */}
-        <div className="flex justify-center">
-          <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
-        </div>
+        {/* Logo -- hidden on step 0, which renders its own logo inside the card */}
+        {step > 0 && (
+          <div className="flex justify-center">
+            <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
+          </div>
+        )}
 
-        <h1
-          className="mt-4 text-center"
-          style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "#1A1A1A" }}
-        >
-          Set up your profile
-        </h1>
-        <p
-          className="mt-1 text-center"
-          style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#6B6B6B" }}
-        >
-          Step {step} of 2
-        </p>
+        {step > 0 && (
+          <h1
+            className="mt-4 text-center"
+            style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "#1A1A1A" }}
+          >
+            Set up your profile
+          </h1>
+        )}
+        {step > 0 && (
+          <p
+            className="mt-1 text-center"
+            style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#6B6B6B" }}
+          >
+            Step {step} of 2
+          </p>
+        )}
 
         <div
           className="mt-6"
@@ -191,6 +197,76 @@ export default function OnboardingPage() {
             boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
           }}
         >
+          {step === 0 && (
+            <div style={{ textAlign: "center", padding: "0 8px" }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 32,
+              }}>
+                <img
+                  src="/clarifer-logo.png"
+                  alt="Clarifer"
+                  width={56}
+                  height={56}
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+
+              <h1 style={{
+                fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+                fontSize: 28,
+                fontWeight: 700,
+                color: "var(--primary)",
+                marginBottom: 16,
+                lineHeight: 1.2,
+              }}>
+                Caring for someone you love is overwhelming.
+              </h1>
+
+              <p style={{
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontSize: 16,
+                color: "var(--muted)",
+                lineHeight: 1.7,
+                marginBottom: 16,
+              }}>
+                Clarifer helps you organize everything in one place -- medical
+                documents, symptoms, appointments, and care team communication --
+                so you can focus on being present.
+              </p>
+
+              <p style={{
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontSize: 15,
+                color: "var(--primary)",
+                fontWeight: 500,
+                marginBottom: 40,
+              }}>
+                Free for caregivers. Always.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                style={{
+                  width: "100%",
+                  height: 56,
+                  borderRadius: 26,
+                  backgroundColor: "var(--primary)",
+                  color: "var(--card)",
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Get started
+              </button>
+            </div>
+          )}
+
           {step === 1 && (
             <>
               <h2
