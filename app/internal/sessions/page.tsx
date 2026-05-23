@@ -75,6 +75,11 @@ const TIERS: { id: string; label: string; sessions: { id: string; title: string 
       { id: "S18", title: "Recurring appointment support" },
       { id: "S19", title: "Past vs upcoming appointment tabs" },
       { id: "S20", title: "Export appointments to iCal" },
+      { id: "T2-U", title: "Authorization wallet" },
+      { id: "T2-V", title: "Income cliff alert" },
+      { id: "T2-W", title: "Call script generator" },
+      { id: "T2-X", title: "Insurance stack fields in patient profile" },
+      { id: "T2-Y", title: "Coverage waterfall display" },
     ],
   },
   {
@@ -107,6 +112,9 @@ const TIERS: { id: string; label: string; sessions: { id: string; title: string 
       { id: "S38", title: "Care team activity feed" },
       { id: "S39", title: "Secure message thread with care team" },
       { id: "S40", title: "Care team export contact sheet" },
+      { id: "T4-I", title: "Contributor role definition and permissions" },
+      { id: "T4-J", title: "Task creation by primary caregiver" },
+      { id: "T4-K", title: "Contributor SMS delivery" },
     ],
   },
   {
@@ -123,6 +131,8 @@ const TIERS: { id: string; label: string; sessions: { id: string; title: string 
       { id: "S48", title: "Mobile offline support" },
       { id: "S49", title: "Mobile onboarding flow" },
       { id: "S50", title: "App Store submission prep" },
+      { id: "T5-N", title: "Discharge mode activation (blocked on hospital partner)" },
+      { id: "T5-O", title: "Discharge checklist (blocked on hospital partner)" },
     ],
   },
   {
@@ -180,7 +190,7 @@ const TIERS: { id: string; label: string; sessions: { id: string; title: string 
   },
 ];
 
-const TOTAL = 126;
+const TOTAL = 136;
 
 export default function SessionsPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
