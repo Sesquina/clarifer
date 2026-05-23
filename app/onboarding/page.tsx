@@ -287,7 +287,7 @@ export default function OnboardingPage() {
                 <h3
                   style={{ fontFamily: "var(--font-playfair)", fontSize: 18, color: "#1A1A1A", marginTop: 24 }}
                 >
-                  Patient information
+                  Tell us about the person you are caring for.
                 </h3>
 
                 <div>
@@ -295,13 +295,13 @@ export default function OnboardingPage() {
                     htmlFor="name"
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
                   >
-                    Patient name
+                    Who are you caring for?
                   </label>
                   <input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder="First and last name"
                     required
                     className="mt-1.5"
                     style={inputStyle}
@@ -314,7 +314,7 @@ export default function OnboardingPage() {
                     htmlFor="dob"
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
                   >
-                    Date of birth
+                    Their date of birth
                   </label>
                   <input
                     id="dob"
@@ -332,7 +332,7 @@ export default function OnboardingPage() {
                     htmlFor="sex"
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
                   >
-                    Sex
+                    Their biological sex
                   </label>
                   <select
                     id="sex"
@@ -356,7 +356,7 @@ export default function OnboardingPage() {
                     htmlFor="cityState"
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
-                    City and state
+                    Where are you located?
                   </label>
                   <input
                     id="cityState"
@@ -375,7 +375,7 @@ export default function OnboardingPage() {
                   <label
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
-                    Preferred language
+                    What language do you prefer?
                   </label>
                   <div className="mt-1.5" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {(["en", "es"] as const).map((lang) => (
@@ -444,13 +444,13 @@ export default function OnboardingPage() {
                     htmlFor="diagnosis"
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
                   >
-                    Primary diagnosis
+                    What are they being treated for?
                   </label>
                   <input
                     id="diagnosis"
                     value={diagnosis}
                     onChange={(e) => setDiagnosis(e.target.value)}
-                    placeholder="e.g., Lupus, Crohn's, MS..."
+                    placeholder="e.g. cholangiocarcinoma, lung cancer"
                     className="mt-1.5"
                     style={inputStyle}
                     onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
@@ -462,13 +462,14 @@ export default function OnboardingPage() {
                     htmlFor="diagDate"
                     style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
                   >
-                    Date of diagnosis
+                    When were they diagnosed?
                   </label>
                   <input
                     id="diagDate"
                     type="date"
                     value={diagnosisDate}
                     onChange={(e) => setDiagnosisDate(e.target.value)}
+                    placeholder="Month and year is fine"
                     className="mt-1.5"
                     style={inputStyle}
                     onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
