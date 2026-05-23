@@ -19,6 +19,8 @@ const NAV = [
   { label: "Sprint History", href: "/internal/sprints" },
   { label: "Roadmap", href: "/internal/roadmap" },
   { label: "Agents", href: "/internal/agents" },
+  { label: "Sessions", href: "/internal/sessions" },
+  { label: "Content", href: "/internal/content" },
 ];
 
 export default function InternalLayout({ children }: { children: ReactNode }) {
@@ -141,6 +143,57 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* Quick Links */}
+        <div style={{ padding: "12px 8px 4px" }}>
+          <div
+            style={{
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              color: "rgba(255,255,255,0.35)",
+              marginBottom: 6,
+              padding: "0 4px",
+            }}
+          >
+            Quick Links
+          </div>
+          {[
+            { label: "GitHub", href: "https://github.com/Sesquina/clarifer" },
+            { label: "Vercel", href: "https://vercel.com/dashboard" },
+            { label: "Supabase", href: "https://supabase.com/dashboard/project/lrhwgswbsctfqtvdjntr" },
+            { label: "Brevo", href: "https://app.brevo.com" },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                height: 36,
+                padding: "0 12px",
+                borderRadius: 8,
+                fontSize: 13,
+                color: "rgba(255,255,255,0.55)",
+                textDecoration: "none",
+                transition: "background 120ms ease, color 120ms ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.color = "rgba(255,255,255,0.9)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "rgba(255,255,255,0.55)";
+              }}
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
         <div
           className="flex flex-col"
           style={{
