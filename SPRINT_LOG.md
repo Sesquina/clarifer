@@ -1,4 +1,11 @@
 ---
+[2026-05-22] DISCOVERED ISSUE: feat/async-upload-ux
+app/documents/[id]/page.tsx has no logic to trigger AI analysis when
+summary is null. Documents uploaded after this change will not be
+auto-analyzed. A future session must add analysis trigger to the
+document detail page.
+
+---
 [2026-05-15] SPRINT: Analytics Embed + CI Improvements
 Branch: sprint-analytics-and-ci | Status: COMPLETE, merged to main
 

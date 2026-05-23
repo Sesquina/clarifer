@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { UploadCloud, ArrowLeft, FileText, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
-type Status = "idle" | "reading" | "uploading" | "analyzing" | "done" | "error";
+type Status = "idle" | "reading" | "uploading" | "done" | "error";
 
 export default function UploadPage() {
   const [status, setStatus] = useState<Status>("idle");
@@ -76,27 +76,13 @@ export default function UploadPage() {
         return;
       }
 
-      const { documentId } = await uploadRes.json();
+      await uploadRes.json();
 
-      // Analyze
-      setStatus("analyzing");
-
-      const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      let fileContent = "";
-      if (["txt", "csv", "md"].includes(ext)) {
-        fileContent = atob(fileData);
-      } else {
-        fileContent = `[${ext.toUpperCase()} file: ${file.name}, ${(file.size / 1024).toFixed(1)}KB]`;
-      }
-
-      await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, content: fileContent }),
-      });
-
+      // Redirect immediately -- analysis runs server-side and stores results in the database.
+      // The document detail page will show the summary when ready.
       setStatus("done");
-      setTimeout(() => router.push("/documents"), 1500);
+      router.push("/documents?uploaded=true");
+      return;
     } catch {
       setStatus("error");
       setErrorMsg("Something went wrong. Please try again.");
@@ -119,8 +105,7 @@ export default function UploadPage() {
     idle: "",
     reading: "Reading file...",
     uploading: "Uploading to secure storage...",
-    analyzing: "Analyzing with AI...",
-    done: "Done. Redirecting...",
+    done: "Uploaded. Your document is being reviewed.",
     error: errorMsg,
   };
 
@@ -171,7 +156,7 @@ export default function UploadPage() {
             </>
           )}
 
-          {(status === "reading" || status === "uploading" || status === "analyzing") && (
+          {(status === "reading" || status === "uploading") && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <Loader2 size={32} color="#2C5F4A" className="animate-spin" />
               <div>
@@ -180,8 +165,8 @@ export default function UploadPage() {
               </div>
               {/* Progress dots */}
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                {["reading", "uploading", "analyzing"].map((step, i) => {
-                  const steps = ["reading", "uploading", "analyzing"];
+                {["reading", "uploading"].map((step, i) => {
+                  const steps = ["reading", "uploading"];
                   const current = steps.indexOf(status);
                   return (
                     <div
@@ -202,7 +187,7 @@ export default function UploadPage() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <CheckCircle size={40} color="#22c55e" />
               <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{fileName}</p>
-              <p style={{ fontSize: 14, color: "#22c55e" }}>Uploaded and analyzed</p>
+              <p style={{ fontSize: 14, color: "#22c55e" }}>Uploaded successfully</p>
             </div>
           )}
 
