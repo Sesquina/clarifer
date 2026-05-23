@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { DeleteDocumentButton } from "@/components/delete-document-button";
+import { AnalysisTrigger } from "@/components/documents/AnalysisTrigger";
 
 export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -77,6 +78,11 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
               </p>
             ))}
           </div>
+        )}
+
+        {/* Trigger analysis if no summary exists yet */}
+        {!doc.summary && doc.patient_id && (
+          <AnalysisTrigger documentId={doc.id} patientId={doc.patient_id} />
         )}
 
         {/* Divider */}
