@@ -35,9 +35,9 @@ describe("Password reset", () => {
   it("uses the clarifer.com reset-password redirect URL", async () => {
     const { sendPasswordReset, RESET_PASSWORD_REDIRECT } = await import("@mobile/lib/auth/password-reset");
     await sendPasswordReset("ana@example.com");
-    expect(RESET_PASSWORD_REDIRECT).toBe("https://clarifer.com/auth/reset-password");
+    expect(RESET_PASSWORD_REDIRECT).toBe("https://clarifer.com/auth/callback?next=/update-password");
     const opts = resetPasswordForEmail.mock.calls[0][1];
-    expect(opts.redirectTo).toBe("https://clarifer.com/auth/reset-password");
+    expect(opts.redirectTo).toBe("https://clarifer.com/auth/callback?next=/update-password");
   });
 
   it("rejects invalid email formats with an error", async () => {

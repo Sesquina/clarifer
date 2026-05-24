@@ -1,10 +1,15 @@
 import { supabase } from "../supabase-client";
 
-export const RESET_PASSWORD_REDIRECT = "https://clarifer.com/auth/reset-password";
+// Must match the web API route (app/api/auth/reset-password/route.ts).
+// The /auth/callback handler reads the `next` param and redirects to
+// /update-password so the user can set a new password with their active
+// recovery session. /auth/reset-password does not exist as a page route.
+export const RESET_PASSWORD_REDIRECT =
+  "https://clarifer.com/auth/callback?next=/update-password";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Send a password-reset email. Redirect lands the user on the reset-password page. */
+/** Send a password-reset email. Redirect lands the user on /update-password. */
 export async function sendPasswordReset(email: string) {
   const trimmed = email.trim();
   if (!EMAIL_REGEX.test(trimmed)) {
