@@ -115,6 +115,6 @@ describe("POST /api/documents/upload", () => {
     await POST(makeRequest(makeMockFile(), TEST_PATIENT_CARLOS.id));
     expect(mock._auditInsert).toHaveBeenCalledOnce();
     const auditCall = mock._auditInsert.mock.calls[0][0];
-    expect(auditCall.action).toBe("UPLOAD_DOCUMENT");
+    expect(auditCall.action).toBe("INSERT");
   });
 });

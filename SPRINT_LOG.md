@@ -1,4 +1,41 @@
 ---
+[2026-05-26] SESSION S5 -- fix/audit-log-missing
+Branch: fix/audit-log-missing
+
+Known bug #3: audit_log writes incomplete or in wrong order on document upload and account deletion.
+
+FILES CHANGED:
+
+app/api/documents/upload/route.ts
+  BEFORE: action="UPLOAD_DOCUMENT", missing ip_address, user_agent, status
+  AFTER:  action="INSERT", added ip_address, user_agent, status="success"
+
+app/api/upload/route.ts
+  BEFORE: missing patient_id, action="UPLOAD_DOCUMENT", resource_type="document" (singular)
+  AFTER:  added patient_id, action="INSERT", resource_type="documents"
+
+app/api/delete-account/route.ts
+  BEFORE: audit_log written AFTER all data deleted; missing patient_id=null;
+          action="DELETE_ACCOUNT"; organization_id=null (not actual org);
+          organization_id re-fetched from users table AFTER users row was deleted (bug)
+  AFTER:  organization_id captured BEFORE deletion loop;
+          audit_log written BEFORE deletion loop (HIPAA: record preserved even if deletion fails);
+          action="DELETE"; added patient_id=null; organization_id uses captured value
+
+tests/api/documents-upload.test.ts
+  Updated stale assertion: action "UPLOAD_DOCUMENT" -> "INSERT"
+
+tests/api/audit-log-missing.test.ts (NEW, 3 tests)
+  - POST /api/documents/upload: audit_log has action=INSERT, resource_type=documents,
+    all required fields present
+  - DELETE /api/delete-account: audit_log has action=DELETE, resource_type=account,
+    patient_id=null, all required fields present
+  - DELETE /api/delete-account: audit_log written BEFORE any data table deletes
+    (verified via callSequence ordering)
+
+Tests: 297/297 passing. tsc: 0 errors.
+
+---
 [2026-05-26] SESSION S4 -- fix/phi-client-writes-3
 Branch: fix/phi-client-writes-3
 

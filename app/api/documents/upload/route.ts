@@ -1,3 +1,12 @@
+/**
+ * app/api/documents/upload/route.ts
+ * Uploads a document file to Supabase Storage and creates the metadata row.
+ * Tables: documents (write), patients (read), users (read), audit_log (write)
+ * Auth: caregiver, provider
+ * Sprint: S5 -- fix missing audit_log fields on document upload
+ * HIPAA: PHI document. Auth + role + org_id enforced.
+ *        audit_log written with all required fields on every successful upload.
+ */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { validateFile } from "@/lib/documents/validate";
@@ -78,14 +87,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Database insert failed" }, { status: 500 });
   }
 
+  // 4. audit_log write -- every patient data insert must be logged with all required fields
   await supabase.from("audit_log").insert({
     user_id: user.id,
     patient_id: patientId,
-    action: "UPLOAD_DOCUMENT",
+    action: "INSERT",
     resource_type: "documents",
     resource_id: document.id,
     organization_id: organizationId,
-  });
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  }).then(() => undefined, () => undefined);
 
   return NextResponse.json(
     { id: document.id, title: document.title },

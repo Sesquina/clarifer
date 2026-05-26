@@ -1,3 +1,14 @@
+/**
+ * app/api/delete-account/route.ts
+ * Deletes all data for the authenticated user and removes the auth account.
+ * Tables: patients, users, chat_messages, symptom_logs, medications, documents,
+ *         trial_saves, care_team, appointments, biomarkers, audit_log (write)
+ * Auth: any authenticated user (self-deletion only)
+ * Sprint: S5 -- fix missing/incorrect audit_log on account deletion
+ * HIPAA: audit_log must be written BEFORE any data is deleted so the record
+ *        is preserved even if deletion partially fails. organization_id captured
+ *        before users row is deleted. patient_id=null (account-level event).
+ */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
@@ -31,6 +42,30 @@ export async function DELETE(request: Request) {
     .eq("created_by", user.id);
   const patientIds = (patients || []).map((p: { id: string }) => p.id);
 
+  // Capture org_id BEFORE any deletions -- the users row is deleted in the loop
+  // below and cannot be re-fetched after that point.
+  const { data: userRecord } = await admin
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+  const orgId: string | null = userRecord?.organization_id ?? null;
+
+  // Audit log BEFORE deleting account data (HIPAA requirement: the record of
+  // the deletion must be preserved even if the deletion itself partially fails).
+  // patient_id=null -- this is an account-level event, not a patient-level event.
+  await admin.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: null,
+    action: "DELETE",
+    resource_type: "account",
+    resource_id: user.id,
+    organization_id: orgId,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  });
+
   // Delete all user data in order (respecting foreign keys)
   const tables = [
     { table: "chat_messages", column: "user_id" },
@@ -53,19 +88,12 @@ export async function DELETE(request: Request) {
         await admin.from(table).delete().eq(column, user.id);
       }
     } catch {
-      // Table may not exist yet — continue cleanup
+      // Table may not exist yet -- continue cleanup
     }
   }
 
-  // Delete storage files
+  // Delete storage files using orgId captured above (users row is already gone)
   if (patientIds.length > 0) {
-    const { data: userRecord } = await admin
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-    const orgId = userRecord?.organization_id;
-
     for (const pid of patientIds) {
       const prefix = orgId ? `${orgId}/${pid}/` : null;
       if (!prefix) continue;
@@ -77,18 +105,6 @@ export async function DELETE(request: Request) {
       }
     }
   }
-
-  // Audit log: record account deletion before removing the auth user
-  await admin.from("audit_log").insert({
-    user_id: user.id,
-    action: "DELETE_ACCOUNT",
-    resource_type: "account",
-    resource_id: user.id,
-    organization_id: null,
-    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
-    user_agent: request.headers.get("user-agent"),
-    status: "success",
-  });
 
   // Delete the auth user
   await admin.auth.admin.deleteUser(user.id);
