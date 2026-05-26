@@ -84,7 +84,7 @@ describe("GET /api/internal/tasks", () => {
       ],
     });
     (supabaseMod.createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(client);
-    const { GET } = await import("@/app/api/internal/tasks/route");
+    const { GET } = await import("@/app/api/hq/tasks/route");
     const res = await GET(
       new Request("http://localhost/api/internal/tasks", {
         headers: { authorization: "Bearer test-secret-value" },
@@ -105,7 +105,7 @@ describe("GET /api/internal/tasks", () => {
       insertReturn: { id: "created", title: "New task", lane: "build" },
     });
     (supabaseMod.createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(client);
-    const { POST } = await import("@/app/api/internal/tasks/route");
+    const { POST } = await import("@/app/api/hq/tasks/route");
     const res = await POST(
       new Request("http://localhost/api/internal/tasks", {
         method: "POST",
@@ -125,7 +125,7 @@ describe("GET /api/internal/tasks", () => {
   });
 
   it("3. rejects request without INTERNAL_API_SECRET bearer and no session", async () => {
-    const { GET } = await import("@/app/api/internal/tasks/route");
+    const { GET } = await import("@/app/api/hq/tasks/route");
     const res = await GET(
       new Request("http://localhost/api/internal/tasks") as unknown as import("next/server").NextRequest
     );
@@ -138,7 +138,7 @@ describe("GET /api/internal/tasks", () => {
       updateReturn: { id: "x", lane: "michael" },
     });
     (supabaseMod.createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(client);
-    const { PATCH } = await import("@/app/api/internal/tasks/[id]/route");
+    const { PATCH } = await import("@/app/api/hq/tasks/[id]/route");
     const res = await PATCH(
       new Request("http://localhost/api/internal/tasks/x", {
         method: "PATCH",

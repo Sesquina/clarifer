@@ -32,7 +32,7 @@ export default async function SprintsPage() {
             fontSize: 14,
           }}
         >
-          No sprints recorded yet. Once Claude Code begins posting to /api/internal/sprints after each sprint, entries will appear here.
+          No sprints recorded yet. Once Claude Code begins posting to /api/hq/sprints after each sprint, entries will appear here.
         </div>
       ) : (
         <>

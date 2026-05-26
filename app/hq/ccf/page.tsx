@@ -1,9 +1,9 @@
 /**
- * app/internal/ccf/page.tsx
+ * app/hq/ccf/page.tsx
  * CCF Foundation dashboard -- live aggregate community intelligence for the CCA caregiver community.
  * Shows anonymized aggregated metrics about cholangiocarcinoma caregivers on Clarifer.
  * Tables: patients, users (auth.users via admin API), symptom_logs, trial_saves, documents, audit_log
- * Auth: /internal layout allowlist (samira.esquina@clarifer.com only)
+ * Auth: /hq passcode gate (hq_session cookie via middleware)
  * Sprint: Sprint CCF-4 -- Foundation Dashboard
  * HIPAA: No individual PHI. All data aggregated. Counts 1-4 shown as "< 5". Page view written to audit_log.
  */

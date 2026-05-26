@@ -1,7 +1,7 @@
-// app/internal/content/page.tsx
+// app/hq/content/page.tsx
 // AI content generator for Clarifer social posts -- Command Center.
 // Generates Substack and LinkedIn drafts via server-side API route.
-// Rule: Anthropic is NEVER called client-side. All AI calls go through /api/internal/content/generate.
+// Rule: Anthropic is NEVER called client-side. All AI calls go through /api/hq/content/generate.
 // Rule: no hex strings in JSX -- use CSS variables only.
 
 "use client";
@@ -159,7 +159,7 @@ export default function ContentPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("/api/internal/content/generate", {
+      const res = await fetch("/api/hq/content/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

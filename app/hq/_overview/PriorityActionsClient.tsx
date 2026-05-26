@@ -43,7 +43,7 @@ export default function PriorityActionsClient({ initial }: { initial: TeamTask[]
       )
     );
     try {
-      const res = await fetch(`/api/internal/tasks/${id}`, {
+      const res = await fetch(`/api/hq/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -166,7 +166,7 @@ export default function PriorityActionsClient({ initial }: { initial: TeamTask[]
             )}
             {section.showViewAll && (
               <Link
-                href="/internal/board"
+                href="/hq/board"
                 style={{
                   ...BODY,
                   display: "inline-block",

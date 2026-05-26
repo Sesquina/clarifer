@@ -1,11 +1,15 @@
+/**
+ * app/hq/layout.tsx
+ * Shared sidebar layout for the /hq command center.
+ * Auth: protected by middleware cookie gate (hq_session). No Supabase auth here.
+ * Sprint: fix/hq-rename-and-passcode
+ * HIPAA: No PHI in this file.
+ */
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import { isAllowedEmail, accessLevelFor } from "@/lib/internal/types";
+import { usePathname } from "next/navigation";
 
 const BODY: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
@@ -14,68 +18,21 @@ const BODY: React.CSSProperties = {
 const SIDEBAR_BG = "rgb(26, 46, 36)";
 
 const NAV = [
-  { label: "Overview", href: "/internal" },
-  { label: "Sprint Board", href: "/internal/board" },
-  { label: "Sprint History", href: "/internal/sprints" },
-  { label: "Roadmap", href: "/internal/roadmap" },
-  { label: "Agents", href: "/internal/agents" },
-  { label: "Sessions", href: "/internal/sessions" },
-  { label: "Content", href: "/internal/content" },
+  { label: "Overview", href: "/hq" },
+  { label: "Sprint Board", href: "/hq/board" },
+  { label: "Sprint History", href: "/hq/sprints" },
+  { label: "Roadmap", href: "/hq/roadmap" },
+  { label: "Agents", href: "/hq/agents" },
+  { label: "Sessions", href: "/hq/sessions" },
+  { label: "Content", href: "/hq/content" },
 ];
 
-export default function InternalLayout({ children }: { children: ReactNode }) {
-  const supabase = createClient();
-  const router = useRouter();
+export default function HQLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
 
-  const onLoginRoute = pathname === "/internal/login";
-
-  useEffect(() => {
-    if (onLoginRoute) {
-      setIsChecking(false);
-      return;
-    }
-    let active = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      const email = data.user?.email ?? null;
-      if (!data.user) {
-        router.replace("/internal/login");
-        return;
-      }
-      if (!isAllowedEmail(email)) {
-        supabase.auth.signOut().finally(() => router.replace("/"));
-        return;
-      }
-      setUser(data.user);
-      setIsChecking(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, [supabase, router, onLoginRoute]);
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    router.push("/internal/login");
-  }
-
+  // Login page renders without the sidebar shell.
+  const onLoginRoute = pathname === "/hq/login";
   if (onLoginRoute) return <>{children}</>;
-
-  if (isChecking || !user) {
-    return (
-      <div
-        style={{ minHeight: "100vh", backgroundColor: "var(--background)" }}
-        aria-hidden="true"
-      />
-    );
-  }
-
-  const email = user.email ?? "";
-  const level = accessLevelFor(email) ?? "growth";
-  const emailDisplay = email.length > 26 ? `${email.slice(0, 25)}…` : email;
 
   return (
     <div
@@ -104,7 +61,7 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
               letterSpacing: 0.3,
             }}
           >
-            Command Center
+            HQ
           </div>
           <div style={{ ...BODY, fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
             Clarifer
@@ -113,7 +70,7 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
         <nav className="flex flex-col" style={{ padding: "4px 8px", gap: 2 }}>
           {NAV.map((item) => {
             const active = pathname === item.href ||
-              (item.href !== "/internal" && pathname.startsWith(item.href));
+              (item.href !== "/hq" && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
@@ -194,6 +151,7 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
           ))}
         </div>
 
+        {/* Footer -- sign out clears the hq_session cookie via GET /api/hq/logout */}
         <div
           className="flex flex-col"
           style={{
@@ -203,46 +161,18 @@ export default function InternalLayout({ children }: { children: ReactNode }) {
             gap: 6,
           }}
         >
-          <div
-            title={email}
-            style={{ ...BODY, fontSize: 12, color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-          >
-            {emailDisplay}
-          </div>
-          <div
-            className="inline-flex items-center"
-            style={{
-              ...BODY,
-              alignSelf: "flex-start",
-              fontSize: 11,
-              fontWeight: 600,
-              color: "var(--white)",
-              backgroundColor: level === "full" ? "var(--accent)" : "rgba(255,255,255,0.15)",
-              padding: "2px 8px",
-              borderRadius: 10,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
-            {level}
-          </div>
-          <button
-            type="button"
-            onClick={signOut}
+          <a
+            href="/api/hq/logout"
             style={{
               ...BODY,
               marginTop: 4,
-              background: "transparent",
-              border: "none",
               color: "rgba(255,255,255,0.5)",
               fontSize: 12,
-              cursor: "pointer",
-              textAlign: "left",
-              padding: 0,
+              textDecoration: "none",
             }}
           >
             Sign out
-          </button>
+          </a>
         </div>
       </aside>
       <main style={{ flex: 1, padding: 32, overflowY: "auto" }}>{children}</main>

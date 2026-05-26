@@ -1,4 +1,4 @@
-// app/internal/sessions/page.tsx
+// app/hq/sessions/page.tsx
 // Sessions roadmap tracker -- Clarifer Command Center
 // Tracks all 126 planned sessions (C01-C31 completed, remainder in tiers).
 // State persisted in localStorage; completed sessions are read-only.

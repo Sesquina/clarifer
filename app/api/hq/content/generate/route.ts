@@ -1,4 +1,4 @@
-// app/api/internal/content/generate/route.ts
+// app/api/hq/content/generate/route.ts
 // Server-side AI content generation for Clarifer Command Center.
 // Calls Anthropic API to draft Substack and LinkedIn posts.
 // NEVER expose this route publicly -- guarded by isAllowedEmail.

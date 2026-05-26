@@ -50,7 +50,7 @@ export default function BoardPage() {
   async function loadTasks() {
     setLoading(true);
     try {
-      const res = await fetch("/api/internal/tasks", { credentials: "include" });
+      const res = await fetch("/api/hq/tasks", { credentials: "include" });
       if (res.ok) {
         const json = await res.json();
         setTasks(json.tasks ?? []);
@@ -66,7 +66,7 @@ export default function BoardPage() {
     async (id: string, newLane: TaskLane) => {
       const before = tasks;
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, lane: newLane } : t)));
-      const res = await fetch(`/api/internal/tasks/${id}`, {
+      const res = await fetch(`/api/hq/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -84,7 +84,7 @@ export default function BoardPage() {
         t.id === id ? { ...t, status: "done", completed_at: new Date().toISOString() } : t
       )
     );
-    const res = await fetch(`/api/internal/tasks/${id}`, {
+    const res = await fetch(`/api/hq/tasks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -101,7 +101,7 @@ export default function BoardPage() {
     due_date: string;
     lane: TaskLane;
   }) {
-    const res = await fetch("/api/internal/tasks", {
+    const res = await fetch("/api/hq/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

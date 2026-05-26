@@ -1,5 +1,5 @@
 /**
- * app/internal/ccf/loading.tsx
+ * app/hq/ccf/loading.tsx
  * Route-level loading skeleton for the CCF Foundation dashboard.
  * Shown by Next.js while the server component fetches Supabase data.
  * Sprint: Sprint CCF-4 -- Foundation Dashboard

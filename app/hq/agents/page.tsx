@@ -33,13 +33,13 @@ const AGENTS: AgentCard[] = [
     key: "deadline-tracker",
     name: "Deadline Tracker",
     description: "Runs Mondays at 08:00. Alerts when any task is overdue or due within 3 days.",
-    triggerPath: "/api/internal/agents/deadline",
+    triggerPath: "/api/hq/agents/deadline",
   },
   {
     key: "daily-digest",
     name: "Daily Digest",
     description: "Runs daily at 08:00. Sends personalized email to Samira (full) and Michael (growth).",
-    triggerPath: "/api/internal/agents/digest",
+    triggerPath: "/api/hq/agents/digest",
   },
 ];
 
@@ -56,7 +56,7 @@ export default function AgentsPage() {
 
   async function loadRuns() {
     try {
-      const res = await fetch("/api/internal/tasks", { credentials: "include" });
+      const res = await fetch("/api/hq/tasks", { credentials: "include" });
       if (!res.ok) return;
       // Derive agent runs via dedicated endpoint (skipped); use sprints endpoint below as health check.
     } catch {

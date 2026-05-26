@@ -49,7 +49,7 @@ describe("/api/internal/sprints", () => {
     const supabaseMod = await import("@supabase/supabase-js");
     const { client, insertSpy } = buildSupabase([]);
     (supabaseMod.createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(client);
-    const { POST } = await import("@/app/api/internal/sprints/route");
+    const { POST } = await import("@/app/api/hq/sprints/route");
     const res = await POST(
       new Request("http://localhost/api/internal/sprints", {
         method: "POST",
@@ -82,7 +82,7 @@ describe("/api/internal/sprints", () => {
     ];
     const { client } = buildSupabase(rows);
     (supabaseMod.createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(client);
-    const { GET } = await import("@/app/api/internal/sprints/route");
+    const { GET } = await import("@/app/api/hq/sprints/route");
     const res = await GET(
       new Request("http://localhost/api/internal/sprints", {
         headers: { authorization: "Bearer test-secret-value" },
@@ -95,7 +95,7 @@ describe("/api/internal/sprints", () => {
   });
 
   it("7. rejects without auth header", async () => {
-    const { POST } = await import("@/app/api/internal/sprints/route");
+    const { POST } = await import("@/app/api/hq/sprints/route");
     const res = await POST(
       new Request("http://localhost/api/internal/sprints", {
         method: "POST",

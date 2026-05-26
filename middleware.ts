@@ -3,6 +3,18 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { loginLimiter, signupLimiter } from "@/lib/ratelimit";
 
+/**
+ * Computes sha256(input) and returns it as a lowercase hex string.
+ * Uses the Web Crypto API (available in both Edge and Node.js 18+ runtimes).
+ */
+async function sha256Hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 // 30 minutes of inactivity → force re-authentication
 const SESSION_TIMEOUT_SECONDS = 30 * 60;
 const SESSION_COOKIE = "cf_last_activity";
@@ -17,6 +29,26 @@ function getClientIp(request: NextRequest): string {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // /hq passcode gate -- protects all /hq/* pages except /hq/login.
+  // Validation: cookie "hq_session" must equal sha256(INTERNAL_PASSCODE + "clarifer-hq-salt").
+  // If INTERNAL_PASSCODE is missing or cookie is absent/wrong, redirect to /hq/login.
+  // Note: /api/* paths are excluded by the matcher below, so /api/hq/auth is never checked here.
+  if (pathname.startsWith("/hq") && pathname !== "/hq/login") {
+    const passcode = process.env.INTERNAL_PASSCODE;
+    if (!passcode) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/hq/login";
+      return NextResponse.redirect(url);
+    }
+    const expectedHash = await sha256Hex(passcode + "clarifer-hq-salt");
+    const cookieValue = request.cookies.get("hq_session")?.value;
+    if (!cookieValue || cookieValue !== expectedHash) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/hq/login";
+      return NextResponse.redirect(url);
+    }
+  }
 
   // Rate limit auth endpoints by IP before anything else.
   // 5 per 15 min on /login; 3 per hour on /signup (defined in lib/ratelimit.ts).
@@ -71,7 +103,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // /ccf-dashboard is intentionally absent -- it is protected and requires isAllowedEmail.
-  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/update-password", "/privacy", "/terms", "/about", "/security", "/ccf", "/disclaimer", "/data", "/waitlist", "/promise", "/privacy-notice"];
+  // /hq is protected by its own cookie gate above; exempt from Supabase session check.
+  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/update-password", "/privacy", "/terms", "/about", "/security", "/ccf", "/disclaimer", "/data", "/waitlist", "/promise", "/privacy-notice", "/hq"];
   // Use startsWith(route + "/") not startsWith(route) to prevent /ccf from matching /ccf-dashboard.
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || (route !== "/" && pathname.startsWith(route + "/"))

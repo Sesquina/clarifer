@@ -7,9 +7,9 @@ import {
   daysUntil,
   urgencyColor,
   MILESTONES_TIMELINE,
-} from "@/app/internal/_overview/helpers";
-import MilestoneTimeline from "@/app/internal/_overview/MilestoneTimeline";
-import BlockerCard from "@/app/internal/_overview/BlockerCard";
+} from "@/app/hq/_overview/helpers";
+import MilestoneTimeline from "@/app/hq/_overview/MilestoneTimeline";
+import BlockerCard from "@/app/hq/_overview/BlockerCard";
 
 describe("internal/overview", () => {
   it("1. CCF countdown calculates correct days from May 8 2026", () => {

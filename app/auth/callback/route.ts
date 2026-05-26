@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * Open-redirect filter for the optional ?next= query param. Only the
- * /internal admin deep-link is honored as an explicit override.
+ * /hq admin deep-link is honored as an explicit override.
  * Unknown or missing values fall through to /patients here, but the
  * GET handler below ignores that fallback and instead routes by user
  * state (see routePostAuth).
@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
  * green -- the function's job is sanitization, not routing.
  */
 export function resolveCallbackRedirect(next: string | null | undefined): string {
-  if (next && next.startsWith("/internal")) return "/internal";
+  if (next && next.startsWith("/hq")) return "/hq";
   if (next === "/update-password") return "/update-password";
   return "/home";
 }
@@ -72,11 +72,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/update-password`);
   }
 
-  // Honor the admin /internal deep-link override only when it was
+  // Honor the admin /hq deep-link override only when it was
   // explicitly requested. All other auth flows go through state-based
   // routing so new users never land on a broken page.
-  if (next && next.startsWith("/internal")) {
-    return NextResponse.redirect(`${origin}/internal`);
+  if (next && next.startsWith("/hq")) {
+    return NextResponse.redirect(`${origin}/hq`);
   }
 
   try {

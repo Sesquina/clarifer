@@ -73,7 +73,7 @@ export default function BlockerCard({ blockers }: { blockers: TeamTask[] }) {
             ))}
           </ul>
           <Link
-            href="/internal/board"
+            href="/hq/board"
             style={{
               ...BODY,
               display: "inline-block",

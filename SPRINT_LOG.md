@@ -1,4 +1,51 @@
 ---
+[2026-05-26] SESSION -- fix/hq-rename-and-passcode
+Branch: fix/hq-rename-and-passcode
+
+PART 1: RENAME /internal TO /hq
+  Moved app/internal/ → app/hq/
+  Moved app/api/internal/ → app/api/hq/
+  Updated all route path references in 13 files inside app/hq/
+  Updated vercel.json cron paths
+  Updated app/auth/callback/route.ts (/internal → /hq in comment, function, and redirect)
+  Updated .env.example (added INTERNAL_PASSCODE, updated GitHub webhook path comment)
+
+PART 2: PASSCODE GATE
+  Created app/api/hq/auth/route.ts
+    POST: validates code against process.env.INTERNAL_PASSCODE using timingSafeEqual
+    Sets httpOnly cookie "hq_session" = sha256(INTERNAL_PASSCODE + "clarifer-hq-salt"), 7 days
+  Created app/api/hq/logout/route.ts
+    GET: clears hq_session cookie, redirects to /hq/login
+  Created app/hq/login/page.tsx (full replacement)
+    Passcode-only login, no Google OAuth, no Supabase dependency
+    Design: linen background, sage logo placeholder, Playfair "HQ Access" heading
+  Updated middleware.ts
+    Added /hq gate: checks hq_session cookie via sha256 (Web Crypto API)
+    Added /hq to publicRoutes to bypass Supabase auth check
+  Updated app/hq/layout.tsx
+    Removed Supabase auth check (middleware handles protection)
+    Updated all NAV hrefs (/internal/* → /hq/*)
+    Sign out → /api/hq/logout (clears cookie)
+
+PART 3: TESTS
+  Created tests/hq/passcode-gate.test.ts (5 tests)
+    POST correct passcode → 200, cookie set
+    POST wrong passcode → 401, no cookie
+    Missing INTERNAL_PASSCODE env var → 500
+    Missing cookie on /hq request → middleware redirects to /hq/login
+    Valid cookie → middleware passes through
+    /hq/login itself not gated (no infinite redirect)
+  Updated tests/internal/auth-fix.test.ts (updated /internal → /hq assertions)
+  Updated tests/components/internal/kanban.test.tsx (fetch stubs: /api/internal → /api/hq)
+  Updated tests/api/internal/sprints.test.ts (import path)
+  Updated tests/api/internal/tasks.test.ts (import paths)
+  Updated tests/internal/overview.test.ts (import paths)
+
+GREP RESULT: 0 route references to /internal in app/ or middleware.ts
+INTERNAL_PASSCODE: read from process.env only. Never hardcoded. Value must be set in Vercel dashboard.
+Tests: 304/304 passing. tsc: 0 errors.
+
+---
 [2026-05-26] SESSION S5 -- fix/audit-log-missing
 Branch: fix/audit-log-missing
 

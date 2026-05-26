@@ -67,7 +67,7 @@ describe("Sprint Board (Kanban)", () => {
     fetchSpy.mockReset();
     // Default fetch: initial load returns tasks
     fetchSpy.mockImplementation((url: string, init?: RequestInit) => {
-      if (url === "/api/internal/tasks" && (!init || init.method === undefined || init.method === "GET")) {
+      if (url === "/api/hq/tasks" && (!init || init.method === undefined || init.method === "GET")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ tasks: mockTasks }),
@@ -84,7 +84,7 @@ describe("Sprint Board (Kanban)", () => {
   });
 
   it("10. renders tasks in their correct lanes", async () => {
-    const { default: BoardPage } = await import("@/app/internal/board/page");
+    const { default: BoardPage } = await import("@/app/hq/board/page");
     render(<BoardPage />);
     expect(await screen.findByText("Build command center")).toBeInTheDocument();
     expect(screen.getByText("File 83(b)")).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe("Sprint Board (Kanban)", () => {
   it("11. dropping a card on a new lane calls PATCH with that lane", async () => {
     const patchCalls: Array<{ url: string; body: unknown }> = [];
     fetchSpy.mockImplementation((url: string, init?: RequestInit) => {
-      if (url === "/api/internal/tasks" && (!init || init.method === undefined || init.method === "GET")) {
+      if (url === "/api/hq/tasks" && (!init || init.method === undefined || init.method === "GET")) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve({ tasks: mockTasks }) });
       }
       if (init?.method === "PATCH") {
@@ -109,7 +109,7 @@ describe("Sprint Board (Kanban)", () => {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
 
-    const { default: BoardPage } = await import("@/app/internal/board/page");
+    const { default: BoardPage } = await import("@/app/hq/board/page");
     render(<BoardPage />);
 
     await screen.findByText("File 83(b)");
@@ -133,14 +133,14 @@ describe("Sprint Board (Kanban)", () => {
     await waitFor(() => {
       expect(patchCalls.length).toBeGreaterThan(0);
     });
-    expect(patchCalls[0].url).toBe("/api/internal/tasks/task-2");
+    expect(patchCalls[0].url).toBe("/api/hq/tasks/task-2");
     expect(patchCalls[0].body).toMatchObject({ lane: "michael" });
   });
 
   it("12. mark done updates task status and applies visual feedback", async () => {
     const patchCalls: Array<{ url: string; body: unknown }> = [];
     fetchSpy.mockImplementation((url: string, init?: RequestInit) => {
-      if (url === "/api/internal/tasks" && (!init || init.method === undefined || init.method === "GET")) {
+      if (url === "/api/hq/tasks" && (!init || init.method === undefined || init.method === "GET")) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve({ tasks: mockTasks }) });
       }
       if (init?.method === "PATCH") {
@@ -150,7 +150,7 @@ describe("Sprint Board (Kanban)", () => {
       return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
     });
 
-    const { default: BoardPage } = await import("@/app/internal/board/page");
+    const { default: BoardPage } = await import("@/app/hq/board/page");
     render(<BoardPage />);
 
     const btn = await screen.findByRole("button", { name: /Mark Build command center as done/i });
@@ -168,7 +168,7 @@ describe("Sprint Board (Kanban)", () => {
     await waitFor(() => {
       expect(patchCalls.length).toBeGreaterThan(0);
     });
-    expect(patchCalls[0].url).toBe("/api/internal/tasks/task-1");
+    expect(patchCalls[0].url).toBe("/api/hq/tasks/task-1");
     expect(patchCalls[0].body).toMatchObject({ status: "done" });
   });
 });
