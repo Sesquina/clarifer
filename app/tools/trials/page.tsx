@@ -156,18 +156,23 @@ export default function TrialsPage() {
   async function handleSave(trial: Trial) {
     if (!patientId) return;
     if (savedIds.has(trial.nct_id)) return;
-    await supabase.from("trial_saves").upsert(
-      {
+    // PHI write routed server-side: auth check + role check +
+    // org_id filter + audit_log are enforced in POST /api/trial-saves/upsert.
+    const res = await fetch("/api/trial-saves/upsert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         patient_id: patientId,
         trial_id: trial.nct_id,
         trial_name: trial.title,
         phase: trial.phase,
         status: trial.status,
         location: trial.location,
-      },
-      { onConflict: "patient_id,trial_id" }
-    );
-    setSavedIds((prev) => new Set([...prev, trial.nct_id]));
+      }),
+    });
+    if (res.ok) {
+      setSavedIds((prev) => new Set([...prev, trial.nct_id]));
+    }
   }
 
   function buildMailto(trial: Trial): string {

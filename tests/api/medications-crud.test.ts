@@ -14,11 +14,13 @@ function makeSupabase(opts: {
   organizationId?: string | null;
   existingMed?: Record<string, unknown> | null;
   activeMeds?: Array<Record<string, unknown>>;
+  patientOrgId?: string;
 }) {
   const {
     organizationId = "test-org-ccf-demo",
     existingMed = { id: "med-1", patient_id: TEST_PATIENT_CARLOS.id, organization_id: "test-org-ccf-demo" },
     activeMeds = [{ id: "med-1", name: "Gemcitabine", is_active: true }],
+    patientOrgId = "test-org-ccf-demo",
   } = opts;
   return {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: TEST_CAREGIVER.id } }, error: null }) },
@@ -29,6 +31,15 @@ function makeSupabase(opts: {
           eq: vi.fn().mockReturnThis(),
           single: vi.fn().mockResolvedValue({
             data: organizationId ? { role: "caregiver", organization_id: organizationId } : null,
+          }),
+        };
+      }
+      if (table === "patients") {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { organization_id: patientOrgId },
           }),
         };
       }

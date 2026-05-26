@@ -1,11 +1,11 @@
 /**
- * app/api/medications/create/route.ts
- * Creates a new medication record for a patient.
- * Tables: medications (write), patients (read), users (read), audit_log (write)
- * Auth: caregiver, provider
- * Sprint: S3 -- fix client-side PHI write on medications table
- * HIPAA: Contains patient medication data. Auth + role + org_id enforced.
- *        audit_log written on every successful insert. No PHI in error responses.
+ * app/api/trial-saves/upsert/route.ts
+ * Upserts a saved clinical trial for a patient.
+ * Tables: trial_saves (write), patients (read), users (read), audit_log (write)
+ * Auth: caregiver, patient, provider
+ * Sprint: S3 -- fix client-side PHI write on trial_saves table
+ * HIPAA: Contains patient trial data. Auth + role + org_id enforced.
+ *        audit_log written on every successful upsert. No PHI in error responses.
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +13,7 @@ import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
-const ALLOWED_ROLES = ["caregiver", "provider"];
+const ALLOWED_ROLES = ["caregiver", "patient", "provider"];
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     .select("role, organization_id")
     .eq("id", user.id)
     .single();
+
   if (!userRecord?.organization_id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -41,12 +42,11 @@ export async function POST(request: Request) {
 
   let body: {
     patient_id?: string;
-    drug_name?: string;
-    dosage?: string | null;
-    dosage_unit?: string | null;
-    frequency?: string | null;
-    start_date?: string | null;
-    notes?: string | null;
+    trial_id?: string;
+    trial_name?: string;
+    phase?: string | null;
+    status?: string | null;
+    location?: string | null;
   };
   try {
     body = await request.json();
@@ -54,9 +54,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  if (!body.patient_id || !body.drug_name?.trim()) {
+  if (!body.patient_id || !body.trial_id?.trim()) {
     return NextResponse.json(
-      { error: "Please enter a medication name and pick a patient." },
+      { error: "patient_id and trial_id are required" },
       { status: 400 }
     );
   }
@@ -73,43 +73,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Write medication record
-  const { data: med, error: insertError } = await supabase
-    .from("medications")
-    .insert({
-      patient_id: body.patient_id,
-      added_by: user.id,
-      name: body.drug_name.trim(),
-      dose: body.dosage ?? null,
-      unit: body.dosage_unit ?? null,
-      frequency: body.frequency ?? null,
-      start_date: body.start_date ?? null,
-      notes: body.notes ?? null,
-      is_active: true,
-      organization_id: orgId,
-    })
-    .select("*")
+  // Upsert trial save record
+  const { data: saved, error: upsertError } = await supabase
+    .from("trial_saves")
+    .upsert(
+      {
+        patient_id: body.patient_id,
+        trial_id: body.trial_id.trim(),
+        trial_name: body.trial_name ?? null,
+        phase: body.phase ?? null,
+        status: body.status ?? null,
+        location: body.location ?? null,
+      },
+      { onConflict: "patient_id,trial_id" }
+    )
+    .select("id")
     .single();
 
-  if (insertError || !med) {
+  if (upsertError || !saved) {
     return NextResponse.json(
-      { error: "We could not save this medication. Please try again." },
+      { error: "Could not save this trial. Please try again." },
       { status: 500 }
     );
   }
 
-  // 4. audit_log write -- every patient data insert must be logged
+  // 4. audit_log write -- every patient data write must be logged
   await supabase.from("audit_log").insert({
     user_id: user.id,
     patient_id: body.patient_id,
-    action: "INSERT",
-    resource_type: "medications",
-    resource_id: med.id,
+    action: "UPSERT",
+    resource_type: "trial_saves",
+    resource_id: saved.id,
     organization_id: orgId,
     ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
     user_agent: request.headers.get("user-agent"),
     status: "success",
   }).then(() => undefined, () => undefined);
 
-  return NextResponse.json({ medication: med }, { status: 201 });
+  return NextResponse.json({ id: saved.id }, { status: 200 });
 }
