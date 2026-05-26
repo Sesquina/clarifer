@@ -45,44 +45,39 @@ export default function CareTeamPage() {
   async function handleAdd() {
     if (!patientId || !name.trim()) return;
     setSaving(true);
-    // care_team.organization_id is NOT NULL (Sprint 10 directory
-    // migration). Fetch the caller's org from public.users so the
-    // insert is org-scoped end-to-end.
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    try {
+      // PHI write routed server-side: auth check + role check +
+      // org_id filter + audit_log are enforced in POST /api/care-team.
+      const res = await fetch("/api/care-team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: patientId,
+          name: name.trim(),
+          role: role || null,
+          phone: phone || null,
+          email: email || null,
+          notes: notes || null,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.member) setMembers((prev) => [...prev, json.member as Member]);
+      }
+    } finally {
       setSaving(false);
-      return;
+      setShowAdd(false);
+      setName(""); setRole(""); setPhone(""); setEmail(""); setNotes("");
     }
-    const { data: me } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-    const organizationId = me?.organization_id ?? null;
-    if (!organizationId) {
-      setSaving(false);
-      return;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from("care_team").insert({
-      patient_id: patientId,
-      organization_id: organizationId,
-      name: name.trim(),
-      role: role || null,
-      phone: phone || null,
-      email: email || null,
-      notes: notes || null,
-    }).select().single();
-    if (data) setMembers((prev) => [...prev, data as Member]);
-    setSaving(false);
-    setShowAdd(false);
-    setName(""); setRole(""); setPhone(""); setEmail(""); setNotes("");
   }
 
   async function handleDelete(id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("care_team").delete().eq("id", id);
-    setMembers((prev) => prev.filter((m) => m.id !== id));
+    // PHI write routed server-side: auth check + role check +
+    // org_id filter + audit_log are enforced in DELETE /api/care-team/[id].
+    const res = await fetch(`/api/care-team/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setMembers((prev) => prev.filter((m) => m.id !== id));
+    }
   }
 
   const inputStyle: React.CSSProperties = {
