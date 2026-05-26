@@ -1,4 +1,29 @@
 ---
+[2026-05-26] SESSION S4 -- fix/phi-client-writes-3
+Branch: fix/phi-client-writes-3
+
+FIXED [S2-5]: app/tools/page.tsx:66 -- moved trial_saves delete to new DELETE /api/trial-saves/delete.
+  New route: all 4 HIPAA checks (auth + role + cross-tenant filter + audit_log).
+  Cross-tenant check: fetch trial_save row to get patient_id, then verify patients.organization_id === caller org.
+  Belt-and-suspenders delete: .eq("id", ...).eq("patient_id", ...) so no row can be deleted outside patient scope.
+  TypeScript fix: trialSave.patient_id typed string | null -- added null guard before use in .eq() calls.
+
+PHI WRITE AUDIT COMPLETE -- all 7 original violations resolved:
+  S2-0a: app/care-team/page.tsx -- care_team INSERT -- FIXED S2 (commit 7f2f7b7)
+  S2-0b: app/care-team/page.tsx -- care_team DELETE -- FIXED S2 (commit 7f2f7b7)
+  S2-1:  app/log/page.tsx -- symptom_logs INSERT -- FIXED S2 (commit dcdde94)
+  S2-2:  app/onboarding/page.tsx -- patients INSERT -- FIXED S2 (commit dcdde94)
+  S2-3:  app/tools/medications/page.tsx -- medications INSERT -- FIXED S3 (commit 6fd4fc6)
+  S2-4:  app/tools/trials/page.tsx -- trial_saves UPSERT -- FIXED S3 (commit 6fd4fc6)
+  S2-5:  app/tools/page.tsx -- trial_saves DELETE -- FIXED S4 (this commit)
+
+GREP AUDIT (grep -rn "supabase\." app/ components/ | grep ".insert|update|upsert|delete" | grep -v route.ts):
+  Result: 0 lines. No client-side PHI writes remain in any .tsx or component file.
+  All supabase write calls exist exclusively in app/api/**/route.ts server-side files.
+
+Tests: 294/294 passing. tsc: 0 errors.
+
+---
 [2026-05-26] SESSION S3 -- fix/phi-client-writes-2
 Branch: fix/phi-client-writes-2
 Commit: 6fd4fc6

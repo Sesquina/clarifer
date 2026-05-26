@@ -63,8 +63,16 @@ export default function ToolsPage() {
   }
 
   async function handleUnsave(id: string) {
-    await supabase.from("trial_saves").delete().eq("id", id);
-    setSavedTrials((prev) => prev.filter((t) => t.id !== id));
+    // PHI write routed server-side: auth check + role check +
+    // org_id filter + audit_log are enforced in DELETE /api/trial-saves/delete.
+    const res = await fetch("/api/trial-saves/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      setSavedTrials((prev) => prev.filter((t) => t.id !== id));
+    }
   }
 
   return (
