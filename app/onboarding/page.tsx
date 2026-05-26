@@ -87,28 +87,33 @@ export default function OnboardingPage() {
         .update({ role, full_name: user.user_metadata?.full_name || null })
         .eq("id", user.id);
 
-      // Step 6: create first patient record for caregiver and patient roles
+      // Step 6: create first patient record for caregiver and patient roles.
+      // PHI write routed server-side: auth + role + org_id filter +
+      // audit_log are enforced in POST /api/patients/create.
       if (role === "caregiver" || role === "patient") {
         const parts = cityState.split(",");
         const cityVal = parts.slice(0, -1).join(",").trim() || cityState.trim();
         const stateVal = parts.length > 1 ? parts[parts.length - 1].trim() : null;
 
-        const { error: insertError } = await supabase.from("patients").insert({
-          name,
-          dob: dob || null,
-          sex: sex || null,
-          custom_diagnosis: diagnosis || null,
-          diagnosis_date: diagnosisDate || null,
-          city: cityVal || null,
-          state: stateVal,
-          language_preference: languagePreference,
-          organization_id: organizationId,
-          created_by: user.id,
-          status: "active",
+        const patientRes = await fetch("/api/patients/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            dob: dob || null,
+            sex: sex || null,
+            custom_diagnosis: diagnosis || null,
+            diagnosis_date: diagnosisDate || null,
+            city: cityVal || null,
+            state: stateVal,
+            language_preference: languagePreference,
+            status: "active",
+          }),
         });
 
-        if (insertError) {
-          setError(friendlyOnboardingError(insertError.message));
+        if (!patientRes.ok) {
+          const body = await patientRes.json().catch(() => ({}));
+          setError(friendlyOnboardingError((body as { error?: string }).error ?? "Could not create patient profile. Please try again."));
           setLoading(false);
           return;
         }

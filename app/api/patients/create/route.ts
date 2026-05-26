@@ -37,11 +37,23 @@ export async function POST(request: Request) {
   const organizationId = userRecord.organization_id;
 
   let body: {
+    // Standard fields
     full_name?: string;
     date_of_birth?: string;
     diagnosis?: string;
     condition_template_id?: string;
     primary_language?: string;
+    // Onboarding aliases (app/onboarding/page.tsx)
+    name?: string;
+    dob?: string;
+    custom_diagnosis?: string;
+    // Additional onboarding fields
+    sex?: string;
+    diagnosis_date?: string;
+    city?: string;
+    state?: string;
+    language_preference?: string;
+    status?: string;
   };
   try {
     body = await request.json();
@@ -49,7 +61,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const fullName = body.full_name?.trim();
+  // Accept both naming conventions (full_name from API callers, name from onboarding)
+  const fullName = (body.full_name ?? body.name ?? "").trim();
   if (!fullName) {
     return NextResponse.json(
       { error: "Please enter the patient's full name." },
@@ -61,12 +74,17 @@ export async function POST(request: Request) {
     .from("patients")
     .insert({
       name: fullName,
-      dob: body.date_of_birth ?? null,
-      custom_diagnosis: body.diagnosis ?? null,
+      dob: body.date_of_birth ?? body.dob ?? null,
+      sex: body.sex ?? null,
+      custom_diagnosis: body.diagnosis ?? body.custom_diagnosis ?? null,
+      diagnosis_date: body.diagnosis_date ?? null,
+      city: body.city ?? null,
+      state: body.state ?? null,
       condition_template_id: body.condition_template_id ?? null,
-      primary_language: body.primary_language ?? "en",
+      language_preference: body.language_preference ?? body.primary_language ?? "en",
       organization_id: organizationId,
       created_by: user.id,
+      status: body.status ?? "active",
     })
     .select("id, name, condition_template_id")
     .single();

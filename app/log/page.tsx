@@ -113,8 +113,6 @@ export default function LogPage() {
   const [saving, setSaving] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState<string | null>(null);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [lastAppetite, setLastAppetite] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -125,18 +123,18 @@ export default function LogPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      setUserId(user.id);
 
-      const [{ data: patient }, { data: me }] = await Promise.all([
-        supabase.from("patients").select("id, name").eq("created_by", user.id).limit(1).single(),
-        supabase.from("users").select("organization_id").eq("id", user.id).single(),
-      ]);
+      const { data: patient } = await supabase
+        .from("patients")
+        .select("id, name")
+        .eq("created_by", user.id)
+        .limit(1)
+        .single();
 
       if (patient) {
         setPatientId(patient.id);
         setPatientName(patient.name ?? null);
       }
-      if (me?.organization_id) setOrganizationId(me.organization_id);
 
       if (patient) {
         const { data: lastLog } = await supabase
@@ -175,28 +173,35 @@ export default function LogPage() {
   const canSave = colorValue !== null && functionalStatus !== null && appetite !== null;
 
   async function handleSave() {
-    if (!canSave || !patientId || !organizationId || !userId) return;
+    if (!canSave || !patientId) return;
     setSaving(true);
-
-    await supabase.from("symptom_logs").insert({
-      patient_id: patientId,
-      logged_by: userId,
-      organization_id: organizationId,
-      symptoms: sensations,
-      overall_severity: colorValue,
-      responses: {
-        color_value: colorValue,
-        sensations,
-        timing,
-        functional_status: functionalStatus,
-        appetite,
-        infection_signs: infectionSigns,
-        notes: notes.trim() || null,
-      },
-    });
-
-    setSaving(false);
-    router.push("/home");
+    try {
+      // PHI write routed server-side: auth + role + org_id filter +
+      // audit_log are enforced in POST /api/log/create.
+      const res = await fetch("/api/log/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: patientId,
+          overall_severity: colorValue,
+          symptoms: sensations,
+          responses: {
+            color_value: colorValue,
+            sensations,
+            timing,
+            functional_status: functionalStatus,
+            appetite,
+            infection_signs: infectionSigns,
+            notes: notes.trim() || null,
+          },
+        }),
+      });
+      if (res.ok) {
+        router.push("/home");
+      }
+    } finally {
+      setSaving(false);
+    }
   }
 
   const chipBase: React.CSSProperties = {

@@ -1,4 +1,19 @@
 ---
+[2026-05-26] SESSION S2 -- fix/phi-client-writes-1
+Branch: fix/phi-client-writes-1
+Audit of client-side PHI writes bypassing /api/ routes. Full list:
+
+DISCOVERED ISSUE [S2-0a]: app/care-team/page.tsx:67 -- direct client-side insert to care_team table. FIXED in commit 7f2f7b7 (previous run).
+DISCOVERED ISSUE [S2-0b]: app/care-team/page.tsx:84 -- direct client-side delete on care_team table. FIXED in commit 7f2f7b7 (previous run).
+DISCOVERED ISSUE [S2-1]: app/log/page.tsx:181 -- direct client-side insert to symptom_logs table. No auth check, no role check, no org_id filter, no audit_log. Fix: POST /api/log/create.
+DISCOVERED ISSUE [S2-2]: app/onboarding/page.tsx:96 -- direct client-side insert to patients table. No auth check, no role check, no org_id filter, no audit_log. Fix: POST /api/patients/create.
+DISCOVERED ISSUE [S2-3]: app/tools/medications/page.tsx:75 -- direct client-side insert to medications table. No auth check, no role check, no org_id filter, no audit_log. Fix: S3.
+DISCOVERED ISSUE [S2-4]: app/tools/trials/page.tsx:159 -- direct client-side upsert to trial_saves table. No auth check, no role check, no org_id filter, no audit_log. Fix: S3.
+DISCOVERED ISSUE [S2-5]: app/tools/page.tsx:66 -- direct client-side delete on trial_saves table. No auth check, no role check, no org_id filter, no audit_log. Fix: S4.
+
+Total violations found: 7 (2 already fixed, 5 open). Fixing S2-1 and S2-2 in this session.
+
+---
 [2026-05-22] DISCOVERED ISSUE: feat/async-upload-ux
 app/documents/[id]/page.tsx has no logic to trigger AI analysis when
 summary is null. Documents uploaded after this change will not be
