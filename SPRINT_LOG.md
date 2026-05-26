@@ -1,4 +1,20 @@
 ---
+[2026-05-26] SESSION S3 -- fix/phi-client-writes-2
+Branch: fix/phi-client-writes-2
+Commit: 6fd4fc6
+
+FIXED [S2-3]: app/tools/medications/page.tsx:75 -- moved medications insert to POST /api/medications/create.
+  Also: added missing cross-tenant org_id filter to existing route (patient.organization_id check was absent).
+FIXED [S2-4]: app/tools/trials/page.tsx:159 -- moved trial_saves upsert to new POST /api/trial-saves/upsert.
+  New route: all 4 HIPAA checks (auth + role + cross-tenant filter + audit_log).
+
+ALSO FIXED: app/api/medications/create/route.ts was missing cross-tenant patient.organization_id check.
+  Updated to verify patient belongs to caller's org before insert.
+
+Tests: 294/294 passing. tsc: 0 errors.
+Remaining open: S2-5 (app/tools/page.tsx:66 trial_saves delete) -- Fix: S4.
+
+---
 [2026-05-26] SESSION S2 -- fix/phi-client-writes-1
 Branch: fix/phi-client-writes-1
 Audit of client-side PHI writes bypassing /api/ routes. Full list:
