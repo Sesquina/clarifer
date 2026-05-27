@@ -2738,3 +2738,49 @@ NOTE TO SAMIRA
   /api/onboarding/complete route or extend the existing /api/patients/create.
   Recommend resolving D2 and D3 first -- those determine whether S18 is a
   rebuild or a polish pass.
+
+---
+[2026-05-27] SESSION RECOVERY: S18 re-fired -- still blocked, no new state
+Branch: fix/mobile-touch-audit (working tree clean, same HEAD: 1dcfe6d wip(S18): blocked)
+Status: BLOCKED -- second consecutive attempt with no resolutions to S18-D1..D6.
+
+CONTEXT
+  The runner re-fired the S18 task. CURRENT_SESSION.md still names
+  sprint-1-onboarding-flow but the agent remains on fix/mobile-touch-audit
+  (S17's branch, the working branch since the runner started using
+  fix/[descriptor] naming). The previous S18 attempt (commit 1dcfe6d)
+  logged six DECISION REQUIRED items (S18-D1..D6) and stopped. None of
+  those items have been answered. Working tree is clean.
+
+DIAGNOSTICS AT SESSION START
+  Current branch:    fix/mobile-touch-audit (unchanged since 1dcfe6d)
+  Last commit:       1dcfe6d wip(S18): blocked -- see SPRINT_LOG.md
+  Uncommitted:       none
+  tsc --noEmit:      0 errors
+  vitest:            not re-evaluated (same HEAD as prior baseline of
+                     299 passed / 10 failed; nothing on disk has changed)
+
+WHY NOTHING WAS DONE
+  Per Rule 10, agent must not guess. The six open S18 decisions
+  (branch convention, Figma 5-step vs existing 3-step, profiles vs
+  users table, /api/onboarding/complete vs existing /api/patients/create,
+  inherited test baseline, mobile parity scope) all require Samira's
+  call. Re-emitting the same DECISION REQUIRED items would add noise
+  without changing the block. Per docs/CLAUDE.md BLOCKED STATE PROTOCOL,
+  the correct action is to log the persistent block and stop.
+
+SIGNAL TO SAMIRA
+  This is the second consecutive S18 attempt that produced no code.
+  The orchestrator (advance-session.sh) does not currently check for
+  the BLOCKED status before re-firing the same task. Suggest either:
+    1. Resolve S18-D1..D6 (see SPRINT_LOG.md entry above the previous
+       "wip(S18): blocked" commit) before re-running, OR
+    2. Teach advance-session.sh to skip a task whose previous commit
+       is "wip(SN): blocked" without an intervening human commit.
+
+NO CHANGES THIS SESSION
+  Files changed:           SPRINT_LOG.md (this entry only)
+  Tests added:             none
+  MIGRATION REQUIRED:      none new (S18-D3 still open)
+  DISCOVERED ISSUE items:  none new
+  DECISION REQUIRED items: none new (S18-D1..D6 still open, see prior entry)
