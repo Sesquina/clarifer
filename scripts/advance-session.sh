@@ -25,7 +25,7 @@
 set -euo pipefail
 
 # --- Paths (adjust if your repo is in a different location) ---
-REPO="/mnt/c/Users/esqui/clarifier"
+REPO="/mnt/c/Users/esqui/clarifer"
 SPRINT_PLAN="$REPO/docs/CLARIFER_SPRINT_PLAN.md"
 SPRINT_STATUS="$REPO/SPRINT_STATUS.md"
 CURRENT_SESSION="$REPO/CURRENT_SESSION.md"

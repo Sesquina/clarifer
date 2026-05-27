@@ -25,7 +25,7 @@
 set -euo pipefail
 
 # --- Paths ---
-REPO="/mnt/c/Users/esqui/clarifier"
+REPO="/mnt/c/Users/esqui/clarifer"
 CURRENT_SESSION="$REPO/CURRENT_SESSION.md"
 SPRINT_STATUS="$REPO/SPRINT_STATUS.md"
 LOG="/home/sesquina/logs/clarifer-sessions.log"
@@ -104,7 +104,7 @@ log "REPO: branch=$CURRENT_BRANCH tsc_errors=$(npx tsc --noEmit 2>&1 | grep -c '
 
 FULL_PROMPT="You are running as an autonomous agent building Clarifer, a HIPAA-compliant caregiver intelligence platform.
 
-Read docs/CLARIFER_MASTER_SESSION_PROMPT.md in full before doing anything else.
+Read docs/MASTER_SESSION_PROMPT.md in full before doing anything else.
 List the 10 rules back to confirm you have read it.
 Then run Step 0 (git status, tsc count, vitest tail).
 Then execute the task in CURRENT_SESSION.md exactly as written.
