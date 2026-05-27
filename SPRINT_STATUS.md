@@ -28,3 +28,4 @@ S11 | fix/touch-targets | DONE | 2026-05-27 | 9 touch targets under 48px across 
 # ADD NEW COMPLETED SESSIONS BELOW THIS LINE
 # Format: S[N] | [branch] | DONE | [YYYY-MM-DD] | [one line summary]
 # ============================================================
+S14 | fix/session-timeout | DONE | 2026-05-27 | 30-min inactivity timeout added — components/SessionTimeout.tsx mounted in (platform) layout, signs out + redirects to /login?reason=session_timeout (matches existing banner); 1 vitest test with fake timers

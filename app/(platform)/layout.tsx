@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { Home, Activity, FileText, Wrench, MessageCircle } from "lucide-react";
+import SessionTimeout from "@/components/SessionTimeout";
 
 const BODY: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
@@ -86,6 +87,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
       className="flex"
       style={{ minHeight: "100vh", backgroundColor: "var(--background)", ...BODY }}
     >
+      <SessionTimeout />
       {/* SIDEBAR: desktop only */}
       <aside
         className="hidden md:flex flex-col"
