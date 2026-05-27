@@ -86,7 +86,7 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask C
   }
 
   return (
-    <div className="flex items-end gap-2 border-t p-3" style={{ backgroundColor: "#F7F2EA" }}>
+    <div className="flex items-end gap-2 border-t p-3" style={{ backgroundColor: "var(--background)" }}>
       {onFileSelect && (
         <>
           <button
@@ -94,7 +94,7 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask C
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
             className="flex min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-white/60 disabled:opacity-50"
-            style={{ color: "#6B6B6B" }}
+            style={{ color: "var(--muted)" }}
           >
             <Paperclip className="h-5 w-5" />
           </button>
@@ -118,19 +118,19 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask C
         rows={1}
         className="flex-1 resize-none rounded-xl px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
         style={{
-          border: "1.5px solid #E8E2D9",
-          backgroundColor: "#FFFFFF",
+          border: "1.5px solid var(--border)",
+          backgroundColor: "var(--card)",
           fontFamily: "var(--font-dm-sans)",
         }}
-        onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-        onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+        onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+        onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
       />
       <button
         type="button"
         onClick={handleSubmit}
         disabled={disabled || !value.trim()}
         className="flex min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ backgroundColor: "#2C5F4A", color: "#FFFFFF" }}
+        style={{ backgroundColor: "var(--primary)", color: "var(--card)" }}
       >
         <Send className="h-4 w-4" />
       </button>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 
 export interface DPDAlertMedication {
@@ -48,7 +48,7 @@ export function DPDAlert({
       <div
         role="status"
         className="rounded-xl border px-4 py-3 text-sm"
-        style={{ borderColor: "var(--primary)", background: "var(--pale-sage, #F0F5F2)", color: "var(--foreground)" }}
+        style={{ borderColor: "var(--primary)", background: "var(--pale-sage)", color: "var(--foreground)" }}
       >
         DPD screening confirmed. {result ? `Result: ${result}.` : ""} No further action required.
       </div>
@@ -60,7 +60,7 @@ export function DPDAlert({
       role="alert"
       aria-label="DPD deficiency alert"
       className="space-y-3 rounded-2xl border px-4 py-4 text-sm"
-      style={{ borderColor: "var(--terracotta)", background: "var(--pale-terra, #FDF3EE)", color: "var(--foreground)" }}
+      style={{ borderColor: "var(--terracotta)", background: "var(--pale-terra)", color: "var(--foreground)" }}
     >
       <p className="font-heading text-base" style={{ color: "var(--terracotta)" }}>
         ⚠ Important Safety Information

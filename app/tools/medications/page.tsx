@@ -84,9 +84,9 @@ export default function MedicationsPage() {
   }
 
   const inputStyle: React.CSSProperties = {
-    height: 48, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px",
-    fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#1A1A1A",
-    backgroundColor: "#FFFFFF", width: "100%", boxSizing: "border-box", outline: "none",
+    height: 48, borderRadius: 12, border: "1.5px solid var(--border)", padding: "0 16px",
+    fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text)",
+    backgroundColor: "var(--card)", width: "100%", boxSizing: "border-box", outline: "none",
   };
 
   return (
@@ -99,7 +99,7 @@ export default function MedicationsPage() {
           <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Medications</h1>
           <button onClick={() => setShowAdd(true)} style={{
             display: "flex", alignItems: "center", gap: 4, padding: "8px 14px", borderRadius: 20,
-            backgroundColor: "#2C5F4A", color: "#FFFFFF", border: "none", fontSize: 13,
+            backgroundColor: "var(--primary)", color: "var(--card)", border: "none", fontSize: 13,
             fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-dm-sans)",
           }}>
             <Plus size={16} /> Add
@@ -140,11 +140,11 @@ export default function MedicationsPage() {
         {showAdd && (
           <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
             <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onClick={() => { setShowAdd(false); setSuggestions([]); }} />
-            <div style={{ position: "relative", backgroundColor: "#FFFFFF", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+            <div style={{ position: "relative", backgroundColor: "var(--card)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                 <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: 20 }}>Add medication</h3>
                 <button onClick={() => { setShowAdd(false); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
-                  <X size={20} color="#6B6B6B" />
+                  <X size={20} color="var(--muted)" />
                 </button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -159,7 +159,7 @@ export default function MedicationsPage() {
                   {suggestions.length > 0 && (
                     <div style={{
                       position: "absolute", top: "100%", left: 0, right: 0, zIndex: 10,
-                      backgroundColor: "#FFFFFF", border: "1.5px solid #E8E2D9", borderRadius: 12,
+                      backgroundColor: "var(--card)", border: "1.5px solid var(--border)", borderRadius: 12,
                       marginTop: 4, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                     }}>
                       {suggestions.map((s) => (
@@ -168,10 +168,10 @@ export default function MedicationsPage() {
                           onClick={() => selectMed(s)}
                           style={{
                             width: "100%", padding: "10px 16px", border: "none",
-                            backgroundColor: "transparent", fontSize: 14, color: "#1A1A1A",
+                            backgroundColor: "transparent", fontSize: 14, color: "var(--text)",
                             cursor: "pointer", textAlign: "left", fontFamily: "var(--font-dm-sans)",
                           }}
-                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#F7F2EA")}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--background)")}
                           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                         >
                           {s}
@@ -191,7 +191,7 @@ export default function MedicationsPage() {
                   onClick={handleAdd}
                   disabled={!name.trim()}
                   style={{
-                    height: 48, borderRadius: 24, backgroundColor: "#2C5F4A", color: "#FFFFFF",
+                    height: 48, borderRadius: 24, backgroundColor: "var(--primary)", color: "var(--card)",
                     border: "none", fontSize: 15, fontWeight: 600, cursor: "pointer",
                     opacity: !name.trim() ? 0.5 : 1, fontFamily: "var(--font-dm-sans)",
                   }}

@@ -139,7 +139,7 @@ export default function PatientDashboard() {
               <Link
                 href={`/patients/${id}/emergency-card`}
                 className="rounded-lg px-4 py-2 text-sm font-semibold"
-                style={{ background: "var(--terracotta)", color: "#FFFFFF", minHeight: 48, display: "inline-flex", alignItems: "center" }}
+                style={{ background: "var(--terracotta)", color: "var(--card)", minHeight: 48, display: "inline-flex", alignItems: "center" }}
               >
                 Emergency card
               </Link>

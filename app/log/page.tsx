@@ -476,7 +476,7 @@ export default function LogPage() {
               height: 56,
               borderRadius: 28,
               backgroundColor: canSave && !saving ? "var(--primary)" : "var(--border)",
-              color: canSave && !saving ? "#FFFFFF" : "var(--muted)",
+              color: canSave && !saving ? "var(--card)" : "var(--muted)",
               fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
               fontSize: 16,
               fontWeight: 600,

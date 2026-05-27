@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo, useState } from "react";
 import { CCA_SPECIALISTS, filterSpecialists, type SpecialistCenter } from "@/lib/ccf/specialists";
 
@@ -65,7 +65,7 @@ export function SpecialistFinder({ onAddToCareTeam }: SpecialistFinderProps) {
               {s.ccfVerified && (
                 <span
                   className="rounded-full px-2 py-1 text-xs font-medium"
-                  style={{ background: "var(--pale-sage, #F0F5F2)", color: "var(--primary)" }}
+                  style={{ background: "var(--pale-sage)", color: "var(--primary)" }}
                 >
                   CCF verified
                 </span>

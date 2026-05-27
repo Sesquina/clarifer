@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -198,7 +198,7 @@ export default function SignupPage() {
               required
               autoComplete="name"
               className="mt-1.5 w-full outline-none transition-colors"
-              style={{ height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
+              style={{ height: 52, borderRadius: 12, border: "1.5px solid var(--border)", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
               onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
               onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             />
@@ -218,7 +218,7 @@ export default function SignupPage() {
               required
               autoComplete="email"
               className="mt-1.5 w-full outline-none transition-colors"
-              style={{ height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
+              style={{ height: 52, borderRadius: 12, border: "1.5px solid var(--border)", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
               onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
               onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             />
@@ -311,7 +311,7 @@ export default function SignupPage() {
           </button>
 
           {error && (
-            <div style={{ backgroundColor: "var(--pale-terra)", borderLeft: "3px solid #C4714A", padding: "12px 16px", borderRadius: 8, fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--accent)" }}>
+            <div style={{ backgroundColor: "var(--pale-terra)", borderLeft: "3px solid var(--accent)", padding: "12px 16px", borderRadius: 8, fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--accent)" }}>
               {error}
             </div>
           )}

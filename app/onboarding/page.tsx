@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
   const inputStyle = {
     height: 52,
     borderRadius: 12,
-    border: "1.5px solid #E8E2D9",
+    border: "1.5px solid var(--border)",
     padding: "0 16px",
     fontFamily: "var(--font-dm-sans)",
     fontSize: 16,
@@ -486,7 +486,7 @@ export default function OnboardingPage() {
                   <div
                     style={{
                       backgroundColor: "var(--pale-terra)",
-                      borderLeft: "3px solid #C4714A",
+                      borderLeft: "3px solid var(--accent)",
                       padding: "12px 16px",
                       borderRadius: 8,
                       fontFamily: "var(--font-dm-sans)",
@@ -506,7 +506,7 @@ export default function OnboardingPage() {
                     style={{
                       height: 52,
                       borderRadius: 26,
-                      border: "1.5px solid #E8E2D9",
+                      border: "1.5px solid var(--border)",
                       backgroundColor: "var(--card)",
                       color: "var(--text)",
                       fontFamily: "var(--font-dm-sans)",
@@ -605,7 +605,7 @@ function RolePicker({
               minHeight: 64,
               padding: "12px 16px",
               borderRadius: 16,
-              border: isSelected ? "2px solid #2C5F4A" : "1.5px solid #E8E2D9",
+              border: isSelected ? "2px solid var(--primary)" : "1.5px solid var(--border)",
               backgroundColor: isSelected ? "var(--pale-sage)" : "var(--card)",
               cursor: "pointer",
               textAlign: "left",

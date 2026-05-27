@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo } from "react";
 import type { BiomarkerRow } from "./BiomarkerTracker";
 
@@ -81,7 +81,7 @@ export function BiomarkerTrialMatcher({ biomarkers }: BiomarkerTrialMatcherProps
     <section
       aria-labelledby="biomarker-trial-heading"
       className="rounded-2xl border p-4"
-      style={{ borderColor: "var(--primary)", background: "var(--pale-sage, #F0F5F2)" }}
+      style={{ borderColor: "var(--primary)", background: "var(--pale-sage)" }}
     >
       <h2 id="biomarker-trial-heading" className="font-heading text-lg text-primary">
         Trials matching this biomarker profile

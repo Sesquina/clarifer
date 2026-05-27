@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { CCF_SUPPORT_GROUPS, sortSupportGroups, type SupportAudience, type SupportLanguage } from "@/lib/ccf/support-groups";
 
 interface SupportGroupCalendarProps {
@@ -23,7 +23,7 @@ export function SupportGroupCalendar({ role, language }: SupportGroupCalendarPro
               <p className="font-heading text-base text-foreground">{g.name}</p>
               <span
                 className="rounded-full px-2 py-1 text-xs font-medium"
-                style={{ background: "var(--pale-sage, #F0F5F2)", color: "var(--primary)" }}
+                style={{ background: "var(--pale-sage)", color: "var(--primary)" }}
               >
                 {g.language}
               </span>

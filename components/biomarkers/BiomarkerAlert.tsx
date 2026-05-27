@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export interface BiomarkerStatus {
   biomarker_type: string;
@@ -55,7 +55,7 @@ export function BiomarkerAlert({ biomarkers, oncologistName }: BiomarkerAlertPro
           className="rounded-xl border px-4 py-3 text-sm"
           style={{
             borderColor: "var(--terracotta)",
-            background: "var(--pale-terra, #FDF3EE)",
+            background: "var(--pale-terra)",
             color: "var(--foreground)",
           }}
         >

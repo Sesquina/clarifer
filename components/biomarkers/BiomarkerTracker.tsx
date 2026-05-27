@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo } from "react";
 import { BiomarkerAlert, BiomarkerStatus } from "./BiomarkerAlert";
 
@@ -15,10 +15,10 @@ interface BiomarkerTrackerProps {
 }
 
 const STATUS_STYLES: Record<string, { background: string; color: string; icon: string; label: string }> = {
-  positive: { background: "var(--pale-terra, #FDF3EE)", color: "var(--terracotta)", icon: "⚠", label: "Positive" },
-  negative: { background: "var(--pale-sage, #F0F5F2)", color: "var(--primary)", icon: "✓", label: "Negative" },
+  positive: { background: "var(--pale-terra)", color: "var(--terracotta)", icon: "⚠", label: "Positive" },
+  negative: { background: "var(--pale-sage)", color: "var(--primary)", icon: "✓", label: "Negative" },
   not_tested: { background: "var(--muted)", color: "var(--muted-foreground)", icon: "?", label: "Not tested" },
-  pending: { background: "var(--pale-sage, #F0F5F2)", color: "var(--primary)", icon: "⏳", label: "Pending" },
+  pending: { background: "var(--pale-sage)", color: "var(--primary)", icon: "⏳", label: "Pending" },
   inconclusive: { background: "var(--muted)", color: "var(--muted-foreground)", icon: "–", label: "Inconclusive" },
 };
 

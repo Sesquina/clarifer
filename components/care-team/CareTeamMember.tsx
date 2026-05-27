@@ -15,11 +15,11 @@ interface CareTeamMemberProps {
 }
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  Doctor: { bg: "#F0F5F2", text: "#2C5F4A" },
-  Nurse: { bg: "#F0F5F2", text: "#2C5F4A" },
-  "Social Worker": { bg: "#FDF3EE", text: "#C4714A" },
+  Doctor: { bg: "var(--pale-sage)", text: "var(--primary)" },
+  Nurse: { bg: "var(--pale-sage)", text: "var(--primary)" },
+  "Social Worker": { bg: "var(--pale-terra)", text: "var(--accent)" },
   Family: { bg: "#FEF3C7", text: "#B45309" },
-  Other: { bg: "#F4F4F5", text: "#6B6B6B" },
+  Other: { bg: "#F4F4F5", text: "var(--muted)" },
 };
 
 export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
@@ -28,7 +28,7 @@ export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
   return (
     <div
       style={{
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "var(--card)",
         borderRadius: 14,
         padding: "16px 18px",
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
@@ -36,7 +36,7 @@ export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{member.name}</p>
+          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{member.name}</p>
           {member.role && (
             <span
               style={{
@@ -56,7 +56,7 @@ export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
         </div>
         <button
           onClick={() => onDelete(member.id)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#C4714A" }}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--accent)" }}
           aria-label="Delete member"
         >
           <Trash2 size={16} />
@@ -67,7 +67,7 @@ export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
         {member.phone && (
           <a
             href={`tel:${member.phone}`}
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "#2C5F4A", textDecoration: "none" }}
+            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--primary)", textDecoration: "none" }}
           >
             <Phone size={14} />
             {member.phone}
@@ -76,7 +76,7 @@ export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
         {member.email && (
           <a
             href={`mailto:${member.email}`}
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "#2C5F4A", textDecoration: "none" }}
+            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--primary)", textDecoration: "none" }}
           >
             <Mail size={14} />
             {member.email}
@@ -85,7 +85,7 @@ export function CareTeamMember({ member, onDelete }: CareTeamMemberProps) {
       </div>
 
       {member.notes && (
-        <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 8, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.5 }}>
           {member.notes}
         </p>
       )}

@@ -1,4 +1,124 @@
 ---
+[2026-05-27] SESSION S10 -- fix/hex-strings
+Branch: fix/hex-strings
+
+Known bug #8: Replace all hex color strings in app/ and components/ with CSS variables.
+Exception: lib/pdf/hospital-grade-export.tsx (react-pdf cannot read CSS vars).
+
+CSS VARIABLE MAPPING APPLIED:
+  #F7F2EA → var(--background)
+  #2C5F4A → var(--primary)
+  #C4714A → var(--accent)
+  #FFFFFF → var(--card)
+  #1A1A1A → var(--text)
+  #6B6B6B → var(--muted)
+  #E8E2D9 → var(--border)
+  #F0F5F2 → var(--pale-sage)
+  #FDF3EE → var(--pale-terra)
+
+FILES CHANGED (in-mapping replacements only):
+  app/waitlist/page.tsx
+  app/profile/page.tsx
+  app/signup/page.tsx
+  app/onboarding/page.tsx
+  app/onboarding/complete/page.tsx
+  app/tools/page.tsx
+  app/tools/medications/page.tsx
+  app/care-team/page.tsx (in-mapping only; #FEF3C7/#B45309/#F4F4F5 → DISCOVERED)
+  app/ccf/page.tsx (stripped correct-value var() fallbacks; wrong-value fallbacks → DISCOVERED)
+  app/documents/[id]/page.tsx (in-mapping only; #F0EBE3/#FEF3C7/#B45309 → DISCOVERED)
+  app/documents/upload/page.tsx (in-mapping only; #22c55e → DISCOVERED)
+  app/not-found.tsx (in-mapping only; #FAF7F2 → DISCOVERED)
+  app/log/page.tsx (in-mapping only; severity chip palette → DISCOVERED)
+  app/(app)/patients/[id]/page.tsx
+  app/(app)/patients/[id]/emergency-card/page.tsx
+  app/tools/trials/page.tsx (in-mapping only; #F0FDF4/#16a34a → DISCOVERED)
+  app/hq/ccf/page.tsx (in-mapping only; #4ade80 → DISCOVERED)
+  components/home/home-client.tsx (in-mapping only; #ef4444/#f59e0b/#22c55e → DISCOVERED)
+  components/chat/message-bubble.tsx
+  components/chat/chat-input.tsx
+  components/care-team/CareTeamMember.tsx (in-mapping only; #FEF3C7/#B45309/#F4F4F5 → DISCOVERED)
+  components/delete-document-button.tsx (in-mapping only; danger colors → DISCOVERED)
+  components/cookie-banner.tsx
+  components/medications/DPDAlert.tsx (stripped var() fallbacks)
+  components/nutrition/NutritionGuidance.tsx (stripped var() fallbacks)
+  components/community/SupportGroupCalendar.tsx (stripped var() fallbacks)
+  components/community/PatientAdvocateConnect.tsx (stripped var() fallbacks)
+  components/care-team/SpecialistFinder.tsx (stripped var() fallbacks)
+  components/biomarkers/BiomarkerTrialMatcher.tsx (stripped var() fallbacks)
+  components/biomarkers/BiomarkerTracker.tsx (stripped var() fallbacks)
+  components/biomarkers/BiomarkerAlert.tsx (stripped var() fallbacks)
+
+DISCOVERED ISSUE [S10-1]: app/layout.tsx:33 -- themeColor: "#2C5F4A"
+  REASON: Next.js Viewport.themeColor is a <meta> tag value. CSS variables are resolved
+  by the browser rendering engine and are NOT available in HTML attribute values.
+  CANNOT be replaced with var(--primary). Leave as hex. Not a violation.
+
+DISCOVERED ISSUE [S10-2]: app/not-found.tsx:8 -- backgroundColor: "#FAF7F2"
+  REASON: #FAF7F2 is not in the CSS variable mapping. Not listed as any design token.
+  ACTION NEEDED: Decide if this is --background (#F7F2EA) or a typo. Map or add new token.
+
+DISCOVERED ISSUE [S10-3]: app/log/page.tsx:10-14, 438-439 -- severity chip palette
+  Colors: #E3F2FD, #0D3B6E (very mild), #FEF8E1, #7A4F00 (mild), #FEF0E1, #7A3B00 (moderate),
+          #FDECEA, #8B1A1A (significant), #F5E0DE, #5C0F0F (severe)
+  REASON: Domain-specific severity color scale. Not in mapping. Cannot be replaced with
+  existing CSS vars without losing semantic meaning. Needs dedicated severity tokens.
+
+DISCOVERED ISSUE [S10-4]: app/tools/page.tsx:170-171, app/tools/trials/page.tsx:530-531
+  Colors: #F0FDF4, #16a34a (recruiting status green), #F4F4F5 (inactive status gray)
+  REASON: Status indicator colors not in mapping. Need --recruiting-bg / --recruiting-text tokens.
+
+DISCOVERED ISSUE [S10-5]: app/care-team/page.tsx:93-94, components/care-team/CareTeamMember.tsx:21-22
+  Colors: #FEF3C7, #B45309 (Family role badge), #F4F4F5 (Other role badge gray)
+  REASON: Role badge palette. Not in mapping. Need --role-family-bg/text and --role-other-bg tokens.
+
+DISCOVERED ISSUE [S10-6]: app/ccf/page.tsx -- wrong-value var() fallbacks
+  var(--border, #C8C2B9): fallback #C8C2B9 ≠ border token #E8E2D9
+  var(--muted, #4A4A4A): fallback #4A4A4A ≠ muted token #6B6B6B
+  var(--pale-sage, #D4EBD8): fallback #D4EBD8 ≠ pale-sage token #F0F5F2
+  REASON: Original fallbacks used wrong hex values. Left as-is to avoid silent color breakage
+  on browsers that don't support CSS vars (extremely rare, but safer to surface). Remove
+  fallbacks only after confirming --border, --muted, --pale-sage are always defined.
+
+DISCOVERED ISSUE [S10-7]: app/documents/upload/page.tsx:188,190, components/home/home-client.tsx:613
+  Color: #22c55e (green success state)
+  REASON: Success color not in mapping. Needs --success or --green token.
+
+DISCOVERED ISSUE [S10-8]: app/documents/[id]/page.tsx:108 -- "1px solid #F0EBE3"
+  REASON: #F0EBE3 not in mapping. Close to --border (#E8E2D9) but distinct. Needs clarification.
+
+DISCOVERED ISSUE [S10-9]: app/documents/[id]/page.tsx:118, app/care-team/page.tsx:93
+  Colors: #FEF3C7, #B45309 (flagged finding badge)
+  REASON: Warning/flagged badge colors not in mapping.
+
+DISCOVERED ISSUE [S10-10]: app/hq/roadmap/page.tsx:59, app/hq/board/page.tsx:18,23,
+                             app/hq/agents/page.tsx:134, app/hq/ccf/page.tsx:364,428
+  Colors: #E8A464 (HQ orange accent), #4ade80 (live status green)
+  REASON: HQ-specific UI colors not in global design system mapping.
+
+DISCOVERED ISSUE [S10-11]: app/login/page.tsx:481-493 -- Google OAuth button SVG
+  Colors: #EA4335, #4285F4, #FBBC05, #34A853 (Google brand colors)
+  REASON: Google brand guidelines require exact hex values in the G logo.
+  These MUST NOT be replaced with CSS variables.
+
+DISCOVERED ISSUE [S10-12]: app/update-password/page.tsx:104 -- color: "#8B1A1A"
+  REASON: Error text color not in mapping. Needs --error or --destructive-text token.
+
+DISCOVERED ISSUE [S10-13]: components/delete-document-button.tsx
+  Colors: #DC2626, #991B1B (destructive red), #FEF2F2 (danger bg), #9A9A9A (icon muted),
+          #FECACA (danger border)
+  REASON: Destructive/danger action palette not in mapping. Needs --destructive token family.
+
+DISCOVERED ISSUE [S10-14]: components/home/home-client.tsx:380
+  Colors: #ef4444 (severe), #f59e0b (moderate), #22c55e (mild) -- symptom severity inline indicator
+  REASON: Same as S10-3. Severity palette not in mapping.
+
+DISCOVERED ISSUE [S10-15]: Email HTML templates
+  Files: app/api/email/welcome/route.ts, app/api/hq/agents/deadline/route.ts
+  REASON: Email clients (Gmail, Outlook) do not support CSS custom properties.
+  Hex colors in email HTML are intentional and must remain as hex.
+
+---
 [2026-05-27] SESSION S6 -- fix/account-deletion-cascade
 Branch: fix/account-deletion-cascade
 

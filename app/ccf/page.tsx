@@ -19,7 +19,7 @@ export default function CCFLandingPage() {
   return (
     <div
       style={{
-        backgroundColor: "var(--background, #F7F2EA)",
+        backgroundColor: "var(--background)",
         minHeight: "100vh",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
       }}
@@ -27,7 +27,7 @@ export default function CCFLandingPage() {
       {/* ── HEADER ── */}
       <header
         style={{
-          backgroundColor: "var(--card, #FFFFFF)",
+          backgroundColor: "var(--card)",
           borderBottom: "1px solid var(--border, #C8C2B9)",
           padding: "0 24px",
           height: 64,
@@ -52,7 +52,7 @@ export default function CCFLandingPage() {
               fontFamily: "var(--font-playfair), 'Playfair Display', serif",
               fontSize: 18,
               fontWeight: 700,
-              color: "var(--primary, #2C5F4A)",
+              color: "var(--primary)",
             }}
           >
             Clarifer
@@ -81,7 +81,7 @@ export default function CCFLandingPage() {
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: "var(--text, #1A1A1A)",
+              color: "var(--text)",
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             }}
           >
@@ -104,7 +104,7 @@ export default function CCFLandingPage() {
             fontFamily: "var(--font-playfair), 'Playfair Display', serif",
             fontSize: "clamp(28px, 5vw, 36px)",
             fontWeight: 700,
-            color: "var(--text, #1A1A1A)",
+            color: "var(--text)",
             lineHeight: 1.3,
             marginBottom: 20,
           }}
@@ -135,8 +135,8 @@ export default function CCFLandingPage() {
             height: 52,
             padding: "0 32px",
             borderRadius: 26,
-            backgroundColor: "var(--primary, #2C5F4A)",
-            color: "#FFFFFF",
+            backgroundColor: "var(--primary)",
+            color: "var(--card)",
             fontSize: 16,
             fontWeight: 600,
             textDecoration: "none",
@@ -158,17 +158,17 @@ export default function CCFLandingPage() {
       >
         <div
           style={{
-            backgroundColor: "var(--card, #FFFFFF)",
+            backgroundColor: "var(--card)",
             border: "1px solid var(--border, #C8C2B9)",
             borderRadius: 14,
             padding: "24px 28px",
-            borderLeft: "4px solid var(--primary, #2C5F4A)",
+            borderLeft: "4px solid var(--primary)",
           }}
         >
           <p
             style={{
               fontSize: 16,
-              color: "var(--text, #1A1A1A)",
+              color: "var(--text)",
               lineHeight: 1.7,
               fontStyle: "italic",
               margin: 0,
@@ -209,7 +209,7 @@ export default function CCFLandingPage() {
           {/* Card 1 */}
           <div
             style={{
-              backgroundColor: "var(--card, #FFFFFF)",
+              backgroundColor: "var(--card)",
               border: "1px solid var(--border, #C8C2B9)",
               borderRadius: 14,
               padding: 24,
@@ -233,7 +233,7 @@ export default function CCFLandingPage() {
                 height="22"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="var(--primary, #2C5F4A)"
+                stroke="var(--primary)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -250,7 +250,7 @@ export default function CCFLandingPage() {
                 fontFamily: "var(--font-playfair), 'Playfair Display', serif",
                 fontSize: 18,
                 fontWeight: 600,
-                color: "var(--text, #1A1A1A)",
+                color: "var(--text)",
                 marginBottom: 10,
               }}
             >
@@ -273,7 +273,7 @@ export default function CCFLandingPage() {
           {/* Card 2 */}
           <div
             style={{
-              backgroundColor: "var(--card, #FFFFFF)",
+              backgroundColor: "var(--card)",
               border: "1px solid var(--border, #C8C2B9)",
               borderRadius: 14,
               padding: 24,
@@ -297,7 +297,7 @@ export default function CCFLandingPage() {
                 height="22"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="var(--primary, #2C5F4A)"
+                stroke="var(--primary)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -313,7 +313,7 @@ export default function CCFLandingPage() {
                 fontFamily: "var(--font-playfair), 'Playfair Display', serif",
                 fontSize: 18,
                 fontWeight: 600,
-                color: "var(--text, #1A1A1A)",
+                color: "var(--text)",
                 marginBottom: 10,
               }}
             >
@@ -336,7 +336,7 @@ export default function CCFLandingPage() {
           {/* Card 3 */}
           <div
             style={{
-              backgroundColor: "var(--card, #FFFFFF)",
+              backgroundColor: "var(--card)",
               border: "1px solid var(--border, #C8C2B9)",
               borderRadius: 14,
               padding: 24,
@@ -360,7 +360,7 @@ export default function CCFLandingPage() {
                 height="22"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="var(--primary, #2C5F4A)"
+                stroke="var(--primary)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -375,7 +375,7 @@ export default function CCFLandingPage() {
                 fontFamily: "var(--font-playfair), 'Playfair Display', serif",
                 fontSize: 18,
                 fontWeight: 600,
-                color: "var(--text, #1A1A1A)",
+                color: "var(--text)",
                 marginBottom: 10,
               }}
             >
@@ -400,7 +400,7 @@ export default function CCFLandingPage() {
       {/* ── BOTTOM CTA ── */}
       <section
         style={{
-          backgroundColor: "var(--card, #FFFFFF)",
+          backgroundColor: "var(--card)",
           borderTop: "1px solid var(--border, #C8C2B9)",
           padding: "56px 24px",
           textAlign: "center",
@@ -411,7 +411,7 @@ export default function CCFLandingPage() {
             fontFamily: "var(--font-playfair), 'Playfair Display', serif",
             fontSize: "clamp(22px, 4vw, 28px)",
             fontWeight: 700,
-            color: "var(--text, #1A1A1A)",
+            color: "var(--text)",
             marginBottom: 24,
           }}
         >
@@ -427,8 +427,8 @@ export default function CCFLandingPage() {
             height: 52,
             padding: "0 36px",
             borderRadius: 26,
-            backgroundColor: "var(--primary, #2C5F4A)",
-            color: "#FFFFFF",
+            backgroundColor: "var(--primary)",
+            color: "var(--card)",
             fontSize: 16,
             fontWeight: 600,
             textDecoration: "none",

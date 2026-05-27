@@ -29,9 +29,9 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
             : ""
         )}
         style={!isUser ? {
-          backgroundColor: "#FFFFFF",
-          border: "0.5px solid #E8E2D9",
-          color: "#1A1A1A",
+          backgroundColor: "var(--card)",
+          border: "0.5px solid var(--border)",
+          color: "var(--text)",
           borderRadius: "14px",
           padding: "12px 16px",
           fontSize: 14,

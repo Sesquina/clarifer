@@ -340,13 +340,13 @@ function DashboardHeader() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <AnchorLogo size={28} color="#ffffff" ariaLabel="Clarifer" />
+        <AnchorLogo size={28} color="var(--card)" ariaLabel="Clarifer" />
         <span
           style={{
             ...BODY,
             fontSize: 18,
             fontWeight: 600,
-            color: "#ffffff",
+            color: "var(--card)",
             letterSpacing: 0.2,
           }}
         >
@@ -365,7 +365,7 @@ function DashboardHeader() {
             flexShrink: 0,
           }}
         />
-        <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: "#ffffff" }}>
+        <span style={{ ...BODY, fontSize: 13, fontWeight: 500, color: "var(--card)" }}>
           Live
         </span>
       </div>
@@ -402,7 +402,7 @@ function HeroMetricCard({ data }: { data: CCFDashboardData }) {
           ...HEADING,
           fontSize: 72,
           fontWeight: 700,
-          color: "#ffffff",
+          color: "var(--card)",
           lineHeight: 1,
           marginBottom: 12,
         }}
@@ -767,7 +767,7 @@ function ReachCommunitySection() {
             padding: "0 24px",
             borderRadius: 10,
             backgroundColor: "var(--primary)",
-            color: "#ffffff",
+            color: "var(--card)",
             fontSize: 14,
             fontWeight: 600,
             textDecoration: "none",

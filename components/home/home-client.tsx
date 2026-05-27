@@ -137,12 +137,12 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
   const inputStyle: React.CSSProperties = {
     height: 48,
     borderRadius: 12,
-    border: "1.5px solid #E8E2D9",
+    border: "1.5px solid var(--border)",
     padding: "0 16px",
     fontFamily: "var(--font-dm-sans)",
     fontSize: 15,
-    color: "#1A1A1A",
-    backgroundColor: "#FFFFFF",
+    color: "var(--text)",
+    backgroundColor: "var(--card)",
     width: "100%",
     boxSizing: "border-box",
     outline: "none",
@@ -153,10 +153,10 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* Greeting */}
         <div>
-          <p style={{ fontSize: 14, color: "#2C5F4A", fontWeight: 500 }}>
+          <p style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500 }}>
             Caring for {firstName}
           </p>
-          <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 4 }}>
+          <p style={{ fontSize: 14, color: "var(--muted)", marginTop: 4 }}>
             {statusLine}
           </p>
         </div>
@@ -230,12 +230,12 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: "var(--card)",
                 borderRadius: 14,
                 padding: "14px 16px",
                 boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                 textDecoration: "none",
-                color: "#1A1A1A",
+                color: "var(--text)",
               }}
             >
               <div
@@ -263,8 +263,8 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             width: "100%",
             height: 48,
             borderRadius: 24,
-            backgroundColor: "#2C5F4A",
-            color: "#FFFFFF",
+            backgroundColor: "var(--primary)",
+            color: "var(--card)",
             border: "none",
             fontSize: 15,
             fontWeight: 600,
@@ -277,7 +277,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
 
         {/* Upcoming appointments */}
         <div>
-          <h2 style={{ fontSize: 13, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Upcoming
           </h2>
           {appointments.length === 0 ? (
@@ -288,7 +288,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 border: "none",
                 cursor: "pointer",
                 fontSize: 14,
-                color: "#2C5F4A",
+                color: "var(--primary)",
                 fontWeight: 500,
                 padding: "8px 0",
                 fontFamily: "var(--font-dm-sans)",
@@ -302,14 +302,14 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 <div
                   key={appt.id}
                   style={{
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "var(--card)",
                     borderRadius: 12,
                     padding: "14px 16px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                   }}
                 >
                   <p style={{ fontSize: 14, fontWeight: 600 }}>{appt.title || "Appointment"}</p>
-                  <div style={{ display: "flex", gap: 16, marginTop: 4, fontSize: 12, color: "#6B6B6B" }}>
+                  <div style={{ display: "flex", gap: 16, marginTop: 4, fontSize: 12, color: "var(--muted)" }}>
                     {appt.datetime && (
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <Calendar size={12} />
@@ -332,7 +332,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                   border: "none",
                   cursor: "pointer",
                   fontSize: 13,
-                  color: "#2C5F4A",
+                  color: "var(--primary)",
                   fontWeight: 500,
                   padding: "4px 0",
                   fontFamily: "var(--font-dm-sans)",
@@ -347,13 +347,13 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
 
         {/* Recent symptoms */}
         <div>
-          <h2 style={{ fontSize: 13, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Recent symptoms
           </h2>
           {!loggedToday && logs.length === 0 ? (
             <Link
               href="/log"
-              style={{ fontSize: 14, color: "#2C5F4A", fontWeight: 500, padding: "8px 0", display: "block", textDecoration: "none" }}
+              style={{ fontSize: 14, color: "var(--primary)", fontWeight: 500, padding: "8px 0", display: "block", textDecoration: "none" }}
             >
               Nothing logged yet. How is {firstName} feeling?
             </Link>
@@ -363,14 +363,14 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 <div
                   key={log.id}
                   style={{
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "var(--card)",
                     borderRadius: 12,
                     padding: "14px 16px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 13, color: "#6B6B6B" }}>
+                    <span style={{ fontSize: 13, color: "var(--muted)" }}>
                       {log.created_at ? new Date(log.created_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : ""}
                     </span>
                     {log.overall_severity !== null && (
@@ -384,7 +384,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                     )}
                   </div>
                   {log.ai_summary && (
-                    <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 4, lineHeight: 1.4 }}>
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4, lineHeight: 1.4 }}>
                       {log.ai_summary.length > 100 ? log.ai_summary.slice(0, 100) + "..." : log.ai_summary}
                     </p>
                   )}
@@ -400,9 +400,9 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
             {/* Newly Connected program card */}
             <div
               style={{
-                backgroundColor: "#FFFFFF",
+                backgroundColor: "var(--card)",
                 borderRadius: 14,
-                border: "1.5px solid #2C5F4A",
+                border: "1.5px solid var(--primary)",
                 padding: "20px",
               }}
             >
@@ -410,7 +410,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 style={{
                   fontSize: 11,
                   fontWeight: 500,
-                  color: "#6B6B6B",
+                  color: "var(--muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 8,
@@ -418,10 +418,10 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
               >
                 FROM CCF
               </p>
-              <p style={{ fontSize: 18, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>
+              <p style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>
                 Are you newly diagnosed?
               </p>
-              <p style={{ fontSize: 16, color: "#6B6B6B", lineHeight: 1.6, marginBottom: 16 }}>
+              <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.6, marginBottom: 16 }}>
                 CCF offers a free care kit, a 1:1 meeting with a patient advocate, and a resource roadmap for families navigating this diagnosis.
               </p>
               <a
@@ -435,8 +435,8 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                   width: "100%",
                   height: 52,
                   borderRadius: 10,
-                  backgroundColor: "#2C5F4A",
-                  color: "#FFFFFF",
+                  backgroundColor: "var(--primary)",
+                  color: "var(--card)",
                   fontSize: 15,
                   fontWeight: 600,
                   textDecoration: "none",
@@ -454,7 +454,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  color: "#6B6B6B",
+                  color: "var(--muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   marginBottom: 8,
@@ -467,9 +467,9 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                   <div
                     key={group.title}
                     style={{
-                      backgroundColor: "#FFFFFF",
+                      backgroundColor: "var(--card)",
                       borderRadius: 14,
-                      border: "0.5px solid #E8E2D9",
+                      border: "0.5px solid var(--border)",
                       padding: "16px 20px",
                       display: "flex",
                       alignItems: "center",
@@ -478,13 +478,13 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 16, fontWeight: 500, color: "#1A1A1A" }}>
+                      <p style={{ fontSize: 16, fontWeight: 500, color: "var(--text)" }}>
                         {group.title}
                       </p>
-                      <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 2 }}>
+                      <p style={{ fontSize: 14, color: "var(--muted)", marginTop: 2 }}>
                         Weekly: register to see upcoming dates
                       </p>
-                      <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 2 }}>
+                      <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
                         Hosted by CCF
                       </p>
                     </div>
@@ -500,8 +500,8 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                         paddingLeft: 16,
                         paddingRight: 16,
                         borderRadius: 10,
-                        border: "1.5px solid #2C5F4A",
-                        color: "#2C5F4A",
+                        border: "1.5px solid var(--primary)",
+                        color: "var(--primary)",
                         fontSize: 14,
                         fontWeight: 600,
                         textDecoration: "none",
@@ -515,7 +515,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                   </div>
                 ))}
               </div>
-              <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 12, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 12, lineHeight: 1.6 }}>
                 Support groups are hosted by CCF. Clarifer is not affiliated with CCF.
               </p>
             </div>
@@ -527,11 +527,11 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
       {showApptModal && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onClick={() => setShowApptModal(false)} />
-          <div style={{ position: "relative", backgroundColor: "#FFFFFF", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <div style={{ position: "relative", backgroundColor: "var(--card)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: 20 }}>Add appointment</h3>
               <button onClick={() => setShowApptModal(false)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-                <X size={20} color="#6B6B6B" />
+                <X size={20} color="var(--muted)" />
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -549,8 +549,8 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 style={{
                   height: 48,
                   borderRadius: 24,
-                  backgroundColor: "#2C5F4A",
-                  color: "#FFFFFF",
+                  backgroundColor: "var(--primary)",
+                  color: "var(--card)",
                   border: "none",
                   fontSize: 15,
                   fontWeight: 600,
@@ -571,20 +571,20 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onClick={() => { if (!updateLoading) setShowUpdateModal(false); }} />
           <div style={{
-            position: "relative", backgroundColor: "#FFFFFF", borderRadius: 16, width: "100%", maxWidth: 480,
+            position: "relative", backgroundColor: "var(--card)", borderRadius: 16, width: "100%", maxWidth: 480,
             maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           }}>
             {/* Sticky header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 28px 12px", flexShrink: 0 }}>
               <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: 20 }}>Family update</h3>
               <button onClick={() => setShowUpdateModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-                <X size={20} color="#6B6B6B" />
+                <X size={20} color="var(--muted)" />
               </button>
             </div>
             {updateLoading ? (
               <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "24px 28px", justifyContent: "center" }}>
-                <Loader2 size={20} className="animate-spin" color="#2C5F4A" />
-                <span style={{ fontSize: 14, color: "#6B6B6B" }}>Writing update...</span>
+                <Loader2 size={20} className="animate-spin" color="var(--primary)" />
+                <span style={{ fontSize: 14, color: "var(--muted)" }}>Writing update...</span>
               </div>
             ) : (
               <>
@@ -594,12 +594,12 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                     value={updateText}
                     onChange={(e) => setUpdateText(e.target.value)}
                     style={{
-                      width: "100%", minHeight: 180, border: "1.5px solid #E8E2D9", borderRadius: 12,
-                      padding: 16, fontSize: 15, color: "#1A1A1A", lineHeight: 1.7, resize: "vertical",
+                      width: "100%", minHeight: 180, border: "1.5px solid var(--border)", borderRadius: 12,
+                      padding: 16, fontSize: 15, color: "var(--text)", lineHeight: 1.7, resize: "vertical",
                       fontFamily: "var(--font-dm-sans)", outline: "none", boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   />
                 </div>
                 {/* Sticky footer */}
@@ -610,8 +610,8 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                       width: "100%",
                       height: 48,
                       borderRadius: 24,
-                      backgroundColor: copied ? "#22c55e" : "#2C5F4A",
-                      color: "#FFFFFF",
+                      backgroundColor: copied ? "#22c55e" : "var(--primary)",
+                      color: "var(--card)",
                       border: "none",
                       fontSize: 15,
                       fontWeight: 600,

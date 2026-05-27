@@ -81,29 +81,29 @@ export default function CareTeamPage() {
   }
 
   const inputStyle: React.CSSProperties = {
-    height: 48, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px",
-    fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#1A1A1A",
-    backgroundColor: "#FFFFFF", width: "100%", boxSizing: "border-box", outline: "none",
+    height: 48, borderRadius: 12, border: "1.5px solid var(--border)", padding: "0 16px",
+    fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text)",
+    backgroundColor: "var(--card)", width: "100%", boxSizing: "border-box", outline: "none",
   };
 
   const roleBadgeColor: Record<string, { bg: string; text: string }> = {
-    Doctor: { bg: "#F0F5F2", text: "#2C5F4A" },
-    Nurse: { bg: "#F0F5F2", text: "#2C5F4A" },
-    "Social Worker": { bg: "#FDF3EE", text: "#C4714A" },
+    Doctor: { bg: "var(--pale-sage)", text: "var(--primary)" },
+    Nurse: { bg: "var(--pale-sage)", text: "var(--primary)" },
+    "Social Worker": { bg: "var(--pale-terra)", text: "var(--accent)" },
     Family: { bg: "#FEF3C7", text: "#B45309" },
-    Other: { bg: "#F4F4F5", text: "#6B6B6B" },
+    Other: { bg: "#F4F4F5", text: "var(--muted)" },
   };
 
   return (
     <PageContainer>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 22, color: "#1A1A1A" }}>Care Team</h1>
+          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 22, color: "var(--text)" }}>Care Team</h1>
           <button
             onClick={() => setShowAdd(true)}
             style={{
               display: "flex", alignItems: "center", gap: 4, padding: "8px 14px", borderRadius: 20,
-              backgroundColor: "#2C5F4A", color: "#FFFFFF", border: "none", fontSize: 13,
+              backgroundColor: "var(--primary)", color: "var(--card)", border: "none", fontSize: 13,
               fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-dm-sans)",
             }}
           >
@@ -113,8 +113,8 @@ export default function CareTeamPage() {
 
         {members.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 20px" }}>
-            <Users size={40} color="#E8E2D9" style={{ margin: "0 auto" }} />
-            <p style={{ fontSize: 15, color: "#6B6B6B", marginTop: 16, lineHeight: 1.6 }}>
+            <Users size={40} color="var(--border)" style={{ margin: "0 auto" }} />
+            <p style={{ fontSize: 15, color: "var(--muted)", marginTop: 16, lineHeight: 1.6 }}>
               No care team members yet. Add your doctors, nurses, and support contacts.
             </p>
           </div>
@@ -126,13 +126,13 @@ export default function CareTeamPage() {
                 <div
                   key={m.id}
                   style={{
-                    backgroundColor: "#FFFFFF", borderRadius: 14, padding: "16px 18px",
+                    backgroundColor: "var(--card)", borderRadius: 14, padding: "16px 18px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
-                      <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{m.name}</p>
+                      <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{m.name}</p>
                       {m.role && (
                         <span style={{
                           display: "inline-block", marginTop: 4, fontSize: 11, fontWeight: 500,
@@ -144,25 +144,25 @@ export default function CareTeamPage() {
                     </div>
                     <button
                       onClick={() => handleDelete(m.id)}
-                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#C4714A" }}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--accent)" }}
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
                   <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
                     {m.phone && (
-                      <a href={`tel:${m.phone}`} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "#2C5F4A", textDecoration: "none" }}>
+                      <a href={`tel:${m.phone}`} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--primary)", textDecoration: "none" }}>
                         <Phone size={14} /> {m.phone}
                       </a>
                     )}
                     {m.email && (
-                      <a href={`mailto:${m.email}`} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "#2C5F4A", textDecoration: "none" }}>
+                      <a href={`mailto:${m.email}`} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--primary)", textDecoration: "none" }}>
                         <Mail size={14} /> {m.email}
                       </a>
                     )}
                   </div>
                   {m.notes && (
-                    <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 8, lineHeight: 1.5 }}>{m.notes}</p>
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.5 }}>{m.notes}</p>
                   )}
                 </div>
               );
@@ -175,11 +175,11 @@ export default function CareTeamPage() {
       {showAdd && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onClick={() => setShowAdd(false)} />
-          <div style={{ position: "relative", backgroundColor: "#FFFFFF", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+          <div style={{ position: "relative", backgroundColor: "var(--card)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: 20 }}>Add team member</h3>
               <button onClick={() => setShowAdd(false)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-                <X size={20} color="#6B6B6B" />
+                <X size={20} color="var(--muted)" />
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -192,9 +192,9 @@ export default function CareTeamPage() {
                     onClick={() => setRole(r)}
                     style={{
                       padding: "6px 14px", borderRadius: 20, border: "1.5px solid",
-                      borderColor: role === r ? "#2C5F4A" : "#E8E2D9",
-                      backgroundColor: role === r ? "#2C5F4A" : "transparent",
-                      color: role === r ? "#FFFFFF" : "#1A1A1A",
+                      borderColor: role === r ? "var(--primary)" : "var(--border)",
+                      backgroundColor: role === r ? "var(--primary)" : "transparent",
+                      color: role === r ? "var(--card)" : "var(--text)",
                       fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-dm-sans)",
                     }}
                   >
@@ -209,7 +209,7 @@ export default function CareTeamPage() {
                 onClick={handleAdd}
                 disabled={saving || !name.trim()}
                 style={{
-                  height: 48, borderRadius: 24, backgroundColor: "#2C5F4A", color: "#FFFFFF",
+                  height: 48, borderRadius: 24, backgroundColor: "var(--primary)", color: "var(--card)",
                   border: "none", fontSize: 15, fontWeight: 600, cursor: "pointer",
                   opacity: saving || !name.trim() ? 0.5 : 1, fontFamily: "var(--font-dm-sans)",
                 }}

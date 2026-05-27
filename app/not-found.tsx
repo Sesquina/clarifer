@@ -14,7 +14,7 @@ export default function NotFound() {
       }}
     >
       <div style={{ textAlign: "center", maxWidth: 400 }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#2C5F4A" strokeWidth="2" width={48} height={48} style={{ margin: "0 auto" }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" width={48} height={48} style={{ margin: "0 auto" }}>
           <circle cx="12" cy="5" r="3" />
           <line x1="12" y1="8" x2="12" y2="22" />
           <path d="M5 15l7 7 7-7" />
@@ -24,13 +24,13 @@ export default function NotFound() {
           style={{
             fontFamily: "var(--font-playfair), serif",
             fontSize: 32,
-            color: "#1A1A1A",
+            color: "var(--text)",
             marginTop: 24,
           }}
         >
           Page not found
         </h1>
-        <p style={{ fontSize: 16, color: "#6B6B6B", marginTop: 8, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 16, color: "var(--muted)", marginTop: 8, lineHeight: 1.6 }}>
           The page you are looking for does not exist.
         </p>
         <Link
@@ -41,8 +41,8 @@ export default function NotFound() {
             height: 48,
             padding: "0 28px",
             borderRadius: 24,
-            backgroundColor: "#2C5F4A",
-            color: "#FFFFFF",
+            backgroundColor: "var(--primary)",
+            color: "var(--card)",
             fontSize: 15,
             fontWeight: 600,
             textDecoration: "none",

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo, useState } from "react";
 
 interface NutritionGuidanceProps {
@@ -83,7 +83,7 @@ export function NutritionGuidance({ medications = [], postSurgery = false }: Nut
 
       <footer
         className="rounded-xl border px-4 py-3 text-xs"
-        style={{ borderColor: "var(--border)", background: "var(--pale-sage, #F0F5F2)", color: "var(--foreground)" }}
+        style={{ borderColor: "var(--border)", background: "var(--pale-sage)", color: "var(--foreground)" }}
       >
         These tips are from CCF's nutrition guide. Always confirm with your oncology dietician.{" "}
         <a

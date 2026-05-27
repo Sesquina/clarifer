@@ -97,7 +97,7 @@ export default function EmergencyCardPage() {
   return (
     <main className="mx-auto max-w-xl px-4 py-6">
       {offline && (
-        <p className="mb-3 rounded-lg px-3 py-2 text-sm" style={{ background: "var(--pale-terra, #FDF3EE)", color: "var(--terracotta)" }}>
+        <p className="mb-3 rounded-lg px-3 py-2 text-sm" style={{ background: "var(--pale-terra)", color: "var(--terracotta)" }}>
           Showing cached emergency card. Data last refreshed {new Date(data.generated_at).toLocaleString()}.
         </p>
       )}
@@ -116,7 +116,7 @@ export default function EmergencyCardPage() {
           <span
             aria-hidden="true"
             className="rounded-full px-3 py-1 text-sm font-semibold"
-            style={{ background: "var(--terracotta)", color: "#FFFFFF" }}
+            style={{ background: "var(--terracotta)", color: "var(--card)" }}
           >
             URGENT
           </span>
@@ -165,7 +165,7 @@ export default function EmergencyCardPage() {
 
         <section
           className="border-b px-5 py-4"
-          style={{ borderColor: "var(--terracotta)", background: "var(--pale-terra, #FDF3EE)" }}
+          style={{ borderColor: "var(--terracotta)", background: "var(--pale-terra)" }}
         >
           <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--terracotta)" }}>
             Critical Alerts

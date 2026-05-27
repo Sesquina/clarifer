@@ -41,39 +41,39 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <Link
           href="/documents"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: "#6B6B6B", textDecoration: "none" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--muted)", textDecoration: "none" }}
         >
           <ArrowLeft size={16} /> Back to documents
         </Link>
 
         <div>
-          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 22, color: "#1A1A1A" }}>
+          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 22, color: "var(--text)" }}>
             {doc.title || "Untitled"}
           </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
             {doc.document_category && (
               <span style={{
                 fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 8,
-                backgroundColor: "#F0F5F2", color: "#2C5F4A",
+                backgroundColor: "var(--pale-sage)", color: "var(--primary)",
               }}>
                 {doc.document_category}
               </span>
             )}
-            <span style={{ fontSize: 12, color: "#6B6B6B" }}>{formatDate(doc.uploaded_at)}</span>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>{formatDate(doc.uploaded_at)}</span>
           </div>
         </div>
 
         {/* AI Summary */}
         {summaryParagraphs.length > 0 && (
           <div style={{
-            backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
+            backgroundColor: "var(--card)", borderRadius: 14, padding: "20px 20px",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
           }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
               AI Summary
             </p>
             {summaryParagraphs.map((p, i) => (
-              <p key={i} style={{ fontSize: 15, color: "#1A1A1A", lineHeight: 1.7, marginTop: i > 0 ? 12 : 0 }}>
+              <p key={i} style={{ fontSize: 15, color: "var(--text)", lineHeight: 1.7, marginTop: i > 0 ? 12 : 0 }}>
                 {p}
               </p>
             ))}
@@ -87,16 +87,16 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
 
         {/* Divider */}
         {summaryParagraphs.length > 0 && findings.length > 0 && (
-          <div style={{ height: 1, backgroundColor: "#E8E2D9" }} />
+          <div style={{ height: 1, backgroundColor: "var(--border)" }} />
         )}
 
         {/* Key Findings */}
         {findings.length > 0 && (
           <div style={{
-            backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
+            backgroundColor: "var(--card)", borderRadius: 14, padding: "20px 20px",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
           }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 16 }}>
               Key Findings
             </p>
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -108,9 +108,9 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
                     borderBottom: i < findings.length - 1 ? "1px solid #F0EBE3" : "none",
                   }}
                 >
-                  <p style={{ fontSize: 12, color: "#6B6B6B", marginBottom: 3 }}>{f.label}</p>
+                  <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 3 }}>{f.label}</p>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{f.value}</p>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{f.value}</p>
                     {f.status === "flagged" && (
                       <span style={{
                         display: "inline-flex", alignItems: "center", gap: 3,
@@ -130,14 +130,14 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         {/* What to watch for: symptom connection */}
         {symptomConnection && (
           <div style={{
-            backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",
+            backgroundColor: "var(--card)", borderRadius: 14, padding: "20px 20px",
             boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            borderLeft: "3px solid #C4714A",
+            borderLeft: "3px solid var(--accent)",
           }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#C4714A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 12 }}>
               What to watch for
             </p>
-            <p style={{ fontSize: 15, color: "#1A1A1A", lineHeight: 1.7 }}>
+            <p style={{ fontSize: 15, color: "var(--text)", lineHeight: 1.7 }}>
               {symptomConnection}
             </p>
           </div>
@@ -151,9 +151,9 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
             rel="noopener noreferrer"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "12px 20px", borderRadius: 12, border: "1.5px solid #E8E2D9",
-              fontSize: 14, fontWeight: 500, color: "#1A1A1A", textDecoration: "none",
-              backgroundColor: "#FFFFFF",
+              padding: "12px 20px", borderRadius: 12, border: "1.5px solid var(--border)",
+              fontSize: 14, fontWeight: 500, color: "var(--text)", textDecoration: "none",
+              backgroundColor: "var(--card)",
             }}
           >
             View original file

@@ -114,15 +114,15 @@ export default function UploadPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <Link
           href="/documents"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: "#6B6B6B", textDecoration: "none" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--muted)", textDecoration: "none" }}
         >
           <ArrowLeft size={16} /> Documents
         </Link>
 
-        <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 24, color: "#1A1A1A" }}>
+        <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 24, color: "var(--text)" }}>
           Upload a document
         </h1>
-        <p style={{ fontSize: 15, color: "#6B6B6B", marginTop: -12 }}>
+        <p style={{ fontSize: 15, color: "var(--muted)", marginTop: -12 }}>
           Discharge summaries, lab results, pathology reports, clinical notes.
         </p>
 
@@ -132,25 +132,25 @@ export default function UploadPage() {
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
           style={{
-            border: "2px dashed #E8E2D9",
+            border: "2px dashed var(--border)",
             borderRadius: 16,
             padding: "48px 24px",
             textAlign: "center",
             cursor: status === "idle" ? "pointer" : "default",
-            backgroundColor: status === "idle" ? "#FFFFFF" : "#F7F2EA",
+            backgroundColor: status === "idle" ? "var(--card)" : "var(--background)",
             transition: "background-color 0.2s",
           }}
         >
           {status === "idle" && (
             <>
-              <UploadCloud size={40} color="#2C5F4A" style={{ margin: "0 auto" }} />
-              <p style={{ fontSize: 16, fontWeight: 600, color: "#1A1A1A", marginTop: 16 }}>
+              <UploadCloud size={40} color="var(--primary)" style={{ margin: "0 auto" }} />
+              <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", marginTop: 16 }}>
                 Tap to select a file
               </p>
-              <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 4 }}>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
                 or drag and drop here
               </p>
-              <p style={{ fontSize: 12, color: "#6B6B6B", marginTop: 12 }}>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 12 }}>
                 PDF, TXT, CSV, DOC, DOCX, PNG, JPG
               </p>
             </>
@@ -158,10 +158,10 @@ export default function UploadPage() {
 
           {(status === "reading" || status === "uploading") && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <Loader2 size={32} color="#2C5F4A" className="animate-spin" />
+              <Loader2 size={32} color="var(--primary)" className="animate-spin" />
               <div>
-                <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{fileName}</p>
-                <p style={{ fontSize: 14, color: "#2C5F4A", marginTop: 4 }}>{statusMessages[status]}</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{fileName}</p>
+                <p style={{ fontSize: 14, color: "var(--primary)", marginTop: 4 }}>{statusMessages[status]}</p>
               </div>
               {/* Progress dots */}
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -173,7 +173,7 @@ export default function UploadPage() {
                       key={step}
                       style={{
                         width: 8, height: 8, borderRadius: "50%",
-                        backgroundColor: i <= current ? "#2C5F4A" : "#E8E2D9",
+                        backgroundColor: i <= current ? "var(--primary)" : "var(--border)",
                         transition: "background-color 0.3s",
                       }}
                     />
@@ -186,21 +186,21 @@ export default function UploadPage() {
           {status === "done" && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <CheckCircle size={40} color="#22c55e" />
-              <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{fileName}</p>
+              <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{fileName}</p>
               <p style={{ fontSize: 14, color: "#22c55e" }}>Uploaded successfully</p>
             </div>
           )}
 
           {status === "error" && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <FileText size={40} color="#C4714A" />
-              <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{fileName || "Upload error"}</p>
-              <p style={{ fontSize: 14, color: "#C4714A", maxWidth: 320 }}>{errorMsg}</p>
+              <FileText size={40} color="var(--accent)" />
+              <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{fileName || "Upload error"}</p>
+              <p style={{ fontSize: 14, color: "var(--accent)", maxWidth: 320 }}>{errorMsg}</p>
               <button
                 onClick={() => { setStatus("idle"); setErrorMsg(""); }}
                 style={{
-                  marginTop: 8, padding: "10px 24px", borderRadius: 20, backgroundColor: "#2C5F4A",
-                  color: "#FFFFFF", border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer",
+                  marginTop: 8, padding: "10px 24px", borderRadius: 20, backgroundColor: "var(--primary)",
+                  color: "var(--card)", border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer",
                   fontFamily: "var(--font-dm-sans)",
                 }}
               >

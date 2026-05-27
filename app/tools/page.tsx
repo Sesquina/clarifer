@@ -82,9 +82,9 @@ export default function ToolsPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {linkTools.map((tool) => (
-            <Link key={tool.label} href={tool.href} style={{ textDecoration: "none", color: "#1A1A1A" }}>
+            <Link key={tool.label} href={tool.href} style={{ textDecoration: "none", color: "var(--text)" }}>
               <div style={{
-                display: "flex", alignItems: "center", gap: 16, backgroundColor: "#FFFFFF",
+                display: "flex", alignItems: "center", gap: 16, backgroundColor: "var(--card)",
                 borderRadius: 14, padding: "14px 16px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
               }}>
                 <div style={{
@@ -95,7 +95,7 @@ export default function ToolsPage() {
                 </div>
                 <div>
                   <p style={{ fontSize: 15, fontWeight: 600 }}>{tool.label}</p>
-                  <p style={{ fontSize: 13, color: "#6B6B6B" }}>{tool.description}</p>
+                  <p style={{ fontSize: 13, color: "var(--muted)" }}>{tool.description}</p>
                 </div>
               </div>
             </Link>
@@ -107,7 +107,7 @@ export default function ToolsPage() {
             style={{ textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0, opacity: exporting ? 0.5 : 1 }}
           >
             <div style={{
-              display: "flex", alignItems: "center", gap: 16, backgroundColor: "#FFFFFF",
+              display: "flex", alignItems: "center", gap: 16, backgroundColor: "var(--card)",
               borderRadius: 14, padding: "14px 16px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
             }}>
               <div style={{
@@ -117,8 +117,8 @@ export default function ToolsPage() {
                 <FileDown size={24} color="var(--accent)" />
               </div>
               <div>
-                <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{exporting ? "Exporting..." : "Export Data"}</p>
-                <p style={{ fontSize: 13, color: "#6B6B6B" }}>Download health records as text file</p>
+                <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{exporting ? "Exporting..." : "Export Data"}</p>
+                <p style={{ fontSize: 13, color: "var(--muted)" }}>Download health records as text file</p>
               </div>
             </div>
           </button>
@@ -126,11 +126,11 @@ export default function ToolsPage() {
 
         {/* Saved Trials */}
         <div>
-          <h2 style={{ fontSize: 13, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Saved Trials
           </h2>
           {savedTrials.length === 0 ? (
-            <p style={{ fontSize: 14, color: "#6B6B6B", padding: "8px 0" }}>
+            <p style={{ fontSize: 14, color: "var(--muted)", padding: "8px 0" }}>
               No saved trials yet.
             </p>
           ) : (
@@ -139,7 +139,7 @@ export default function ToolsPage() {
                 <div
                   key={trial.id}
                   style={{
-                    backgroundColor: "#FFFFFF", borderRadius: 12, padding: "14px 16px",
+                    backgroundColor: "var(--card)", borderRadius: 12, padding: "14px 16px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                   }}
                 >
@@ -150,7 +150,7 @@ export default function ToolsPage() {
                           href={`https://clinicaltrials.gov/study/${trial.trial_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", textDecoration: "none", lineHeight: 1.4 }}
+                          style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", textDecoration: "none", lineHeight: 1.4 }}
                         >
                           {trial.trial_name || trial.trial_id}
                           <ExternalLink size={11} style={{ display: "inline", marginLeft: 6, verticalAlign: "middle", opacity: 0.4 }} />
@@ -168,7 +168,7 @@ export default function ToolsPage() {
                           <span style={{
                             fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 8,
                             backgroundColor: trial.status.toUpperCase() === "RECRUITING" ? "#F0FDF4" : "#F4F4F5",
-                            color: trial.status.toUpperCase() === "RECRUITING" ? "#16a34a" : "#6B6B6B",
+                            color: trial.status.toUpperCase() === "RECRUITING" ? "#16a34a" : "var(--muted)",
                           }}>
                             {trial.status}
                           </span>

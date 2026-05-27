@@ -49,7 +49,7 @@ export function DeleteDocumentButton({
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: "#FFFFFF",
+              color: "var(--card)",
               backgroundColor: "#DC2626",
               border: "none",
               borderRadius: 6,
@@ -64,7 +64,7 @@ export function DeleteDocumentButton({
             onClick={() => setConfirming(false)}
             style={{
               fontSize: 11,
-              color: "#6B6B6B",
+              color: "var(--muted)",
               background: "none",
               border: "none",
               cursor: "pointer",
@@ -123,9 +123,9 @@ export function DeleteDocumentButton({
               flex: 1,
               height: 40,
               borderRadius: 10,
-              border: "1.5px solid #E8E2D9",
-              backgroundColor: "#FFFFFF",
-              color: "#1A1A1A",
+              border: "1.5px solid var(--border)",
+              backgroundColor: "var(--card)",
+              color: "var(--text)",
               fontSize: 14,
               fontWeight: 500,
               cursor: "pointer",
@@ -143,7 +143,7 @@ export function DeleteDocumentButton({
               borderRadius: 10,
               border: "none",
               backgroundColor: "#DC2626",
-              color: "#FFFFFF",
+              color: "var(--card)",
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
@@ -176,7 +176,7 @@ export function DeleteDocumentButton({
         fontSize: 14,
         fontWeight: 500,
         color: "#DC2626",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "var(--card)",
         cursor: "pointer",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
       }}

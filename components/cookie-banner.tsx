@@ -25,7 +25,7 @@ export function CookieBanner() {
         left: 0,
         right: 0,
         zIndex: 100,
-        backgroundColor: "#1A1A1A",
+        backgroundColor: "var(--text)",
         padding: "16px 24px",
         display: "flex",
         alignItems: "center",
@@ -37,7 +37,7 @@ export function CookieBanner() {
       <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", maxWidth: 600 }}>
         Clarifer uses essential cookies to keep you signed in. We do not use tracking or advertising
         cookies. See our{" "}
-        <a href="/privacy" style={{ color: "#FFFFFF", textDecoration: "underline" }}>
+        <a href="/privacy" style={{ color: "var(--card)", textDecoration: "underline" }}>
           Privacy Policy
         </a>{" "}
         for details.
@@ -48,8 +48,8 @@ export function CookieBanner() {
           height: 36,
           padding: "0 20px",
           borderRadius: 18,
-          backgroundColor: "#2C5F4A",
-          color: "#FFFFFF",
+          backgroundColor: "var(--primary)",
+          color: "var(--card)",
           border: "none",
           fontSize: 14,
           fontWeight: 600,

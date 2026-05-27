@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 interface PatientAdvocateConnectProps {
   context?: "dashboard" | "checklist" | "emergency";
@@ -13,7 +13,7 @@ export function PatientAdvocateConnect({ context = "dashboard" }: PatientAdvocat
       className="rounded-2xl border p-4"
       style={{
         borderColor: "var(--primary)",
-        background: "var(--pale-sage, #F0F5F2)",
+        background: "var(--pale-sage)",
         color: "var(--foreground)",
       }}
     >
