@@ -7,11 +7,9 @@
 # SKIP means: session was skipped intentionally (add a reason)
 #
 # DO NOT edit the completed lines below — only add new ones at the bottom.
-
 # ============================================================
 # COMPLETED SESSIONS
 # ============================================================
-
 S1 | fix/password-reset-redirect | DONE | 2026-05-27 | Password reset redirect to nonexistent page fixed in mobile auth lib
 S2 | fix/phi-client-writes-1 | DONE | 2026-05-27 | 2 PHI writes moved to server-side API routes (care_team insert + delete)
 S3 | fix/phi-client-writes-2 | DONE | 2026-05-27 | 2 more PHI writes moved (medications insert, trial_saves upsert)
@@ -23,8 +21,13 @@ S8 | fix/vitest-failing-7 | DONE | 2026-05-27 | No failing tests found — 308 t
 S9 | fix/em-dashes | DONE | 2026-05-27 | 26 em dashes across 18 files — all replaced
 S10 | fix/hex-strings | DONE | 2026-05-27 | Hex color strings replaced with CSS variables
 S11 | fix/touch-targets | DONE | 2026-05-27 | 9 touch targets under 48px across 8 files — all fixed
-
 # ============================================================
 # ADD NEW COMPLETED SESSIONS BELOW THIS LINE
 # Format: S[N] | [branch] | DONE | [YYYY-MM-DD] | [one line summary]
 # ============================================================
+S12 | fix/who-ictrp-empty | DONE | 2026-05-27 | WHO ICTRP seeded with 6 sample trials
+S13 | fix/rls-audit | SKIP | 2026-05-27 | Did not complete — re-run manually later
+S14 | fix/session-timeout | SKIP | 2026-05-27 | Did not complete — re-run manually later
+S15 | fix/supabase-baa-check | DONE | 2026-05-27 | PHI audit — 4 violations found
+S16 | fix/sentry-errors | DONE | 2026-05-27 | Sentry wired into top 3 silent error sources
+S13 | fix/rls-audit | DONE | 2026-05-27 | RLS audit of last 25 migrations — 27 tables, all have RLS + policy, no migration required

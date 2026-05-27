@@ -2481,3 +2481,127 @@ VERIFICATION:
   npx tsc --noEmit -> 0 errors.
   npx vitest run -> see commit message (run after commit because the
     parallel session interferes with long-running test runs).
+
+---
+[2026-05-27] SESSION S13 -- fix/rls-audit
+Branch: fix/rls-audit
+
+TASK:
+  Audit all tables created in the last 25 migrations for RLS coverage.
+  For each migration, verify every CREATE TABLE has:
+    1. A corresponding ALTER TABLE ... ENABLE ROW LEVEL SECURITY, AND
+    2. At least one CREATE POLICY scoped to that table.
+  Write a new migration for any table missing either.
+
+SCOPE (last 25 migrations, oldest first):
+  20260422000004_add_tenant_id_to_all_tables.sql
+  20260422000005_update_rls_for_multi_tenancy.sql
+  20260422000006_add_roles_table.sql
+  20260423000001_create_documents_bucket.sql
+  20260423000002_add_missing_tables.sql
+  20260423000003_enable_rls_missing_tables.sql
+  20260423000004_cholangiocarcinoma_template.sql
+  20260423000005_audit_log_forensic_columns.sql
+  20260423000006_full_schema_baseline.sql
+  20260423000007_appointments_checklist.sql
+  20260423000008_emergency_card.sql
+  20260423000009_biomarkers.sql
+  20260423000010_newly_connected.sql
+  20260423000011_fix_users_rls_recursion.sql
+  20260424000005_command_center.sql
+  20260424000006_trials_family.sql
+  20260428000002_add_terms_accepted_at.sql
+  20260428000003_who_ictrp_mirror.sql
+  20260428000004_care_team_directory.sql
+  20260428000005_appointments_action_items.sql
+  20260428000006_provider_portal.sql
+  20260430000001_handle_new_user_trigger.sql
+  20260522000001_add_disclaimer_accepted.sql
+  20260522000002_add_language_preference.sql
+  20260526000001_account_deletion_cascade.sql
+
+FINDINGS BY TABLE (CREATE TABLE statements in scope):
+
+  20260422000006_add_roles_table.sql
+    medical_disclaimer_acceptances             RLS=YES  policies=2  OK
+
+  20260423000002_add_missing_tables.sql
+    ai_analysis_consents                       RLS=YES  policies=1  OK
+
+  20260423000003_enable_rls_missing_tables.sql
+    trial_cache                                RLS=YES  policies=1  OK
+    (also enables RLS on condition_templates with 1 policy)
+
+  20260423000006_full_schema_baseline.sql
+    users                                      RLS=YES  policies=2  OK
+    patients                                   RLS=YES  policies=1  OK
+    care_relationships                         RLS=YES  policies=1  OK
+    documents                                  RLS=YES  policies=1  OK
+    chat_messages                              RLS=YES  policies=1  OK
+    symptom_logs                               RLS=YES  policies=1  OK
+    symptom_alerts                             RLS=YES  policies=1  OK
+    medications                                RLS=YES  policies=1  OK
+    appointments                               RLS=YES  policies=1  OK
+    trial_saves                                RLS=YES  policies=1  OK
+    research_consent                           RLS=YES  policies=1  OK
+    anonymized_exports                         RLS=YES  policies=1  OK
+    notifications                              RLS=YES  policies=1  OK
+    calendar_connections                       RLS=YES  policies=1  OK
+
+  20260423000009_biomarkers.sql
+    biomarkers                                 RLS=YES  policies=1  OK
+
+  20260423000010_newly_connected.sql
+    newly_connected_checklists                 RLS=YES  policies=1  OK
+
+  20260424000005_command_center.sql
+    team_tasks                                 RLS=YES  policies=1  OK (service_only)
+    sprint_updates                             RLS=YES  policies=1  OK (service_only)
+    agent_runs                                 RLS=YES  policies=1  OK (service_only)
+
+  20260424000006_trials_family.sql
+    trial_cache (idempotent re-create)         RLS=YES  policies=1  OK (service_only)
+    family_updates                             RLS=YES  policies=1  OK
+
+  20260428000003_who_ictrp_mirror.sql
+    who_ictrp_trials                           RLS=YES  policies=1  OK (service_only)
+
+  20260428000004_care_team_directory.sql
+    care_team_message_templates                RLS=YES  policies=1  OK
+
+  20260428000006_provider_portal.sql
+    provider_notes                             RLS=YES  policies=1  OK
+
+  Remaining 14 migrations in scope are pure ALTER / data / trigger /
+  storage-bucket / policy-only edits with no CREATE TABLE on
+  public.* and are therefore out of scope for this audit.
+
+RESULT:
+  27 public.* tables created across the last 25 migrations.
+  All 27 have RLS enabled AND at least one policy.
+  NO MIGRATION REQUIRED.
+
+  service_only policies (team_tasks, sprint_updates, agent_runs,
+  trial_cache, who_ictrp_trials) deliberately use USING (false) to
+  block all authenticated access -- only the service role (which
+  bypasses RLS) can read or write. That is an intentional internal /
+  ingestion-pipeline pattern, not a gap.
+
+VERIFICATION:
+  npx tsc --noEmit -> 0 errors.
+
+OUT OF SCOPE (DISCOVERED, NOT FIXED):
+  - This audit covers only the last 25 migrations. The 19 pre-Apr-22
+    legacy tables (e.g. waitlist, organization_patients,
+    organizations, care_team) are not in this window. A full pg_policies
+    audit against the live Supabase project is a separate task
+    (Sprint 18 -- Security Audit per CLAUDE.md Section 10).
+  - This is a static-file audit. It does not confirm that the
+    migrations have actually been applied to production, nor does
+    it query pg_policies. That requires Samira to run
+      SELECT schemaname, tablename, policyname FROM pg_policies
+      WHERE schemaname = 'public' ORDER BY tablename, policyname;
+    in the Supabase SQL editor and compare against this list.
+
+DO NOT EXECUTE ANY SQL. No migration file was written.
+DO NOT PUSH TO MAIN. Commit stays on fix/rls-audit.
