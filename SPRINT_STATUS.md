@@ -29,3 +29,8 @@ S11 | fix/touch-targets | DONE | 2026-05-27 | 9 touch targets under 48px across 
 # Format: S[N] | [branch] | DONE | [YYYY-MM-DD] | [one line summary]
 # ============================================================
 S14 | fix/session-timeout | DONE | 2026-05-27 | 30-min inactivity timeout added — components/SessionTimeout.tsx mounted in (platform) layout, signs out + redirects to /login?reason=session_timeout (matches existing banner); 1 vitest test with fake timers
+S12 | fix/who-ictrp-empty | DONE | 2026-05-27 | WHO ICTRP seeded with 6 sample trials
+S13 | fix/rls-audit | DONE | 2026-05-27 | RLS audit passed — 27 tables all have RLS
+S15 | fix/supabase-baa-check | DONE | 2026-05-27 | PHI audit — 4 violations found and logged
+S16 | fix/sentry-errors | DONE | 2026-05-27 | Sentry wired into top 3 silent error sources
+S17 | fix/mobile-touch-audit | DONE | 2026-05-27 | Rule 9 audit -- 33 mobile-parity gaps logged, 2 DECISION REQUIRED

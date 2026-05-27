@@ -2397,3 +2397,202 @@ DISCOVERED ISSUE: app/onboarding/complete/page.tsx line 67
     A. Add --white: #FFFFFF to the design system and use it here.
     B. Use color: "var(--card)" (card is #FFFFFF in light mode -- semantically wrong but functionally correct).
   Do not fix inline. Assign to a future design-system sprint or resolve with option A/B decision from Samira.
+
+---
+
+[2026-05-27] SPRINT: S17 -- Rule 9 mobile-parity audit
+Branch: fix/mobile-touch-audit | Status: AUDIT-ONLY (no code changes; gaps logged)
+
+SCOPE: Per S17 task, list every web page, list every mobile screen, identify
+gaps where a web page has no corresponding mobile screen. Do not fix inline.
+
+INVENTORY
+  Web pages (app/**/page.tsx):     49 files
+  Mobile screens (apps/mobile/app): 32 files
+
+PARITY MATCHES (web ↔ mobile, 17 confirmed pairs)
+  app/(app)/patients/[id]/appointments/page.tsx
+    ↔ apps/mobile/app/(app)/patients/[id]/appointments.tsx
+  app/(app)/patients/[id]/care-team/page.tsx
+    ↔ apps/mobile/app/(app)/patients/[id]/care-team.tsx
+  app/(app)/patients/[id]/family-update/page.tsx
+    ↔ apps/mobile/app/(app)/patients/[id]/family-update.tsx
+  app/(app)/patients/[id]/page.tsx
+    ↔ apps/mobile/app/(app)/patients/[id]/index.tsx
+  app/(app)/patients/[id]/trials/page.tsx
+    ↔ apps/mobile/app/(app)/patients/[id]/trials.tsx
+  app/(app)/patients/new/page.tsx
+    ↔ apps/mobile/app/(app)/patients/new.tsx
+  app/(app)/provider/page.tsx
+    ↔ apps/mobile/app/(app)/provider/index.tsx
+  app/(app)/provider/patients/[id]/page.tsx
+    ↔ apps/mobile/app/(app)/provider/patients/[id].tsx
+  app/(auth)/forgot-password/page.tsx
+    ↔ apps/mobile/app/(auth)/forgot-password.tsx
+  app/login/page.tsx                ↔ apps/mobile/app/(auth)/login.tsx
+  app/signup/page.tsx               ↔ apps/mobile/app/(auth)/signup.tsx
+  app/page.tsx (landing)            ↔ apps/mobile/app/index.tsx
+  app/documents/page.tsx            ↔ apps/mobile/app/(app)/documents/index.tsx
+  app/documents/[id]/page.tsx       ↔ apps/mobile/app/(app)/documents/[id].tsx
+  app/care-team/page.tsx            ↔ apps/mobile/app/(app)/care-team/index.tsx
+  app/disclaimer/page.tsx           ↔ apps/mobile/app/(modals)/medical-disclaimer.tsx (functional)
+  app/update-password/page.tsx      ↔ apps/mobile/app/(auth)/reset-password.tsx (functional)
+
+GAPS -- CORE CAREGIVER FUNCTIONALITY (high priority; Rule 9 violation)
+  These are real authenticated-user screens with no mobile counterpart.
+
+  DISCOVERED ISSUE [S17-G1]: app/chat/page.tsx has no mobile screen.
+    Web route serves the AI caregiver chat. Mobile has no chat screen at
+    apps/mobile/app/(app)/chat.tsx or anywhere else.
+    Impact: caregivers cannot reach the AI assistant from mobile.
+
+  DISCOVERED ISSUE [S17-G2]: app/documents/upload/page.tsx has no mobile screen.
+    Mobile has documents list + detail, but no dedicated upload route.
+    Impact: caregivers cannot upload a document on mobile. Document
+    intelligence is the Sprint 5 keystone feature; this is a P0 gap.
+
+  DISCOVERED ISSUE [S17-G3]: app/notifications/page.tsx has no mobile screen.
+    Web shows the notification feed. No apps/mobile/app/(app)/notifications.tsx.
+
+  DISCOVERED ISSUE [S17-G4]: app/profile/page.tsx has no mobile screen.
+    User profile / account settings. No mobile counterpart.
+
+  DISCOVERED ISSUE [S17-G5]: app/(app)/patients/[id]/emergency-card/page.tsx
+    has a NEAR-MISS mobile screen at apps/mobile/app/(app)/patients/emergency-card.tsx
+    but the mobile path is NOT [id]-scoped. They reference different patient
+    contexts. Either align the mobile path to include [id], or document that
+    mobile emergency card pulls active patient from session state.
+
+  DISCOVERED ISSUE [S17-G6]: app/(platform)/dashboard/page.tsx has no
+    direct mobile screen. Mobile has role-specific (home)/caregiver.tsx,
+    patient.tsx, provider.tsx, admin.tsx, but no unified /dashboard route.
+
+  DISCOVERED ISSUE [S17-G7]: app/home/page.tsx is the authenticated home
+    on web. Mobile uses role-split (home)/{caregiver|patient|provider|admin}.tsx.
+    Functionally similar but the route shapes do not match -- a deep link
+    to /home from web does not have a matching mobile target.
+
+  DISCOVERED ISSUE [S17-G8]: app/onboarding/page.tsx (top-level onboarding
+    entry, role select + intro) has no mobile screen. Mobile (onboarding)
+    only has condition-select.tsx and care-team-setup.tsx (intermediate
+    steps), and (auth)/role-select.tsx covers role selection, but there
+    is no single entry equivalent to the web /onboarding route.
+
+  DISCOVERED ISSUE [S17-G9]: app/onboarding/complete/page.tsx has no
+    mobile screen. This is the Sprint feat/medical-disclaimer-modal
+    completion screen with the disclaimer gate. Mobile shows the
+    medical-disclaimer modal but has no "all set" completion screen.
+
+  DISCOVERED ISSUE [S17-G10]: app/tools/page.tsx (tools index) has no
+    mobile screen.
+
+  DISCOVERED ISSUE [S17-G11]: app/tools/trials/page.tsx (top-level trial
+    search, no patient context) has no mobile screen. Mobile only has
+    patient-scoped trials at (app)/patients/[id]/trials.tsx.
+
+  DISCOVERED ISSUE [S17-G12]: app/tools/medications/page.tsx is a
+    NEAR-MISS -- mobile has apps/mobile/app/(app)/medications/index.tsx.
+    The route paths differ (/tools/medications vs /medications). Choose
+    one canonical path and align both platforms.
+
+  DISCOVERED ISSUE [S17-G13]: app/log/page.tsx (symptom/activity log
+    detail view) has no mobile screen. Symptom logging is the Sprint 6
+    keystone; verify whether this web route is the symptom log entry
+    point and, if so, treat as P0.
+
+GAPS -- MARKETING / STATIC PAGES (lower priority; may be web-only by design)
+  These are public marketing or legal pages. Rule 9 is literal ("every web
+  page"), so they are logged, but Samira's call whether mobile parity is
+  required (likely served as in-app webviews instead of native screens).
+
+  DISCOVERED ISSUE [S17-M1]: app/about/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M2]: app/ccf/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M3]: app/ccf-dashboard/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M4]: app/data/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M5]: app/download/page.tsx -- no mobile screen
+    (intentional -- this is the "download our app" landing).
+  DISCOVERED ISSUE [S17-M6]: app/privacy/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M7]: app/privacy-notice/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M8]: app/promise/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M9]: app/security/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M10]: app/terms/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-M11]: app/waitlist/page.tsx -- no mobile screen.
+
+GAPS -- INTERNAL HQ COMMAND CENTER (almost certainly web-only by design)
+  app/hq/* is the internal command center per CLAUDE.md (clarifer.com/internal).
+  Listed for completeness but should be confirmed as out-of-scope for mobile.
+
+  DISCOVERED ISSUE [S17-H1]: app/hq/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H2]: app/hq/login/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H3]: app/hq/agents/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H4]: app/hq/board/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H5]: app/hq/ccf/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H6]: app/hq/content/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H7]: app/hq/roadmap/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H8]: app/hq/sessions/page.tsx -- no mobile screen.
+  DISCOVERED ISSUE [S17-H9]: app/hq/sprints/page.tsx -- no mobile screen.
+
+REVERSE-PARITY NOTE (mobile has, web does not -- not a Rule 9 violation, but
+flagged so Samira knows the directionality)
+  Mobile-only screens:
+    (auth)/phone-login.tsx           -- web has no phone OTP entry page
+    (auth)/verify-email.tsx          -- web verifies via link, not a page
+    (auth)/verify-otp.tsx            -- web has no OTP verify page
+    (auth)/role-select.tsx           -- web role select is inline in /signup
+    (home)/caregiver.tsx, patient.tsx, provider.tsx, admin.tsx
+                                      -- web uses unified /home + /dashboard
+    (onboarding)/care-team-setup.tsx, condition-select.tsx
+                                      -- web onboarding is a single page
+    (app)/care-team/new.tsx          -- web new-member is modal/inline
+    (app)/medications/new.tsx        -- web new-medication is modal/inline
+    auth/callback.tsx                -- expected OAuth callback parity
+
+DECISION REQUIRED [S17-D1]: Which of the gap categories above is in-scope
+  for Rule 9 going forward?
+    A. Strict Rule 9 -- every web page including marketing + HQ needs mobile.
+    B. App-only Rule 9 -- only authenticated caregiver/provider/admin screens
+       need mobile parity; marketing + HQ are web-only by design.
+    C. Tiered -- core caregiver flows are P0, marketing/legal can be
+       rendered via in-app WebView, HQ is web-only.
+  Samira's choice determines whether [S17-G1..G13] are P0 sprint candidates
+  and whether [S17-M*] and [S17-H*] should be closed as out-of-scope.
+
+DECISION REQUIRED [S17-D2]: Path canonicalization for near-miss pairs.
+  - /tools/medications vs /medications
+  - /(app)/patients/[id]/emergency-card vs /(app)/patients/emergency-card
+  - /home vs role-split (home)/* vs /(platform)/dashboard
+  Either align the routes between platforms or document the divergence
+  in the screen parity map (docs/MASTER_SESSION_PROMPT.md, "MOBILE + WEB").
+
+DEFINITION OF DONE
+  - tsc --noEmit: 0 errors (verified at session start, no code touched).
+  - vitest run: 299 passed / 10 failed (309 total) across 82 files
+    (3 files failed). Since this session made zero code changes (only
+    SPRINT_LOG.md and SPRINT_STATUS.md were edited), this is the
+    pre-existing inherited baseline on fix/mobile-touch-audit.
+  - No code changes this session (audit-only per S17 directive).
+
+DISCOVERED ISSUE [S17-T1]: 10 vitest failures across 3 files exist on
+  fix/mobile-touch-audit as the inherited baseline before S17 started.
+  Per Rule 8 (bugs found during this session go to SPRINT_LOG as
+  DISCOVERED ISSUE -- do not fix inline), the specific failing files /
+  tests are not enumerated here; a follow-up sprint should run
+  `npx vitest run --reporter=verbose` and triage. Rule 7 (definition
+  of done: all tests passing) is not met on this branch independent of
+  S17's audit scope -- this gates merge to main.
+
+COMPLETION SUMMARY (S17)
+  What was built:    nothing (audit-only)
+  Files changed:     SPRINT_LOG.md (this entry), SPRINT_STATUS.md
+                     (S17 DONE row); CURRENT_SESSION.md + SPRINT_STATUS.md
+                     also carried inherited edits from the session runner.
+  Tests added:       none
+  MIGRATION REQUIRED: none
+  DISCOVERED ISSUE items: 33 logged
+    Core caregiver gaps:   S17-G1..G13 (13 items)
+    Marketing/static gaps: S17-M1..M11 (11 items)
+    Internal HQ gaps:      S17-H1..H9   (9 items)
+    Test baseline:         S17-T1
+  DECISION REQUIRED items: 2 logged
+    S17-D1 -- scope of Rule 9 (strict / app-only / tiered)
+    S17-D2 -- route canonicalization for near-miss pairs
