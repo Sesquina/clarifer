@@ -129,4 +129,94 @@ describe("POST /api/patients/create", () => {
     );
     expect(res.status).toBe(401);
   });
+
+  // S18 hardening: input validation. Each case must 400 with a warm message
+  // BEFORE Postgres is ever asked to insert.
+  async function postBody(payload: Record<string, unknown>) {
+    createClient.mockResolvedValue(makeSupabase({}));
+    const { POST } = await import("@/app/api/patients/create/route");
+    return POST(
+      new Request("http://localhost/api/patients/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+    );
+  }
+
+  it("name longer than 200 chars → 400", async () => {
+    const res = await postBody({ full_name: "x".repeat(201) });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("malformed dob (not YYYY-MM-DD) → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", dob: "March 14 1958" });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(String(body.error)).toMatch(/date of birth/i);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("malformed diagnosis_date → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", diagnosis_date: "not-a-date" });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("sex outside enum → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", sex: "yes please" });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("language_preference outside enum → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", language_preference: "klingon" });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("status outside enum → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", status: "pending" });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("custom_diagnosis longer than 500 chars → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", custom_diagnosis: "x".repeat(501) });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("city longer than 100 chars → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", city: "x".repeat(101) });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("state longer than 100 chars → 400", async () => {
+    const res = await postBody({ full_name: "Carlos", state: "x".repeat(101) });
+    expect(res.status).toBe(400);
+    expect(patientInserts).toHaveLength(0);
+  });
+
+  it("valid full onboarding payload (caregiver) → 201 and DB receives normalized fields", async () => {
+    const res = await postBody({
+      full_name: "Carlos Rivera",
+      dob: "1958-03-14",
+      diagnosis_date: "2024-06-01",
+      sex: "male",
+      city: "Cleveland",
+      state: "OH",
+      custom_diagnosis: "Cholangiocarcinoma",
+      language_preference: "en",
+      status: "active",
+    });
+    expect(res.status).toBe(201);
+    expect(patientInserts).toHaveLength(1);
+    expect(patientInserts[0].sex).toBe("male");
+    expect(patientInserts[0].dob).toBe("1958-03-14");
+    expect(patientInserts[0].language_preference).toBe("en");
+    expect(patientInserts[0].status).toBe("active");
+  });
 });

@@ -34,3 +34,4 @@ S13 | fix/rls-audit | DONE | 2026-05-27 | RLS audit passed — 27 tables all hav
 S15 | fix/supabase-baa-check | DONE | 2026-05-27 | PHI audit — 4 violations found and logged
 S16 | fix/sentry-errors | DONE | 2026-05-27 | Sentry wired into top 3 silent error sources
 S17 | fix/mobile-touch-audit | DONE | 2026-05-27 | Rule 9 audit -- 33 mobile-parity gaps logged, 2 DECISION REQUIRED
+S18 | fix/onboarding-hardening | DONE | 2026-05-27 | /api/patients/create input validation hardened (length caps + enums + date format); 10 new tests (14/14); 2 issues logged: client-side users.role write enables self-elevation (S18-DI1, needs coordinated security sprint + DB trigger migration), refresh loses onboarding state (S18-DI2)

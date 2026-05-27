@@ -69,22 +69,99 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  if (fullName.length > 200) {
+    return NextResponse.json(
+      { error: "Name is too long. Please use 200 characters or fewer." },
+      { status: 400 }
+    );
+  }
+
+  // Input validation: date format, enums, and length caps. Anything that
+  // would otherwise reach Postgres and return a 500 is rejected here with
+  // a warm 400 message. See S18 audit notes in SPRINT_LOG.md.
+  const dobRaw = body.date_of_birth ?? body.dob ?? null;
+  const diagnosisDateRaw = body.diagnosis_date ?? null;
+  const diagnosisRaw = body.diagnosis ?? body.custom_diagnosis ?? null;
+  const cityRaw = body.city ?? null;
+  const stateRaw = body.state ?? null;
+  const sexRaw = body.sex ?? null;
+  const statusRaw = body.status ?? "active";
+  const languageRaw = body.language_preference ?? body.primary_language ?? "en";
+
+  const isIsoDateOrEmpty = (v: unknown): v is string | null =>
+    v == null || v === "" || (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v));
+
+  if (!isIsoDateOrEmpty(dobRaw)) {
+    return NextResponse.json(
+      { error: "Date of birth must be in YYYY-MM-DD format." },
+      { status: 400 }
+    );
+  }
+  if (!isIsoDateOrEmpty(diagnosisDateRaw)) {
+    return NextResponse.json(
+      { error: "Diagnosis date must be in YYYY-MM-DD format." },
+      { status: 400 }
+    );
+  }
+
+  const ALLOWED_SEX = ["female", "male", "other", "", null] as const;
+  if (sexRaw != null && !ALLOWED_SEX.includes(sexRaw as (typeof ALLOWED_SEX)[number])) {
+    return NextResponse.json(
+      { error: "Please choose female, male, or other." },
+      { status: 400 }
+    );
+  }
+
+  const ALLOWED_LANGUAGE = ["en", "es"] as const;
+  if (!ALLOWED_LANGUAGE.includes(languageRaw as (typeof ALLOWED_LANGUAGE)[number])) {
+    return NextResponse.json(
+      { error: "Language must be 'en' or 'es'." },
+      { status: 400 }
+    );
+  }
+
+  const ALLOWED_STATUS = ["active", "inactive"] as const;
+  if (!ALLOWED_STATUS.includes(statusRaw as (typeof ALLOWED_STATUS)[number])) {
+    return NextResponse.json(
+      { error: "Status must be 'active' or 'inactive'." },
+      { status: 400 }
+    );
+  }
+
+  if (typeof diagnosisRaw === "string" && diagnosisRaw.length > 500) {
+    return NextResponse.json(
+      { error: "Diagnosis description is too long. Please use 500 characters or fewer." },
+      { status: 400 }
+    );
+  }
+  if (typeof cityRaw === "string" && cityRaw.length > 100) {
+    return NextResponse.json(
+      { error: "City is too long. Please use 100 characters or fewer." },
+      { status: 400 }
+    );
+  }
+  if (typeof stateRaw === "string" && stateRaw.length > 100) {
+    return NextResponse.json(
+      { error: "State is too long. Please use 100 characters or fewer." },
+      { status: 400 }
+    );
+  }
 
   const { data: inserted, error: insertError } = await supabase
     .from("patients")
     .insert({
       name: fullName,
-      dob: body.date_of_birth ?? body.dob ?? null,
-      sex: body.sex ?? null,
-      custom_diagnosis: body.diagnosis ?? body.custom_diagnosis ?? null,
-      diagnosis_date: body.diagnosis_date ?? null,
-      city: body.city ?? null,
-      state: body.state ?? null,
+      dob: dobRaw || null,
+      sex: sexRaw || null,
+      custom_diagnosis: diagnosisRaw || null,
+      diagnosis_date: diagnosisDateRaw || null,
+      city: cityRaw || null,
+      state: stateRaw || null,
       condition_template_id: body.condition_template_id ?? null,
-      language_preference: body.language_preference ?? body.primary_language ?? "en",
+      language_preference: languageRaw,
       organization_id: organizationId,
       created_by: user.id,
-      status: body.status ?? "active",
+      status: statusRaw,
     })
     .select("id, name, condition_template_id")
     .single();
