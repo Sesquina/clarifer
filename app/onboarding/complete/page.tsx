@@ -69,7 +69,7 @@ export default function OnboardingCompletePage() {
               height: 56,
               borderRadius: 26,
               backgroundColor: "var(--primary)",
-              color: "#FFFFFF",
+              color: "var(--card)",
               fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
               fontSize: 16,
               fontWeight: 600,

@@ -112,13 +112,13 @@ export default function SignupPage() {
     return (
       <div
         className={`${playfair.variable} ${dmSans.variable} flex min-h-screen items-center justify-center px-4`}
-        style={{ backgroundColor: "#F7F2EA" }}
+        style={{ backgroundColor: "var(--background)" }}
       >
         <div
           className="w-full"
           style={{
             maxWidth: 400,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: "var(--card)",
             borderRadius: 16,
             padding: 32,
             boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
@@ -126,10 +126,10 @@ export default function SignupPage() {
           }}
         >
           <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ margin: "0 auto", objectFit: "contain" }} />
-          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 24, color: "#1A1A1A", marginTop: 16 }}>
+          <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: 24, color: "var(--text)", marginTop: 16 }}>
             Check your email
           </h1>
-          <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#6B6B6B", marginTop: 12, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--muted)", marginTop: 12, lineHeight: 1.6 }}>
             Check your email to confirm your account. Once confirmed you will be taken to setup.
           </p>
           <Link
@@ -140,8 +140,8 @@ export default function SignupPage() {
               height: 44,
               padding: "0 24px",
               borderRadius: 22,
-              backgroundColor: "#2C5F4A",
-              color: "#FFFFFF",
+              backgroundColor: "var(--primary)",
+              color: "var(--card)",
               fontSize: 14,
               fontWeight: 600,
               textDecoration: "none",
@@ -159,13 +159,13 @@ export default function SignupPage() {
   return (
     <div
       className={`${playfair.variable} ${dmSans.variable} flex min-h-screen items-center justify-center px-4`}
-      style={{ backgroundColor: "#F7F2EA" }}
+      style={{ backgroundColor: "var(--background)" }}
     >
       <div
         className="w-full"
         style={{
           maxWidth: 400,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "var(--card)",
           borderRadius: 16,
           padding: 32,
           boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
@@ -176,17 +176,17 @@ export default function SignupPage() {
           <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
         </div>
 
-        <h1 className="text-center" style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "#1A1A1A", marginTop: 16 }}>
+        <h1 className="text-center" style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "var(--text)", marginTop: 16 }}>
           Create your account.
         </h1>
-        <p className="text-center" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#6B6B6B", marginTop: 4 }}>
+        <p className="text-center" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--muted)", marginTop: 4 }}>
           For the family doing everything they can.
         </p>
 
         <form onSubmit={handleSignup} className="mt-6 space-y-4">
           {/* Name */}
           <div>
-            <label htmlFor="fullName" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}>
+            <label htmlFor="fullName" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}>
               Your name
             </label>
             <input
@@ -198,15 +198,15 @@ export default function SignupPage() {
               required
               autoComplete="name"
               className="mt-1.5 w-full outline-none transition-colors"
-              style={{ height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "#1A1A1A" }}
-              onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-              onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+              style={{ height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
+              onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             />
           </div>
 
           {/* Email */}
           <div>
-            <label htmlFor="email" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}>
+            <label htmlFor="email" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}>
               Email
             </label>
             <input
@@ -218,15 +218,15 @@ export default function SignupPage() {
               required
               autoComplete="email"
               className="mt-1.5 w-full outline-none transition-colors"
-              style={{ height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "#1A1A1A" }}
-              onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-              onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+              style={{ height: 52, borderRadius: 12, border: "1.5px solid #E8E2D9", padding: "0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
+              onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             />
           </div>
 
           {/* Password */}
           <div>
-            <label htmlFor="password" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}>
+            <label htmlFor="password" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}>
               Password
             </label>
             <div className="relative mt-1.5">
@@ -243,26 +243,26 @@ export default function SignupPage() {
                 minLength={8}
                 autoComplete="new-password"
                 className="w-full outline-none transition-colors"
-                style={{ height: 52, borderRadius: 12, border: `1.5px solid ${passwordError ? "#C4714A" : "#E8E2D9"}`, padding: "0 48px 0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "#1A1A1A" }}
-                onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                onBlur={(e) => (e.target.style.borderColor = passwordError ? "#C4714A" : "#E8E2D9")}
+                style={{ height: 52, borderRadius: 12, border: `1.5px solid ${passwordError ? "var(--accent)" : "var(--border)"}`, padding: "0 48px 0 16px", fontFamily: "var(--font-dm-sans)", fontSize: 16, color: "var(--text)" }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                onBlur={(e) => (e.target.style.borderColor = passwordError ? "var(--accent)" : "var(--border)")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2"
-                style={{ color: "#6B6B6B" }}
+                style={{ color: "var(--muted)" }}
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
             {passwordError ? (
-              <p className="mt-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 12, color: "#C4714A" }}>
+              <p className="mt-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 12, color: "var(--accent)" }}>
                 {passwordError}
               </p>
             ) : (
-              <p className="mt-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 12, color: "#6B6B6B" }}>
+              <p className="mt-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 12, color: "var(--muted)" }}>
                 At least 8 characters with uppercase, lowercase, and a number
               </p>
             )}
@@ -275,13 +275,13 @@ export default function SignupPage() {
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                style={{ marginTop: 3, accentColor: "#2C5F4A" }}
+                style={{ marginTop: 3, accentColor: "var(--primary)" }}
               />
-              <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, color: "#1A1A1A", lineHeight: 1.4 }}>
+              <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, color: "var(--text)", lineHeight: 1.4 }}>
                 I agree to the{" "}
-                <Link href="/terms" style={{ color: "#2C5F4A", textDecoration: "underline" }}>Terms of Service</Link>{" "}
+                <Link href="/terms" style={{ color: "var(--primary)", textDecoration: "underline" }}>Terms of Service</Link>{" "}
                 and{" "}
-                <Link href="/privacy" style={{ color: "#2C5F4A", textDecoration: "underline" }}>Privacy Policy</Link>
+                <Link href="/privacy" style={{ color: "var(--primary)", textDecoration: "underline" }}>Privacy Policy</Link>
               </span>
             </label>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
@@ -289,9 +289,9 @@ export default function SignupPage() {
                 type="checkbox"
                 checked={ageConfirmed}
                 onChange={(e) => setAgeConfirmed(e.target.checked)}
-                style={{ marginTop: 3, accentColor: "#2C5F4A" }}
+                style={{ marginTop: 3, accentColor: "var(--primary)" }}
               />
-              <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, color: "#1A1A1A", lineHeight: 1.4 }}>
+              <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, color: "var(--text)", lineHeight: 1.4 }}>
                 I confirm I am 18 years of age or older
               </span>
             </label>
@@ -303,7 +303,7 @@ export default function SignupPage() {
             disabled={!canSubmit}
             className="flex w-full items-center justify-center transition-opacity hover:opacity-90 disabled:opacity-60"
             style={{
-              height: 52, borderRadius: 26, backgroundColor: "#2C5F4A", color: "#FFFFFF",
+              height: 52, borderRadius: 26, backgroundColor: "var(--primary)", color: "var(--card)",
               fontFamily: "var(--font-dm-sans)", fontSize: 16, fontWeight: 600,
             }}
           >
@@ -311,15 +311,15 @@ export default function SignupPage() {
           </button>
 
           {error && (
-            <div style={{ backgroundColor: "#FDF3EE", borderLeft: "3px solid #C4714A", padding: "12px 16px", borderRadius: 8, fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#C4714A" }}>
+            <div style={{ backgroundColor: "var(--pale-terra)", borderLeft: "3px solid #C4714A", padding: "12px 16px", borderRadius: 8, fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--accent)" }}>
               {error}
             </div>
           )}
         </form>
 
-        <p className="mt-4 text-center" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#6B6B6B" }}>
+        <p className="mt-4 text-center" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--muted)" }}>
           Already have an account?{" "}
-          <Link href="/login" style={{ color: "#2C5F4A", fontWeight: 500 }}>Sign in</Link>
+          <Link href="/login" style={{ color: "var(--primary)", fontWeight: 500 }}>Sign in</Link>
         </p>
       </div>
     </div>

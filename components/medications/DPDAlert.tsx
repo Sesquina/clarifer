@@ -113,7 +113,7 @@ export function DPDAlert({
             }}
             placeholder="e.g. normal, partial deficiency"
             className="ml-2 rounded-md border px-2 py-1 text-sm"
-            style={{ borderColor: "var(--border)", background: "var(--card)", minHeight: 32 }}
+            style={{ borderColor: "var(--border)", background: "var(--card)", minHeight: 48 }}
           />
         </span>
       </label>

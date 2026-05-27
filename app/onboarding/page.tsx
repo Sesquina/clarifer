@@ -148,8 +148,8 @@ export default function OnboardingPage() {
     padding: "0 16px",
     fontFamily: "var(--font-dm-sans)",
     fontSize: 16,
-    color: "#1A1A1A",
-    backgroundColor: "#FFFFFF",
+    color: "var(--text)",
+    backgroundColor: "var(--card)",
     width: "100%",
     outline: "none",
   };
@@ -166,7 +166,7 @@ export default function OnboardingPage() {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4 py-12"
-      style={{ backgroundColor: "#F7F2EA" }}
+      style={{ backgroundColor: "var(--background)" }}
     >
       <div className="w-full" style={{ maxWidth: 400 }}>
         {/* Logo -- hidden on step 0, which renders its own logo inside the card */}
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
         {step > 0 && (
           <h1
             className="mt-4 text-center"
-            style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "#1A1A1A" }}
+            style={{ fontFamily: "var(--font-playfair)", fontSize: 28, color: "var(--text)" }}
           >
             Set up your profile
           </h1>
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
         {step > 0 && (
           <p
             className="mt-1 text-center"
-            style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "#6B6B6B" }}
+            style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--muted)" }}
           >
             Step {step} of 2
           </p>
@@ -196,7 +196,7 @@ export default function OnboardingPage() {
         <div
           className="mt-6"
           style={{
-            backgroundColor: "#FFFFFF",
+            backgroundColor: "var(--card)",
             borderRadius: 16,
             padding: 32,
             boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
@@ -275,13 +275,13 @@ export default function OnboardingPage() {
           {step === 1 && (
             <>
               <h2
-                style={{ fontFamily: "var(--font-playfair)", fontSize: 20, color: "#1A1A1A" }}
+                style={{ fontFamily: "var(--font-playfair)", fontSize: 20, color: "var(--text)" }}
               >
                 Tell us about you
               </h2>
               <p
                 className="mt-1"
-                style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#6B6B6B" }}
+                style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--muted)" }}
               >
                 Choose the description that fits best.
               </p>
@@ -290,7 +290,7 @@ export default function OnboardingPage() {
                 <RolePicker selected={role} onSelect={setRole} />
 
                 <h3
-                  style={{ fontFamily: "var(--font-playfair)", fontSize: 18, color: "#1A1A1A", marginTop: 24 }}
+                  style={{ fontFamily: "var(--font-playfair)", fontSize: 18, color: "var(--text)", marginTop: 24 }}
                 >
                   Tell us about the person you are caring for.
                 </h3>
@@ -298,7 +298,7 @@ export default function OnboardingPage() {
                 <div>
                   <label
                     htmlFor="name"
-                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
                     Who are you caring for?
                   </label>
@@ -310,14 +310,14 @@ export default function OnboardingPage() {
                     required
                     className="mt-1.5"
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="dob"
-                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
                     Their date of birth
                   </label>
@@ -328,14 +328,14 @@ export default function OnboardingPage() {
                     onChange={(e) => setDob(e.target.value)}
                     className="mt-1.5"
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="sex"
-                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
                     Their biological sex
                   </label>
@@ -345,8 +345,8 @@ export default function OnboardingPage() {
                     onChange={(e) => setSex(e.target.value)}
                     className="mt-1.5"
                     style={selectStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   >
                     <option value="">Select</option>
                     <option value="female">Female</option>
@@ -370,8 +370,8 @@ export default function OnboardingPage() {
                     placeholder="e.g. Los Angeles, CA"
                     className="mt-1.5"
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   />
                 </div>
 
@@ -416,8 +416,8 @@ export default function OnboardingPage() {
                   style={{
                     height: 52,
                     borderRadius: 26,
-                    backgroundColor: "#2C5F4A",
-                    color: "#FFFFFF",
+                    backgroundColor: "var(--primary)",
+                    color: "var(--card)",
                     fontFamily: "var(--font-dm-sans)",
                     fontSize: 16,
                     fontWeight: 600,
@@ -432,13 +432,13 @@ export default function OnboardingPage() {
           {step === 2 && (
             <>
               <h2
-                style={{ fontFamily: "var(--font-playfair)", fontSize: 20, color: "#1A1A1A" }}
+                style={{ fontFamily: "var(--font-playfair)", fontSize: 20, color: "var(--text)" }}
               >
                 Condition details
               </h2>
               <p
                 className="mt-1"
-                style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#6B6B6B" }}
+                style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--muted)" }}
               >
                 This helps Clarifer personalize your experience
               </p>
@@ -447,7 +447,7 @@ export default function OnboardingPage() {
                 <div>
                   <label
                     htmlFor="diagnosis"
-                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
                     What are they being treated for?
                   </label>
@@ -458,14 +458,14 @@ export default function OnboardingPage() {
                     placeholder="e.g. cholangiocarcinoma, lung cancer"
                     className="mt-1.5"
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="diagDate"
-                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "#1A1A1A", fontWeight: 500 }}
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, color: "var(--text)", fontWeight: 500 }}
                   >
                     When were they diagnosed?
                   </label>
@@ -477,21 +477,21 @@ export default function OnboardingPage() {
                     placeholder="Month and year is fine"
                     className="mt-1.5"
                     style={inputStyle}
-                    onFocus={(e) => (e.target.style.borderColor = "#2C5F4A")}
-                    onBlur={(e) => (e.target.style.borderColor = "#E8E2D9")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                   />
                 </div>
 
                 {error && (
                   <div
                     style={{
-                      backgroundColor: "#FDF3EE",
+                      backgroundColor: "var(--pale-terra)",
                       borderLeft: "3px solid #C4714A",
                       padding: "12px 16px",
                       borderRadius: 8,
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: 14,
-                      color: "#C4714A",
+                      color: "var(--accent)",
                     }}
                   >
                     {error}
@@ -507,8 +507,8 @@ export default function OnboardingPage() {
                       height: 52,
                       borderRadius: 26,
                       border: "1.5px solid #E8E2D9",
-                      backgroundColor: "#FFFFFF",
-                      color: "#1A1A1A",
+                      backgroundColor: "var(--card)",
+                      color: "var(--text)",
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: 16,
                       fontWeight: 600,
@@ -524,8 +524,8 @@ export default function OnboardingPage() {
                     style={{
                       height: 52,
                       borderRadius: 26,
-                      backgroundColor: "#2C5F4A",
-                      color: "#FFFFFF",
+                      backgroundColor: "var(--primary)",
+                      color: "var(--card)",
                       fontFamily: "var(--font-dm-sans)",
                       fontSize: 16,
                       fontWeight: 600,
@@ -606,7 +606,7 @@ function RolePicker({
               padding: "12px 16px",
               borderRadius: 16,
               border: isSelected ? "2px solid #2C5F4A" : "1.5px solid #E8E2D9",
-              backgroundColor: isSelected ? "#F0F5F2" : "#FFFFFF",
+              backgroundColor: isSelected ? "var(--pale-sage)" : "var(--card)",
               cursor: "pointer",
               textAlign: "left",
               fontFamily: "var(--font-dm-sans)",
@@ -622,16 +622,16 @@ function RolePicker({
                 width: 36,
                 height: 36,
                 borderRadius: 18,
-                backgroundColor: isSelected ? "#FFFFFF" : "#F0F5F2",
-                color: "#2C5F4A",
+                backgroundColor: isSelected ? "var(--card)" : "var(--pale-sage)",
+                color: "var(--primary)",
                 flexShrink: 0,
               }}
             >
               {opt.icon}
             </span>
             <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-              <span style={{ fontWeight: 600, fontSize: 16, color: "#1A1A1A" }}>{opt.title}</span>
-              <span style={{ fontWeight: 400, fontSize: 13, color: "#6B6B6B" }}>{opt.subtitle}</span>
+              <span style={{ fontWeight: 600, fontSize: 16, color: "var(--text)" }}>{opt.title}</span>
+              <span style={{ fontWeight: 400, fontSize: 13, color: "var(--muted)" }}>{opt.subtitle}</span>
             </span>
           </button>
         );

@@ -15,9 +15,9 @@ interface SavedTrial {
 }
 
 const linkTools = [
-  { href: "/tools/trials", icon: Search, label: "Clinical Trials", description: "Find relevant trials based on your condition", bg: "#FDF3EE", color: "#C4714A" },
-  { href: "/tools/medications", icon: Pill, label: "Medications", description: "Track and manage current medications", bg: "#F0F5F2", color: "#2C5F4A" },
-  { href: "/care-team", icon: Users, label: "Care Team", description: "Manage your care relationships", bg: "#F0F5F2", color: "#2C5F4A" },
+  { href: "/tools/trials", icon: Search, label: "Clinical Trials", description: "Find relevant trials based on your condition", bg: "var(--pale-terra)", color: "var(--accent)" },
+  { href: "/tools/medications", icon: Pill, label: "Medications", description: "Track and manage current medications", bg: "var(--pale-sage)", color: "var(--primary)" },
+  { href: "/care-team", icon: Users, label: "Care Team", description: "Manage your care relationships", bg: "var(--pale-sage)", color: "var(--primary)" },
 ];
 
 export default function ToolsPage() {
@@ -111,10 +111,10 @@ export default function ToolsPage() {
               borderRadius: 14, padding: "14px 16px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
             }}>
               <div style={{
-                width: 48, height: 48, borderRadius: 12, backgroundColor: "#FDF3EE",
+                width: 48, height: 48, borderRadius: 12, backgroundColor: "var(--pale-terra)",
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}>
-                <FileDown size={24} color="#C4714A" />
+                <FileDown size={24} color="var(--accent)" />
               </div>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 600, color: "#1A1A1A" }}>{exporting ? "Exporting..." : "Export Data"}</p>
@@ -160,7 +160,7 @@ export default function ToolsPage() {
                       )}
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                         {trial.phase && (
-                          <span style={{ fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 8, backgroundColor: "#F0F5F2", color: "#2C5F4A" }}>
+                          <span style={{ fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 8, backgroundColor: "var(--pale-sage)", color: "var(--primary)" }}>
                             {trial.phase}
                           </span>
                         )}
@@ -177,7 +177,7 @@ export default function ToolsPage() {
                     </div>
                     <button
                       onClick={() => handleUnsave(trial.id)}
-                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#C4714A", flexShrink: 0 }}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--accent)", flexShrink: 0 }}
                       title="Remove saved trial"
                     >
                       <Trash2 size={16} />

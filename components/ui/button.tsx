@@ -13,10 +13,10 @@ const variantStyles: Record<Variant, string> = {
 };
 
 const sizeStyles: Record<Size, string> = {
-  default: "h-10 px-4 py-2",
-  sm: "h-9 rounded-md px-3",
-  lg: "h-11 rounded-md px-8",
-  icon: "h-10 w-10",
+  default: "min-h-[48px] px-4 py-2",
+  sm: "min-h-[48px] rounded-md px-3",
+  lg: "min-h-[48px] rounded-md px-8",
+  icon: "min-h-[48px] min-w-[48px]",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

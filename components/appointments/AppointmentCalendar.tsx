@@ -220,7 +220,7 @@ function MonthGrid({ cursor, apptsByDay, dayKey, onSelectAppointment }: GridProp
                     <button
                       type="button"
                       onClick={() => onSelectAppointment?.(a.id)}
-                      className="w-full truncate rounded bg-pale-sage px-2 py-1 text-left text-xs text-primary hover:bg-primary hover:text-white"
+                      className="w-full truncate rounded bg-pale-sage px-2 py-1 text-left text-xs text-primary hover:bg-primary hover:text-white min-h-[48px]"
                     >
                       {a.title ?? "Untitled"}
                     </button>

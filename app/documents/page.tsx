@@ -35,7 +35,7 @@ export default async function DocumentsPage() {
           <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Documents</h1>
           <Link
             href="/documents/upload"
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="flex min-h-[48px] items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             <Upload className="h-4 w-4" />
             Upload

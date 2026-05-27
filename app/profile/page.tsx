@@ -106,19 +106,19 @@ export default function ProfilePage() {
                   height: 36,
                   padding: "0 16px",
                   borderRadius: 18,
-                  backgroundColor: "#2C5F4A",
-                  color: "#FFFFFF",
+                  backgroundColor: "var(--primary)",
+                  color: "var(--card)",
                   fontSize: 14,
                   fontWeight: 500,
                 }}
               >
                 English
               </span>
-              <span style={{ fontSize: 14, color: "#6B6B6B", opacity: 0.4, cursor: "default" }}>
+              <span style={{ fontSize: 14, color: "var(--muted)", opacity: 0.4, cursor: "default" }}>
                 Español (coming soon)
               </span>
             </div>
-            <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 8 }}>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
               More languages coming soon. Spanish (Latin American) is next.
             </p>
           </CardContent>

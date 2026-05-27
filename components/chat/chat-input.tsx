@@ -93,7 +93,7 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask C
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-white/60 disabled:opacity-50"
+            className="flex min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-white/60 disabled:opacity-50"
             style={{ color: "#6B6B6B" }}
           >
             <Paperclip className="h-5 w-5" />
@@ -129,7 +129,7 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask C
         type="button"
         onClick={handleSubmit}
         disabled={disabled || !value.trim()}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="flex min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{ backgroundColor: "#2C5F4A", color: "#FFFFFF" }}
       >
         <Send className="h-4 w-4" />
