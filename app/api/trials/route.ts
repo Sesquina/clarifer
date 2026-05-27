@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
@@ -69,7 +70,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ trials });
   } catch (error) {
+    Sentry.captureException(error, { tags: { route: "api/trials", upstream: "clinicaltrials.gov" } });
     console.error('[trials/route] ClinicalTrials.gov fetch failed:', error);
-    return NextResponse.json({ error: 'Failed to fetch trials', detail: String(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch trials' }, { status: 500 });
   }
 }

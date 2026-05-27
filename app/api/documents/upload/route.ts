@@ -8,6 +8,7 @@
  *        audit_log written with all required fields on every successful upload.
  */
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { validateFile } from "@/lib/documents/validate";
 import { uploadToStorage } from "@/lib/documents/storage";
@@ -65,7 +66,8 @@ export async function POST(request: Request) {
   let filePath: string;
   try {
     filePath = await uploadToStorage(file, organizationId, patientId);
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, { tags: { route: "api/documents/upload", phase: "storage" } });
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 
