@@ -2596,3 +2596,145 @@ COMPLETION SUMMARY (S17)
   DECISION REQUIRED items: 2 logged
     S17-D1 -- scope of Rule 9 (strict / app-only / tiered)
     S17-D2 -- route canonicalization for near-miss pairs
+
+---
+
+[2026-05-27] SPRINT: S18 -- onboarding flow (build /onboarding + /onboarding/complete)
+Branch: fix/mobile-touch-audit (NOT switched to sprint-1-onboarding-flow; see D1 below)
+Status: BLOCKED on multiple DECISION REQUIRED items. No code changes this session.
+
+DIAGNOSTICS AT SESSION START
+  Current branch:    fix/mobile-touch-audit (CURRENT_SESSION.md says sprint-1-onboarding-flow)
+  Last commit:       f0d1a4e fix(S17): Rule 9 mobile-parity audit -- 33 gaps logged
+  Uncommitted:       CURRENT_SESSION.md (modified by advance-session.sh)
+  tsc --noEmit:      0 errors
+  vitest:            same-day S17 baseline was 299 passed / 10 failed (309 total)
+                     across 82 files (3 files failed). Re-run started but did
+                     not produce output within session window; baseline assumed
+                     unchanged since no code touched on this branch since S17.
+
+SESSION TASK AS WRITTEN
+  Build /onboarding and /onboarding/complete.
+  Files: app/onboarding/page.tsx, app/onboarding/complete/page.tsx.
+  Matches Figma Row 1 signup steps 1-5.
+  API: POST /api/onboarding/complete. Writes to: profiles, patients, care_team.
+  tsc + vitest + Playwright (onboarding completes, redirects to /home).
+
+WHY THIS IS BLOCKED -- six material conflicts with current repo state:
+
+DECISION REQUIRED [S18-D1]: Branch mismatch.
+  Task says commit to sprint-1-onboarding-flow.
+  Current branch is fix/mobile-touch-audit (S17's branch, unmerged).
+  All recent autonomous sessions (S1..S17) used fix/[descriptor] branches,
+  not sprint-N-[descriptor]. SPRINT_STATUS.md confirms this convention.
+  Options:
+    A. Create sprint-1-onboarding-flow off main (loses S17's uncommitted
+       audit-only state on fix/mobile-touch-audit -- but S17 is committed,
+       so nothing material is lost; CURRENT_SESSION.md change is runner noise).
+    B. Stay on fix/mobile-touch-audit and rename later.
+    C. Confirm sprint-N-* is the new convention and update the runner script.
+
+DECISION REQUIRED [S18-D2]: Files already exist with substantial functionality.
+  app/onboarding/page.tsx exists (642 lines). It implements:
+    - Step 0 welcome screen, Step 1 role + person info, Step 2 condition details.
+    - Calls POST /api/patients/create (which has auth + role + org_id + audit).
+    - Creates organizations + users rows if handle_new_user trigger missed.
+    - Sends welcome email via /api/email/welcome.
+    - Routes to /onboarding/complete on success.
+  app/onboarding/complete/page.tsx exists (122 lines). It implements:
+    - Medical disclaimer modal (logs to medical_disclaimer_acceptances).
+    - Three CTAs: Upload first document, Ask Clarifer, Go to dashboard.
+  Task says "Matches Figma Row 1 signup steps 1-5" -- but existing flow is
+  a 3-step flow (0, 1, 2). Figma reference is not visible to the agent.
+  Options:
+    A. Treat S18 as already substantially done -- mark COMPLETE with the
+       caveat that step count differs from Figma (3 steps, not 5).
+    B. Rebuild to match Figma -- requires Samira to attach the Figma spec
+       or list the 5 steps explicitly. Guessing is forbidden by Rule 10.
+    C. Audit-only: list deltas between current onboarding and the 5-step
+       Figma without modifying code, then queue a follow-up sprint.
+
+DECISION REQUIRED [S18-D3]: Schema mismatch -- profiles table does not exist.
+  Task says: "API: POST /api/onboarding/complete. Writes to: profiles,
+  patients, care_team."
+  Confirmed-live schema (28 tables in docs/MASTER_SESSION_PROMPT.md and
+  docs/CLAUDE.md Section 5) has no profiles table. User profile data lives
+  in the users table (id, email, role, organization_id, full_name).
+  Options:
+    A. Treat profiles as a typo for users -- write to users + patients +
+       care_team. (Existing /api/patients/create already does this minus
+       care_team.)
+    B. Create a new profiles table via migration (MIGRATION REQUIRED per
+       Rule 4 -- Samira runs SQL, agent only writes the .sql file).
+    C. Per Rule 10, stop and ask Samira to clarify.
+
+DECISION REQUIRED [S18-D4]: API path mismatch.
+  Task says POST /api/onboarding/complete; existing flow uses
+  POST /api/patients/create. Per Rule 6, any new patient-data route must
+  add auth + role + org_id + audit_log. /api/patients/create already
+  enforces all four; building a parallel /api/onboarding/complete that
+  also writes to patients is duplicate logic and a Rule 6 audit risk
+  (two write paths into the same table).
+  Options:
+    A. Keep /api/patients/create; add care_team and any missing fields
+       there.
+    B. Build /api/onboarding/complete that wraps /api/patients/create
+       (proxy) and additionally inserts into care_team.
+    C. Build /api/onboarding/complete as a single transactional endpoint
+       and deprecate the patients/create caller from the onboarding flow.
+
+DECISION REQUIRED [S18-D5]: Definition of Done conflicts with inherited
+  baseline. Rule 7 requires "vitest all passing". S17-T1 logged 10 failing
+  tests across 3 files as the inherited baseline -- not introduced by S17
+  or S18. Rule 8 forbids fixing DISCOVERED ISSUES inline. Therefore Rule 7
+  cannot be satisfied within S18's scope.
+  Options:
+    A. Suspend Rule 7 for this session and accept the baseline.
+    B. Add a baseline-fix sprint before S18 proceeds.
+    C. Allow S18 to fix the baseline as a prerequisite (overrides Rule 8
+       for this case).
+
+DECISION REQUIRED [S18-D6]: Mobile parity (Rule 9) for onboarding.
+  apps/mobile/app/(onboarding)/ currently contains only:
+    - care-team-setup.tsx
+    - condition-select.tsx
+  These do not implement the full 3-step (or 5-step) onboarding flow that
+  the web has. S17-D1 (scope of Rule 9) is still open. Whether mobile
+  onboarding must reach full parity in S18 depends on that resolution.
+  Options:
+    A. Strict Rule 9 -- build the full 5-step (or 3-step) onboarding on
+       mobile in S18. Doubles the scope.
+    B. App-only Rule 9 -- web is in scope, mobile is logged as gap.
+    C. Tiered -- mobile onboarding is P0 but lives in a follow-up sprint
+       once Figma spec is clarified.
+
+DEFINITION OF DONE (per Rule 7)
+  - tsc --noEmit: 0 errors (verified -- no code changes this session).
+  - vitest: cannot be evaluated -- inherited 10 failures (S17-T1). See D5.
+  - Playwright: not run -- no code changes; would re-execute existing tests.
+  - Desktop + mobile viewport: existing /onboarding renders on both; no
+    new screens added.
+
+NO CODE CHANGES THIS SESSION
+  Reason: six unresolved DECISION REQUIRED items (D1..D6). Per Rule 10,
+  agent must not guess. Per the runner's WHEN BLOCKED protocol, commit
+  whatever exists and stop. Nothing to commit on disk except this
+  SPRINT_LOG.md entry and the runner-edited CURRENT_SESSION.md.
+
+COMPLETION SUMMARY (S18)
+  What was built:    nothing (blocked on D1..D6)
+  Files changed:     SPRINT_LOG.md (this entry); CURRENT_SESSION.md
+                     (runner-set, not edited by agent)
+  Tests added:       none
+  MIGRATION REQUIRED: none yet -- depends on D3 (profiles vs users)
+  DISCOVERED ISSUE items: none new this session (S17-T1 baseline still open)
+  DECISION REQUIRED items: 6 logged (S18-D1..D6)
+
+NOTE TO SAMIRA
+  S18 may already be substantially complete -- the /onboarding flow exists
+  and routes correctly. The blockers are (1) confirming the Figma 5-step
+  spec vs existing 3-step flow, (2) confirming the schema target (no
+  profiles table exists), and (3) deciding whether to build a parallel
+  /api/onboarding/complete route or extend the existing /api/patients/create.
+  Recommend resolving D2 and D3 first -- those determine whether S18 is a
+  rebuild or a polish pass.
