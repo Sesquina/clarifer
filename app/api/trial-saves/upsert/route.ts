@@ -84,6 +84,7 @@ export async function POST(request: Request) {
         phase: body.phase ?? null,
         status: body.status ?? null,
         location: body.location ?? null,
+        organization_id: orgId,
       },
       { onConflict: "patient_id,trial_id" }
     )
