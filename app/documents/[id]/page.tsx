@@ -127,7 +127,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
           </div>
         )}
 
-        {/* What to watch for — symptom connection */}
+        {/* What to watch for: symptom connection */}
         {symptomConnection && (
           <div style={{
             backgroundColor: "#FFFFFF", borderRadius: 14, padding: "20px 20px",

@@ -1,10 +1,10 @@
 /**
  * GET /api/condition-templates/[id]
  * Returns a condition template by id. Accepts either a UUID (actual primary key)
- * or a text slug (e.g. "dementia", "cholangiocarcinoma") — production rows store
+ * or a text slug (e.g. "dementia", "cholangiocarcinoma") -- production rows store
  * UUIDs for id and text identifiers in the slug column.
  * Auth: authenticate → require org membership → return template fields.
- * No PHI involved — templates are configuration data.
+ * No PHI involved -- templates are configuration data.
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";

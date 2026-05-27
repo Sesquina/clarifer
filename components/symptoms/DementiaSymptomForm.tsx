@@ -41,9 +41,9 @@ function ScaleField({
           aria-label={label}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>1 — None</span>
+          <span>1: None</span>
           <span className="font-medium text-foreground">{value}/10</span>
-          <span>10 — Severe</span>
+          <span>10: Severe</span>
         </div>
       </CardContent>
     </Card>

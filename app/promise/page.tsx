@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Our Caregiver Promise — Clarifer",
+  title: "Our Caregiver Promise | Clarifer",
   description: "Clarifer's commitment to caregivers. Free forever, data never sold, research only with consent.",
 };
 

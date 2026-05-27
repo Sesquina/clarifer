@@ -17,7 +17,7 @@ const MAGIC_BYTES: Record<string, number[]> = {
 
 function validateMagicBytes(buffer: Buffer, ext: string): boolean {
   const expected = MAGIC_BYTES[ext];
-  if (!expected) return true; // txt, csv, md — no magic bytes to check
+  if (!expected) return true; // txt, csv, md -- no magic bytes to check
   if (buffer.length < expected.length) return false;
   return expected.every((byte, i) => buffer[i] === byte);
 }

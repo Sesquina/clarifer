@@ -86,7 +86,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
       className="flex"
       style={{ minHeight: "100vh", backgroundColor: "var(--background)", ...BODY }}
     >
-      {/* SIDEBAR — desktop only */}
+      {/* SIDEBAR: desktop only */}
       <aside
         className="hidden md:flex flex-col"
         style={{

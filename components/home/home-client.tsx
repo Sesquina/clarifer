@@ -482,7 +482,7 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                         {group.title}
                       </p>
                       <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 2 }}>
-                        Weekly — register to see upcoming dates
+                        Weekly: register to see upcoming dates
                       </p>
                       <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 2 }}>
                         Hosted by CCF

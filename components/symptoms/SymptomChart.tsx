@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 /**
  * Pure-SVG line chart so the same component renders on web (Next.js) and
  * mobile (React Native via react-native-svg, which exports the same primitive
- * shapes). No chart library — avoids victory-native's Expo SDK 55 issues.
+ * shapes). No chart library -- avoids victory-native's Expo SDK 55 issues.
  */
 
 export interface SymptomPoint {

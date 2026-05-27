@@ -1,7 +1,7 @@
 /**
  * app/api/delete-account/route.ts
  * Deletes all data for the authenticated user and removes the auth account.
- * Tables (deletion order — children before parents):
+ * Tables (deletion order: children before parents):
  *   symptom_alerts, research_consent, anonymized_exports, notifications (patient),
  *   family_updates, newly_connected_checklists, ai_analysis_consents, provider_notes,
  *   care_relationships (patient), symptom_logs, medications, trial_saves, care_team

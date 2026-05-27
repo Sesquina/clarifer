@@ -2,7 +2,7 @@
  * components/waitlist-form.tsx
  * Beta waitlist signup form. POSTs { email } to /api/waitlist.
  * Tables: waitlist (via API route)
- * Auth: public — no auth required
+ * Auth: public -- no auth required
  * Sprint: fix/landing-page-beta
  * HIPAA: No PHI in this file
  */

@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. Audit log — HIPAA Tier 1, required on every symptom write
+  // 5. Audit log -- HIPAA Tier 1, required on every symptom write
   await supabase.from("audit_log").insert({
     user_id: user.id,
     patient_id: patientId,

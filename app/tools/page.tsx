@@ -100,7 +100,7 @@ export default function ToolsPage() {
               </div>
             </Link>
           ))}
-          {/* Export Data — triggers download directly */}
+          {/* Export Data: triggers download directly */}
           <button
             onClick={handleExport}
             disabled={exporting || !patientId}

@@ -178,7 +178,7 @@ export default function ChatPage() {
 
       // Step 2: Analyze document -- show pulsing state immediately
       setMessages((prev) =>
-        prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded. Analyzing...` } : m)
+        prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName}: Uploaded. Analyzing...` } : m)
       );
       setIsAnalyzing(true);
 
@@ -191,7 +191,7 @@ export default function ChatPage() {
       if (!res.ok) {
         setIsAnalyzing(false);
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded (analysis failed: ${res.status})` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName}: Uploaded (analysis failed: ${res.status})` } : m)
         );
         return;
       }
@@ -201,7 +201,7 @@ export default function ChatPage() {
       if (summaryData.error) {
         setIsAnalyzing(false);
         setMessages((prev) =>
-          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded (analysis error: ${summaryData.error})` } : m)
+          prev.map((m) => m.id === docMsgId ? { ...m, content: `📎 ${origName}: Uploaded (analysis error: ${summaryData.error})` } : m)
         );
         return;
       }
@@ -217,7 +217,7 @@ export default function ChatPage() {
       setIsAnalyzing(false);
       setMessages((prev) => [
         ...prev.map((m) =>
-          m.id === docMsgId ? { ...m, content: `📎 ${origName} — Uploaded & analyzed` } : m
+          m.id === docMsgId ? { ...m, content: `📎 ${origName}: Uploaded and analyzed` } : m
         ),
         {
           id: crypto.randomUUID(),

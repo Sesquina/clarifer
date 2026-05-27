@@ -67,7 +67,7 @@ export function MedicationForm({ patientId, onSubmit, submitting, error }: Medic
         }
         setSuggestions(Array.from(names).slice(0, 6));
       } catch {
-        // ignore network / abort errors — suggestion UI is non-critical
+        // ignore network / abort errors -- suggestion UI is non-critical
       } finally {
         setSuggestLoading(false);
       }

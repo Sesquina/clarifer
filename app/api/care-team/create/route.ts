@@ -1,5 +1,5 @@
 /**
- * POST /api/care-team/create — add a care team member (stored on care_relationships).
+ * POST /api/care-team/create -- add a care team member (stored on care_relationships).
  * Name/role/phone/email/hospital/notes are held in the relationship_type and
  * access_level fields plus a JSON notes blob on the caregiver's notes column.
  */

@@ -27,7 +27,7 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
           </CardHeader>
           <CardContent className="space-y-1">
             {appt.provider_name && (
-              <p className="text-sm text-muted-foreground">{appt.provider_name} — {appt.provider_specialty}</p>
+              <p className="text-sm text-muted-foreground">{appt.provider_name}, {appt.provider_specialty}</p>
             )}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               {appt.datetime && (
