@@ -1,10 +1,18 @@
 /**
  * app/api/delete-account/route.ts
  * Deletes all data for the authenticated user and removes the auth account.
- * Tables: patients, users, chat_messages, symptom_logs, medications, documents,
- *         trial_saves, care_team, appointments, biomarkers, audit_log (write)
+ * Tables (deletion order — children before parents):
+ *   symptom_alerts, research_consent, anonymized_exports, notifications (patient),
+ *   family_updates, newly_connected_checklists, ai_analysis_consents, provider_notes,
+ *   care_relationships (patient), symptom_logs, medications, trial_saves, care_team
+ *   (→ care_team_message_templates CASCADE), appointments, biomarkers,
+ *   chat_messages, documents,
+ *   patients,
+ *   care_relationships (user), notifications (user), ai_analysis_consents (user),
+ *   research_consent (user), calendar_connections, medical_disclaimer_acceptances,
+ *   users
  * Auth: any authenticated user (self-deletion only)
- * Sprint: S5 -- fix missing/incorrect audit_log on account deletion
+ * Sprint: S6 -- complete cascade across all 12 missing tables
  * HIPAA: audit_log must be written BEFORE any data is deleted so the record
  *        is preserved even if deletion partially fails. organization_id captured
  *        before users row is deleted. patient_id=null (account-level event).
@@ -66,17 +74,45 @@ export async function DELETE(request: Request) {
     status: "success",
   });
 
-  // Delete all user data in order (respecting foreign keys)
+  // Delete all user data in order (children before parents, respecting foreign keys).
+  // Entries with via:"patients" use .in(column, patientIds); entries without via
+  // use .eq(column, user.id). Tables that already have ON DELETE CASCADE are included
+  // explicitly as belt-and-suspenders in case the migration has not yet been applied.
+  // care_team_message_templates is omitted: it cascades automatically when care_team
+  // rows are deleted (ON DELETE CASCADE on care_team_member_id FK).
   const tables = [
+    // ── NEW: children of patients (delete before patients) ──────────────────
+    { table: "symptom_alerts",             column: "patient_id", via: "patients" },
+    { table: "research_consent",           column: "patient_id", via: "patients" },
+    { table: "anonymized_exports",         column: "patient_id", via: "patients" },
+    { table: "notifications",              column: "patient_id", via: "patients" },
+    { table: "family_updates",             column: "patient_id", via: "patients" },
+    { table: "newly_connected_checklists", column: "patient_id", via: "patients" },
+    { table: "ai_analysis_consents",       column: "patient_id", via: "patients" },
+    { table: "provider_notes",             column: "patient_id", via: "patients" },
+    { table: "care_relationships",         column: "patient_id", via: "patients" },
+    // ── EXISTING: children of patients ──────────────────────────────────────
+    { table: "symptom_logs",   column: "patient_id", via: "patients" },
+    { table: "medications",    column: "patient_id", via: "patients" },
+    { table: "trial_saves",    column: "patient_id", via: "patients" },
+    { table: "care_team",      column: "patient_id", via: "patients" },
+    { table: "appointments",   column: "patient_id", via: "patients" },
+    { table: "biomarkers",     column: "patient_id", via: "patients" },
+    // ── EXISTING: children of user (by user_id, not tied to patients) ───────
     { table: "chat_messages", column: "user_id" },
-    { table: "symptom_logs", column: "patient_id", via: "patients" },
-    { table: "medications", column: "patient_id", via: "patients" },
-    { table: "documents", column: "uploaded_by" },
-    { table: "trial_saves", column: "patient_id", via: "patients" },
-    { table: "care_team", column: "patient_id", via: "patients" },
-    { table: "appointments", column: "patient_id", via: "patients" },
-    { table: "biomarkers", column: "patient_id", via: "patients" },
+    { table: "documents",     column: "uploaded_by" },
+    // ── Delete patients ──────────────────────────────────────────────────────
     { table: "patients", column: "created_by" },
+    // ── NEW: children of user (direct user_id references, post-patients) ────
+    // care_relationships: also delete rows where this user is the caregiver
+    //   for another user's patient (not caught by patient_id phase above).
+    { table: "care_relationships",             column: "user_id" },
+    { table: "notifications",                  column: "user_id" },
+    { table: "ai_analysis_consents",           column: "user_id" },
+    { table: "research_consent",               column: "user_id" },
+    { table: "calendar_connections",           column: "user_id" },
+    { table: "medical_disclaimer_acceptances", column: "user_id" },
+    // ── Delete user ──────────────────────────────────────────────────────────
     { table: "users", column: "id" },
   ];
 

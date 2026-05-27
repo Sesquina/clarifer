@@ -1,4 +1,31 @@
 ---
+[2026-05-27] SESSION S6 -- fix/account-deletion-cascade
+Branch: fix/account-deletion-cascade
+
+MIGRATION REQUIRED [S6]: supabase/migrations/20260526000001_account_deletion_cascade.sql
+  Run manually in Supabase SQL Editor on project lrhwgswbsctfqtvdjntr.
+  Do NOT execute automatically.
+  Adds ON DELETE CASCADE to FKs on 7 tables (care_relationships, symptom_alerts,
+  research_consent, anonymized_exports, notifications, calendar_connections,
+  ai_analysis_consents, provider_notes.provider_id).
+  SET NULL on symptom_alerts.acknowledged_by (nullable, preserve audit value).
+  5 tables already have CASCADE: family_updates, medical_disclaimer_acceptances,
+  newly_connected_checklists, provider_notes.patient_id, care_team_message_templates.
+
+ROUTE UPDATE: app/api/delete-account/route.ts
+  Added 12 missing tables to deletion loop in correct FK order (children before parents):
+  Phase 1 (children of patients): symptom_alerts, research_consent, anonymized_exports,
+    notifications (patient_id), family_updates, newly_connected_checklists,
+    ai_analysis_consents, provider_notes, care_relationships (patient_id)
+  Phase 2 (children of user, post-patients): care_relationships (user_id),
+    notifications (user_id), ai_analysis_consents (user_id), research_consent (user_id),
+    calendar_connections, medical_disclaimer_acceptances
+  care_team_message_templates: handled by ON DELETE CASCADE from care_team (in loop).
+  audit_log write preserved as first operation (HIPAA requirement from S5).
+
+Tests: 304/304 passing. tsc: 0 errors.
+
+---
 [2026-05-26] SESSION -- fix/hq-rename-and-passcode
 Branch: fix/hq-rename-and-passcode
 
