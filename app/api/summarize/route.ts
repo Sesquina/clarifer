@@ -112,14 +112,16 @@ export async function POST(request: Request) {
 
     if (doc.patient_id) {
       const [patientResult, logResult] = await Promise.all([
-        supabase.from("patients").select("name, custom_diagnosis").eq("id", doc.patient_id).eq("organization_id", organizationId).single(),
+        supabase.from("patients").select("name").eq("id", doc.patient_id).eq("organization_id", organizationId).single(),
         supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary").eq("patient_id", doc.patient_id).eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(1).single(),
       ]);
 
       const patient = patientResult.data;
       const recentLog = logResult.data;
 
-      if (patient?.custom_diagnosis && keyFindings.length > 0) {
+      if (patient && keyFindings.length > 0) {
+        const { name: patientName } = patient;
+        const firstName = patientName?.split(' ')[0] ?? 'your loved one';
         const findingsText = keyFindings.map((f) => `${f.label}: ${f.value}`).join("; ");
         const symptomsText = recentLog
           ? `Recent symptoms: severity ${recentLog.overall_severity}/10. ${recentLog.ai_summary || JSON.stringify(recentLog.symptoms)}`
@@ -136,11 +138,11 @@ export async function POST(request: Request) {
                 role: "user",
                 content: `Based on these lab findings: ${findingsText}
 
-And this patient's diagnosis of ${patient.custom_diagnosis}:
+And this patient's condition:
 
 ${symptomsText}
 
-What symptoms might ${patient.name || "the patient"} be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
+What symptoms might ${firstName} be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
               }],
             }),
             new Promise<never>((_, reject) =>
