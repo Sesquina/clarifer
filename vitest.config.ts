@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
-    setupFiles: ["./tests/__setup.ts"],
+    setupFiles: ["./tests/__setup.ts", "./tests/setup/blob-polyfill.ts"],
     globals: true,
     // Module-cache leaks across parallel workers cause intermittent timeouts
     // in the heavily-mocked API tests (@/lib/supabase/server, @/lib/cors, etc.).

@@ -2696,3 +2696,76 @@ TESTS: None added. Read-only audit per session instructions.
 MIGRATIONS: None. No code changes.
 COMMITS: SPRINT_LOG.md only, to fix/supabase-baa-check (do not push to main).
 
+---
+
+[2026-05-28] SESSION fix/runner-hardening -- infrastructure only
+
+TASK: Runner hardening, Blob polyfill fix, core-flow test, CCF demo audit.
+
+WHAT WAS BUILT:
+
+1. scripts/run-clarifer-session.sh -- COMPLETE REWRITE (v2)
+   Previous version: exported ANTHROPIC_API_KEY (triggered API billing over Max subscription);
+   only warned on main branch; no branch-from-origin protection; no regression detection.
+   New version adds:
+   - PROTECTION 1: Hard stop if repo is on main. Exit 1. Cannot be bypassed.
+   - PROTECTION 2: Branch always created from origin/main (git fetch first), never from current HEAD.
+   - PROTECTION 3: Branch name verified after checkout. Exit 1 if mismatch.
+   - npm install before every session (fixes node_modules drift in WSL).
+   - Pre-session tsc check. Logs error count before Claude Code runs (reference baseline).
+   - Pre-session vitest baseline capture. Counts pre-existing failures so regressions are measurable.
+   - Post-session vitest run. Compares to baseline. Logs REGRESSION DETECTED if new failures appear.
+     Does NOT mark session DONE if regression detected. advance-session.sh not called.
+   - Email notification includes: session ID, branch, commit hash, commit message,
+     changed files, pre/post vitest counts, TSC delta, REGRESSION flag if applicable.
+   - advance-session.sh only called on clean COMPLETED status (no regressions).
+   - unset ANTHROPIC_API_KEY (uses Claude Max via ~/.claude.json, no API billing).
+   - Reads docs/CLARIFER_BRAIN.md (not old MASTER_SESSION_PROMPT.md) in prompt.
+
+2. tests/setup/blob-polyfill.ts -- NEW
+   Polyfills Blob.prototype.stream for Node.js/jsdom test environment.
+   Fixes "object.stream is not a function" in tests/lib/pdf/hospital-grade-export.test.ts.
+
+3. vitest.config.ts -- UPDATED
+   Added blob-polyfill.ts to setupFiles array.
+
+4. tests/integration/core-flow.test.ts -- NEW
+   3 passing tests, 1 todo:
+   - GET /api/patients/[id] returns 401 without auth PASS
+   - POST /api/log/create returns 401 without auth PASS
+   - POST /api/family-update/generate returns 401 without auth PASS
+   - GET /api/notifications returns 401 without auth TODO (S19 not merged to main yet)
+
+5. CURRENT_SESSION.md -- UPDATED
+   Reset to S-INFRA-1 (5 Playwright smoke tests vs clarifer.com).
+   Previous state had conflict markers from stash pop resolved to old S12 content.
+
+TESTS: 316 passing, 1 todo, 0 failing (was 316 passing before Blob fix confirmed the PDF tests now pass).
+TSC: 0 errors.
+
+DISCOVERED ISSUE [RUNNER-1]:
+   feat/notifications (S19) has not been merged to main. GET /api/notifications route
+   does not exist on main branch. The core-flow test correctly marks this as todo.
+   Action: Merge feat/notifications to unblock the notifications test and route.
+
+DISCOVERED ISSUE [RUNNER-2]:
+   SPRINT_STATUS.md is out of sync. S17-S20 are committed in git log but not recorded
+   as DONE in SPRINT_STATUS.md. S14 is marked SKIP but has a real commit (7aba721).
+   Action: Samira to reconcile SPRINT_STATUS.md entries with git log before running
+   advance-session.sh (it will queue S17 as next, which is already done).
+
+DISCOVERED ISSUE [RUNNER-3]:
+   CURRENT_SESSION.md had stash pop conflict markers at session start (UU state in git).
+   The runner v2 now checks for conflict markers before starting and exits with CRITICAL error.
+   This prevents Claude Code from receiving a prompt with <<<<<< markers in it.
+
+CCF DEMO READINESS (June 3, 2026 -- 6 days):
+   All 7 demo step routes exist and are reachable.
+   MISSING: S19 (feat/notifications) not merged. Bell badge absent from live site.
+   MISSING: S20 (feat/appointments patient hub hardening) stashed on feat/appointments.
+   NEEDED: S-INFRA-1 (Playwright smoke tests vs clarifer.com) to confirm demo flow end-to-end.
+   DECISION REQUIRED: Should S19 and S20 be merged before June 3 demo?
+
+MIGRATIONS: None.
+COMMITS: fix/runner-hardening. Do not push to main.
+
