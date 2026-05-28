@@ -2715,3 +2715,29 @@ Per RULE 10: Cannot proceed without the source HTML content.
 Branch feat/research-page has been created from origin/main (Step 1 complete).
 TypeScript errors: 0.
 Awaiting source file or inline HTML content to proceed with Steps 2-6.
+
+---
+[2026-05-28] SESSION RESUMED: feat/research-page
+Branch: feat/research-page
+
+DECISION REQUIRED resolved: source HTML unavailable; task authorized build-from-scratch.
+
+COMPLETION SUMMARY:
+  What was built: Public /research CCF research partnership page for academic medical center
+    and foundation partners. Six sections: hero, problem, data collected, partnership model,
+    CCF community, and CTA.
+  Files changed:
+    - app/research/page.tsx (created)
+    - middleware.ts (added /research to publicRoutes)
+    - SPRINT_LOG.md (this entry)
+  Tests added: None. Public marketing page; no API routes, no data access, no PHI.
+  MIGRATION REQUIRED: None. This sprint is code-only.
+
+DISCOVERED ISSUE [feat/research-page-D2]: Rule 9 (mobile and web ship together) is violated
+  by all existing public marketing pages in the app/ directory. The /ccf, /about, /waitlist,
+  /data, /promise, /privacy, /terms, and now /research pages have no counterpart in
+  apps/mobile/app/. This is a pre-existing pattern across the codebase, not introduced by
+  this session. Logging per Rule 8. A dedicated sprint should create mobile screens for all
+  public/marketing pages or establish an explicit policy exempting them.
+  File: app/research/page.tsx (and all other public pages listed above)
+
