@@ -104,7 +104,7 @@ export async function middleware(request: NextRequest) {
 
   // /ccf-dashboard is intentionally absent -- it is protected and requires isAllowedEmail.
   // /hq is protected by its own cookie gate above; exempt from Supabase session check.
-  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/update-password", "/privacy", "/terms", "/about", "/security", "/ccf", "/disclaimer", "/data", "/waitlist", "/promise", "/privacy-notice", "/hq"];
+  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/update-password", "/privacy", "/terms", "/about", "/security", "/ccf", "/disclaimer", "/data", "/waitlist", "/promise", "/privacy-notice", "/hq", "/research"];
   // Use startsWith(route + "/") not startsWith(route) to prevent /ccf from matching /ccf-dashboard.
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || (route !== "/" && pathname.startsWith(route + "/"))
