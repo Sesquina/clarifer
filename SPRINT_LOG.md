@@ -2696,3 +2696,22 @@ TESTS: None added. Read-only audit per session instructions.
 MIGRATIONS: None. No code changes.
 COMMITS: SPRINT_LOG.md only, to fix/supabase-baa-check (do not push to main).
 
+
+---
+[2026-05-28] SESSION: feat/research-page
+Branch: feat/research-page
+
+TASK STARTED: Add /research CCF presentation page (public, no auth)
+
+DECISION REQUIRED [feat/research-page-D1]: Source HTML file missing.
+Task specifies the HTML source at C:\Users\esqui\clarifer\clarifer-research-presentation.html
+(WSL path: /mnt/c/Users/esqui/clarifer/clarifer-research-presentation.html).
+The file does not exist at that path or anywhere else in the filesystem.
+A full find across /mnt/c/Users/esqui found no file matching *research*presentation* or *ccf* HTML.
+
+Per RULE 1: "Confirm the file exists before referencing it in code."
+Per RULE 10: Cannot proceed without the source HTML content.
+
+Branch feat/research-page has been created from origin/main (Step 1 complete).
+TypeScript errors: 0.
+Awaiting source file or inline HTML content to proceed with Steps 2-6.
