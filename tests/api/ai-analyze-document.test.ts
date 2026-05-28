@@ -73,6 +73,11 @@ function makeMockSupabase(userOverride: unknown, roleOverride: unknown, docOverr
     storage: {
       from: vi.fn().mockReturnValue({
         download: vi.fn().mockResolvedValue({ data: new Blob(["fake pdf"]), error: null }),
+        // Required since route now calls generateSignedUrl() for storage paths before fetch()
+        createSignedUrl: vi.fn().mockResolvedValue({
+          data: { signedUrl: "https://mock-storage.supabase.co/signed/doc.pdf" },
+          error: null,
+        }),
       }),
     },
     _chatInsert: chatInsert,
