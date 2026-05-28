@@ -38,7 +38,7 @@ export function AppHeader({ userName }: AppHeaderProps) {
           fontSize: 14,
           color: "var(--muted)",
         }}>
-          {userName}
+          {userName.split(' ')[0]}
         </span>
       )}
     </header>
