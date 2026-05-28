@@ -237,7 +237,17 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 7.5rem)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
-      <ChatHistory messages={messages} isLoading={isLoading} isAnalyzing={isAnalyzing} />
+      <ChatHistory messages={messages} isLoading={isLoading} />
+      <p style={{
+        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+        fontSize: 12,
+        color: "var(--muted)",
+        textAlign: "center",
+        padding: "4px 16px",
+        margin: 0,
+      }}>
+        Clarifer does not diagnose. For clinical decisions, always consult your care team.
+      </p>
       <ChatInput
         onSend={handleSend}
         onFileSelect={handleFileUpload}

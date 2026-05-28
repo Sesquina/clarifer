@@ -45,33 +45,13 @@ export function AppHeader({ userName }: AppHeaderProps) {
       </Link>
 
       {userName && (
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: 14,
-            color: "var(--muted)",
-          }}>
-            {userName}
-          </span>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            style={{
-              height: 44,
-              padding: "0 12px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--primary)",
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: 14,
-              fontWeight: 500,
-              minWidth: 44,
-            }}
-          >
-            Sign out
-          </button>
-        </div>
+        <span style={{
+          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+          fontSize: 14,
+          color: "var(--muted)",
+        }}>
+          {userName.split(' ')[0]}
+        </span>
       )}
     </header>
   );
