@@ -1,6 +1,7 @@
 export const runtime = "edge";
 
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { chatLimiter } from "@/lib/ratelimit";
@@ -209,6 +210,7 @@ ${patient.condition_templates?.ai_context || ""}`
           ]);
           controller.close();
         } catch (error) {
+          Sentry.captureException(error, { tags: { route: "api/chat", phase: "stream" } });
           console.error('[chat/route] stream error:', error);
           controller.enqueue(encoder.encode("Sorry, something went wrong. Please try again."));
           controller.close();
@@ -222,7 +224,8 @@ ${patient.condition_templates?.ai_context || ""}`
         "Transfer-Encoding": "chunked",
       },
     });
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error, { tags: { route: "api/chat", phase: "handler" } });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
