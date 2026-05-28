@@ -3108,3 +3108,137 @@ COMMIT
   all required columns (user_id, patient_id, title,
   message, type, action_url, read, organization_id,
   created_at). No MIGRATION REQUIRED.
+
+============================================================
+[2026-05-27] S20 STATUS: BLOCKED -- DECISION REQUIRED (S20-D1..D4)
+Branch (actual): feat/notifications (last shipped: S19)
+Branch (requested by task): sprint-3-patient-hub (deprecated format, see S20-D3)
+Session task: build /patients/[id] hub with insurance stack,
+              coverage waterfall, authorization wallet, income
+              cliff alert. GET /api/patients/[id] with HIPAA 4/4.
+
+STEP 0 REPORT
+  Branch:                  feat/notifications
+  Last 5 commits:
+    f91c661 fix(S19): notifications inbox
+    b5b3635 docs: add CLARIFER_BRAIN.md
+    bd1ee04 fix(S18): harden /api/patients/create input validation
+    359877b wip(S18): still blocked
+    1dcfe6d wip(S18): blocked
+  Uncommitted changes:     CURRENT_SESSION.md only (sprint
+                           orchestrator marker; not real content).
+  TypeScript errors:       0 (npx tsc --noEmit).
+  Test status:             see post-block run (pending at time of
+                           write; known pre-existing failures from
+                           S19-DI1 unrelated to this task).
+  Last 10 migrations:      ...20260526000001_account_deletion_cascade.sql
+                           (no insurance/coverage tables).
+  Open DECISION REQUIRED:  S17-D1, S17-D2, S18-D1..D6 still open.
+  Open MIGRATION REQUIRED: 20260423000006_full_schema_baseline.sql
+                           and downstream migrations still pending
+                           Samira to run in production (per CLAUDE.md
+                           Section 11). No new migrations this session.
+
+WHY BLOCKED
+  Four distinct blockers, each independently sufficient under
+  the 10 rules. Per Rule 10 (when in doubt, stop) and Rule 3
+  (missing-table protocol), this is not a guess-and-proceed
+  situation.
+
+DECISION REQUIRED [S20-D1]: Schema mismatch -- four required
+features reference tables that do not exist in the CONFIRMED
+SCHEMA (docs/CLARIFER_BRAIN.md, 28 tables, lines 144-201):
+  Feature                      Required table (none found)
+  ---------------------------  -------------------------------
+  Insurance stack              insurance_policies (or similar)
+  Coverage waterfall           coverage_periods / payer_order
+  Authorization wallet         prior_authorizations
+  Income cliff alert           financial_eligibility / income
+Verified by:
+  grep -ri "insurance|coverage|authorization_wallet|income_cliff"
+       supabase/migrations/   --> 0 matches
+       lib/ app/ components/  --> only hq/sessions/page.tsx
+       (planned-work labels: "T2-X Insurance stack fields in
+       patient profile", "T2-Y Coverage waterfall display").
+Per Rule 3: "Never substitute one table for another. Never
+assume a table exists." Per the MISSING TABLE clause in the
+DECISION FRAMEWORK: stop, do not create new tables without
+explicit go-ahead.
+QUESTIONS FOR SAMIRA:
+  a. Are these four features in scope for Clarifer v1, or have
+     they been carried over from a different product brief?
+  b. If in scope: write a single migration that adds four new
+     tables (insurance_policies, coverage_periods,
+     prior_authorizations, financial_eligibility) with full
+     org-isolation RLS and audit_log triggers? Or split into
+     four migrations, one per feature?
+  c. Each table needs a column inventory before any SQL is
+     written. Provide the field list (or approve a proposed
+     list before SQL is drafted).
+
+DECISION REQUIRED [S20-D2]: Existing-file overlap.
+  app/(app)/patients/[id]/page.tsx already exists (built in
+  Sprint 7, hardened through Sprint 13). It currently renders
+  six sections: documents, symptoms (7-day chart), biomarkers,
+  biomarker-trial matcher, medications, appointments, care
+  team, DPD alert, newly-connected checklist, support group,
+  specialist finder, nutrition guidance, patient advocate
+  connect, export PDF, emergency card.
+  app/api/patients/[id]/route.ts also exists with the four
+  HIPAA gates already in place (per CONFIRMED API ROUTES in
+  docs/CLARIFER_BRAIN.md).
+Per DECISION FRAMEWORK ("EXISTING FILE"): read the existing
+file in full, then harden -- do not rebuild. But hardening
+this page with insurance/coverage/etc. is impossible until
+S20-D1 is resolved (no tables, no data, no API).
+QUESTION FOR SAMIRA: confirm the intent for this session.
+  Option A: Add the four new sections to the existing hub
+            (waits on S20-D1).
+  Option B: Replace the existing hub with a purely
+            insurance/coverage-focused layout (also waits
+            on S20-D1, plus needs a UX decision on what
+            happens to the clinical sections already there).
+  Option C: Skip S20; the hub work is already complete from
+            Sprint 7, and the orchestrator queued an out-of-
+            date task. Advance to S21 / next live sprint.
+RECOMMENDATION: C looks most likely correct -- the hub was
+delivered in Sprint 7 -- but this is a scope decision, not
+an engineering decision.
+
+DECISION REQUIRED [S20-D3]: Branch naming conflict.
+  CURRENT_SESSION.md asks for branch "sprint-3-patient-hub".
+  Rule 5 + DECISION FRAMEWORK ("BRANCH NAMING") explicitly
+  forbid the sprint-N-name format. Always use fix/* or feat/*.
+  Current branch is feat/notifications (S19 just shipped).
+QUESTION FOR SAMIRA: when S20 is unblocked, target branch is
+  feat/patient-hub-extensions (or fix/* equivalent), correct?
+  Confirm or supply preferred slug.
+
+DECISION REQUIRED [S20-D4]: Orchestrator drift (recurring).
+  See prior session memo on orchestrator drift. The session
+  task references "Sprint 3" (the original multi-tenancy
+  sprint per Section 10 of docs/CLAUDE.md, completed long
+  ago). The "patient hub" deliverable was actually built in
+  Sprint 7 (April 23, 2026; see Section 11 of docs/CLAUDE.md).
+  advance-session.sh appears to be reading from an older or
+  divergent sprint plan than the actual roadmap.
+QUESTION FOR SAMIRA: rerun advance-session.sh against the
+  current SPRINT_STATUS.md state? The script should not be
+  pointing at S20 = "sprint-3-patient-hub" when the live
+  state is S19 just merged into feat/notifications.
+
+PER RULE 10 -- NO CODE CHANGES THIS SESSION
+  - No new files written under app/ or apps/mobile/app/.
+  - No SQL written to supabase/migrations/.
+  - No edits to the existing patient hub page or API route.
+  - No npm install. No package additions.
+
+NEXT ACTIONS (when unblocked)
+  1. Samira resolves S20-D1..D4 above.
+  2. If schema is approved for the four new tables: draft a
+     single migration with full RLS + audit_log triggers,
+     log as MIGRATION REQUIRED, do not execute.
+  3. Build new sections in a branch named per S20-D3.
+  4. Add corresponding mobile screens per Rule 9.
+  5. Tests for every new API route + audit_log assertion.
+============================================================
