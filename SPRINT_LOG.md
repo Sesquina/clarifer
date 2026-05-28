@@ -3242,3 +3242,99 @@ NEXT ACTIONS (when unblocked)
   4. Add corresponding mobile screens per Rule 9.
   5. Tests for every new API route + audit_log assertion.
 ============================================================
+
+============================================================
+[2026-05-28] SESSION S19 (RE-FIRED) -- ORCHESTRATOR DRIFT
+Branch (actual): fix/runner-setup-may28
+Branch (requested by task): sprint-2-notifications (does not exist;
+                            also a deprecated naming format)
+
+STEP 0 REPORT
+  Branch:              fix/runner-setup-may28
+  Last 5 commits:
+    ebb3f97 infra: fix runner auth, update sprint status to S18, queue S-INFRA-1
+    490d0df wip(S20): blocked -- see SPRINT_LOG.md
+    f91c661 fix(S19): notifications inbox -- COMPLETED 2026-05-27
+    b5b3635 docs: add CLARIFER_BRAIN.md
+    bd1ee04 fix(S18): harden /api/patients/create input validation
+  Uncommitted changes: CURRENT_SESSION.md, docs/CLARIFER_SPRINT_PLAN.md
+                       (both managed by advance-session.sh, not edited
+                       by hand; line-ending churn ignored per Rule
+                       LINE ENDING CHURN).
+  TypeScript errors:   0 (npx tsc --noEmit).
+  Test status:         pre-existing failures from S19-DI1 documented
+                       under fix/runner-setup-may28; S19's own 11
+                       tests passing per f91c661 commit attestation.
+  Last 10 migrations:  ...20260526000001_account_deletion_cascade.sql
+                       (no new migration needed for this re-fired task).
+
+WHY NO CODE WAS WRITTEN
+  CURRENT_SESSION.md (generated 2026-05-28 00:10:03 PDT by
+  advance-session.sh) requested re-execution of S19 -- but S19 was
+  already shipped on 2026-05-27 in commit f91c661 on branch
+  feat/notifications. All deliverables exist:
+    - app/notifications/page.tsx + layout.tsx
+    - app/api/notifications/route.ts (GET + ?count=1 + ?filter=)
+    - app/api/notifications/[id]/read/route.ts (PATCH)
+    - components/notifications/{NotificationList,NotificationBell}.tsx
+    - apps/mobile/app/(app)/notifications.tsx
+    - tests/api/notifications/{list,read}.test.ts (11 tests)
+  All four HIPAA gates verified in both API routes (auth, role,
+  user_id + organization_id filter, audit_log SELECT/UPDATE with
+  forensic columns). Cross-tenant PATCH returns 404 without leaking
+  existence. tsc --noEmit = 0 errors.
+
+  Per docs/CLARIFER_BRAIN.md "EXISTING FILE" decision framework
+  ("If it works correctly: harden it. Do not rebuild it"): looked
+  for hardening opportunities and found none material to S19 scope.
+  Per Rule 8 (BUGS GET REPORTED, NOT FIXED INLINE) and Rule 10
+  (WHEN IN DOUBT, STOP): no inline expansion.
+
+DECISION REQUIRED [S19-D-DRIFT-3]: Orchestrator drift, third mode.
+  The runner has now re-fired a session whose previous commit was
+  fix(SN): (a non-wip completion marker). Prior modes already
+  logged:
+    Mode 1 (S12, 2026-05-27): pointer advanced without verifying
+           prior commit + SPRINT_STATUS append.
+    Mode 2 (S18, 2026-05-27): re-fired a session whose prior
+           commit was wip(SN): blocked.
+    Mode 3 (this entry, 2026-05-28 S19): re-fired a session whose
+           prior commit was fix(SN): -- a clean completion.
+
+  Note also: SPRINT_STATUS.md was deliberately truncated to S18 in
+  commit ebb3f97 ("update sprint status to S18, queue S-INFRA-1").
+  The expected next queued task per that commit message was
+  S-INFRA-1, NOT S19. The advance-session.sh output disagrees with
+  the recorded operator intent.
+
+  QUESTIONS FOR SAMIRA:
+    a. Is advance-session.sh reading from a stale/divergent state
+       (e.g. an older sprint plan or non-committed cache)?
+    b. Should S19 be re-listed in SPRINT_STATUS.md (it was shipped
+       in f91c661 but the row is absent)? Or was the truncation
+       to S18 intentional (e.g. S19 work is being reviewed before
+       acceptance)?
+    c. Is S-INFRA-1 the actual next task, per ebb3f97's commit
+       message? If so, please re-run advance-session.sh so
+       CURRENT_SESSION.md reflects that.
+
+  See also [[project-clarifer-orchestrator-drift]] memory note.
+
+NEXT ACTIONS (when unblocked)
+  1. Samira resolves S19-D-DRIFT-3 above.
+  2. Re-run advance-session.sh against the current SPRINT_STATUS.md
+     to regenerate CURRENT_SESSION.md with the correct next task.
+  3. If S-INFRA-1 is the intended next session: queue it explicitly.
+  4. If S19 still needs hardening or additional work: spell out the
+     specific gap (the existing deliverable is functionally complete
+     and passes all four HIPAA gates).
+
+PER RULE 10 -- NO CODE CHANGES THIS SESSION
+  - No new files written under app/ or apps/mobile/app/.
+  - No SQL written to supabase/migrations/.
+  - No edits to existing S19 files.
+  - No edits to SPRINT_STATUS.md (preserves Samira's S18
+    truncation in ebb3f97).
+  - No edits to CURRENT_SESSION.md or docs/CLARIFER_SPRINT_PLAN.md
+    (orchestrator-managed; left as advance-session.sh wrote them).
+============================================================
