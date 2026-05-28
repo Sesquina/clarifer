@@ -1,3 +1,12 @@
+/**
+ * app/api/ai/analyze-document/route.ts
+ * POST /api/ai/analyze-document
+ * Streams an AI analysis of an uploaded document.
+ * Tables: documents (read/write), patients (read), condition_templates (read),
+ *         chat_messages (write), audit_log (write), users (read)
+ * Auth: caregiver
+ * HIPAA: PHI document. Auth + role + org_id enforced. audit_log written on every analysis.
+ */
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +14,7 @@ import { analyzeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { extractText } from "@/lib/documents/extract";
 import { buildAnalysisPrompt } from "@/lib/documents/prompt";
+import { generateSignedUrl } from "@/lib/documents/storage";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,6 +24,9 @@ const ALLOWED_ROLES = ["caregiver"];
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
+
+  // Step 5: log API key presence so errors appear in Vercel logs
+  console.log("[analyze-document] ANTHROPIC_API_KEY present:", !!process.env.ANTHROPIC_API_KEY);
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -71,17 +84,49 @@ export async function POST(request: Request) {
   }
 
   if (!doc.file_url) {
+    console.error("[analyze-document] document has no file_url, documentId:", documentId);
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
-  const fileResponse = await fetch(doc.file_url);
-  if (!fileResponse.ok) {
+  // FIX: Documents uploaded via /api/documents/upload store a bare storage path
+  // (e.g. "org-id/patient-id/uuid.pdf"), not an absolute URL. fetch() on a relative
+  // path throws TypeError: Only absolute URLs are supported, causing a 500.
+  // Generate a fresh signed URL whenever file_url is not already an absolute URL.
+  let fetchUrl = doc.file_url;
+  if (!fetchUrl.startsWith("http")) {
+    try {
+      fetchUrl = await generateSignedUrl(doc.file_url);
+    } catch (urlErr) {
+      console.error("[analyze-document] generateSignedUrl failed:", urlErr, "path:", doc.file_url);
+      return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
+    }
+  }
+
+  let buffer: Buffer;
+  try {
+    const fileResponse = await fetch(fetchUrl);
+    if (!fileResponse.ok) {
+      console.error(
+        "[analyze-document] file fetch failed — status:", fileResponse.status,
+        "url prefix:", fetchUrl.slice(0, 80)
+      );
+      return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
+    }
+    buffer = Buffer.from(await fileResponse.arrayBuffer());
+  } catch (fetchErr) {
+    console.error("[analyze-document] fetch threw:", fetchErr, "file_url was:", doc.file_url);
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
-  const buffer = Buffer.from(await fileResponse.arrayBuffer());
+
   const rawType = doc.file_type ?? "pdf";
   const mimeType = rawType.includes("/") ? rawType : `application/${rawType}`;
-  const documentText = await extractText(buffer, mimeType);
+  let documentText: string;
+  try {
+    documentText = await extractText(buffer, mimeType);
+  } catch (extractErr) {
+    console.error("[analyze-document] extractText threw:", extractErr, "mimeType:", mimeType);
+    return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
+  }
 
   const { data: patient } = await supabase
     .from("patients")
@@ -100,9 +145,16 @@ export async function POST(request: Request) {
     if (template?.ai_context) conditionContext = template.ai_context;
   }
 
+  let anthropicClient: Anthropic;
+  try {
+    anthropicClient = new Anthropic();
+  } catch (initErr) {
+    console.error("[analyze-document] Anthropic() constructor threw:", initErr);
+    return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
+  }
+
   const documentType = doc.document_category ?? "medical document";
   const prompt = buildAnalysisPrompt(documentText, documentType, conditionContext);
-  const anthropicClient = new Anthropic();
   const encoder = new TextEncoder();
 
   const readableStream = new ReadableStream({
@@ -151,7 +203,8 @@ export async function POST(request: Request) {
           })(),
         ]);
         controller.close();
-      } catch {
+      } catch (streamErr) {
+        console.error("[analyze-document] stream error:", streamErr);
         controller.enqueue(
           encoder.encode(JSON.stringify({ error: "Analysis temporarily unavailable" }))
         );
