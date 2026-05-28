@@ -1,63 +1,50 @@
+/**
+ * app/notifications/page.tsx
+ * Caregiver/patient/provider notifications inbox: symptom alerts,
+ * medication reminders, care team updates.
+ * Tables: notifications (read), users (read)
+ * Auth: signed-in users only (redirect to /login otherwise).
+ * HIPAA: row scoped to user_id + organization_id. No condition names
+ *        are surfaced. Mark-read happens per row via the API route,
+ *        not implicitly on load.
+ */
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { Card, CardContent } from "@/components/ui/card";
-import { Bell } from "lucide-react";
-import { formatRelativeDate } from "@/lib/utils";
+import { NotificationList, type NotificationRow } from "@/components/notifications/NotificationList";
 
 export default async function NotificationsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: notifications } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
 
-  // Mark all as read
-  await supabase
-    .from("notifications")
-    .update({ read: true })
-    .eq("user_id", user.id)
-    .eq("read", false);
+  const orgId = userRecord?.organization_id ?? null;
+
+  let notifications: NotificationRow[] = [];
+  if (orgId) {
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, title, message, type, action_url, read, created_at")
+      .eq("user_id", user.id)
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    notifications = (data ?? []) as NotificationRow[];
+  }
 
   return (
     <PageContainer>
       <div className="space-y-4">
-        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>Notifications</h1>
-
-        {(!notifications || notifications.length === 0) ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-12">
-              <Bell className="h-10 w-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No notifications yet</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {notifications.map((n) => (
-              <Card key={n.id} className={n.read ? "opacity-60" : ""}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Bell className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{n.title}</p>
-                      {n.message && <p className="mt-0.5 text-sm text-muted-foreground">{n.message}</p>}
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatRelativeDate(n.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-playfair)" }}>
+          Notifications
+        </h1>
+        <NotificationList initial={notifications} />
       </div>
     </PageContainer>
   );

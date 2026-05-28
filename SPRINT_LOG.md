@@ -2923,3 +2923,188 @@ COMMIT
          SPRINT_LOG.md (this entry)
          SPRINT_STATUS.md (S18 row)
   No SQL written this session. Do not push to main.
+
+---
+[2026-05-27] S18 DECISIONS RESOLVED BY SAMIRA
+
+S18-D1 RESOLVED: Use fix/ branch format. sprint-N-name is deprecated.
+S18-D2 RESOLVED: Existing 3-step onboarding stays. Harden it, do not rebuild.
+S18-D3 RESOLVED: Use patients table. There is no profiles table.
+S18-D4 RESOLVED: Use existing POST /api/patients/create. Do not create duplicate route.
+S18-D5 RESOLVED: Vitest gate is no new failures introduced. Pre-existing failures do not block.
+S18-D6 RESOLVED: Mobile onboarding is its own session. Not in scope for S18.
+
+All S18 blocks cleared. Runner may proceed.
+
+---
+[2026-05-27] SESSION S19 -- feat/notifications -- COMPLETE
+
+TASK
+  Build /notifications page, GET /api/notifications,
+  PATCH /api/notifications/[id]/read, bell-badge on header
+  with realtime updates. Mobile screen at apps/mobile/app/
+  (app)/notifications.tsx.
+
+DECISION FRAMEWORK APPLIED
+  All target files already existed in the working tree
+  (untracked) from a prior session, in good shape. Per the
+  EXISTING FILE rule (read in full, harden if needed, do
+  not rebuild) the build was reviewed for correctness, not
+  rewritten. No regressions introduced.
+
+  Branch is feat/notifications, NOT sprint-2-notifications.
+  Per CLARIFER_BRAIN.md decision framework, sprint-N-name
+  is the deprecated branch format; feat/ is correct.
+
+HIPAA REQUIREMENTS (all four on every new route)
+  GET /api/notifications
+    1. supabase.auth.getUser() -- 401 if no session.
+    2. users role check (caregiver|patient|provider|admin)
+       -- 403 otherwise.
+    3. .eq("user_id", user.id).eq("organization_id", orgId)
+       on every query branch (list, count, filter).
+    4. audit_log INSERT with action=SELECT,
+       resource_type=notifications, forensic columns
+       (ip_address, user_agent, status).
+
+  PATCH /api/notifications/[id]/read
+    1. supabase.auth.getUser() -- 401 if no session.
+    2. users role check -- 403 otherwise.
+    3. .eq("id", id).eq("user_id", user.id)
+       .eq("organization_id", orgId) on UPDATE. Returns
+       404 if no row matches -- never leaks foreign-row
+       existence.
+    4. audit_log INSERT with action=UPDATE,
+       resource_type=notifications, resource_id, forensic
+       columns. Only written on successful update.
+
+WHAT WAS BUILT
+  app/api/notifications/route.ts (new)
+    GET. Returns { notifications, unread } scoped to user
+    + org. ?count=1 returns just unread count for the
+    bell. ?filter=symptom_alert|medication_reminder|
+    care_team_update narrows by type.
+
+  app/api/notifications/[id]/read/route.ts (new)
+    PATCH. Marks one notification read. Cross-tenant /
+    foreign-user attempts return 404.
+
+  app/notifications/page.tsx (modified)
+    Replaced the implicit mark-all-on-load behaviour with
+    a per-row mark-read flow driven by the API. Org-scoped
+    server-side read. Renders NotificationList.
+
+  app/notifications/layout.tsx (pre-existing, unchanged)
+    Re-exports the platform AppLayout so the notifications
+    route is auth-gated and gets the header.
+
+  components/notifications/NotificationList.tsx (new)
+    Client component. Tabs: All / Symptoms / Medications
+    / Care team. Per-row "Mark read" with 48px touch
+    target. Icons from lucide. CSS variables only.
+
+  components/notifications/NotificationBell.tsx (new)
+    Bell icon + unread badge wired into AppHeader.
+    Realtime: Supabase channel subscribed to
+    postgres_changes on notifications filtered by
+    user_id=eq.{userId}. Polling fallback every 60s.
+    Badge caps at "9+". aria-label updates with count.
+
+  components/layout/app-header.tsx (modified)
+    Now accepts userId and renders NotificationBell when
+    a userId is passed.
+
+  components/layout/app-layout.tsx (modified)
+    Passes user.id to AppHeader.
+
+  apps/mobile/app/(app)/notifications.tsx (new)
+    Mobile screen. Filter chips, pull-to-refresh, per-row
+    mark-read. Relies on RLS for org isolation (no
+    explicit org filter). Hex strings here mirror the
+    existing apps/mobile design pattern -- tokenization
+    of the entire mobile app is tracked as a Sprint 17
+    audit item, not in scope here.
+
+TESTS ADDED
+  tests/api/notifications/list.test.ts -- 6 tests
+    401 no session, 401 no org, 403 wrong role, 200 list
+    with user_id + org_id filters + audit_log written,
+    ?count=1 returns unread + applies read=false filter,
+    ?filter=symptom_alert applies type filter.
+
+  tests/api/notifications/read.test.ts -- 5 tests
+    401 no session, 403 wrong role, 200 success with
+    user_id + org_id scoping + audit_log UPDATE, 404 on
+    foreign row (no audit_log written), 500 on db error.
+
+  All 11 new tests pass.
+
+DEFINITION OF DONE (per task)
+  tsc --noEmit:      0 errors. PASS.
+  vitest delta:      tests/api/notifications/ 11 / 11.
+                     No other test files touched.
+                     Pre-existing failures: 10 tests
+                     across 3 files
+                     (tests/api/provider/export.test.ts,
+                      tests/api/export/pdf.test.ts,
+                      tests/components/export/
+                        export-button.test.tsx)
+                     all "TypeError: object.stream is
+                     not a function" -- vitest Blob /
+                     Response polyfill issue, unrelated
+                     to notifications. Not fixed inline
+                     per Rule 8 -- logged below.
+  New failures introduced:  0. PASS.
+  Desktop + mobile viewport: PASS (responsive page
+                                   container; mobile
+                                   screen at
+                                   apps/mobile/app/
+                                   (app)/notifications.tsx).
+  Mobile parity:     PASS (Rule 9).
+
+DISCOVERED ISSUE [S19-DI1]
+  tests/api/provider/export.test.ts (4 failures)
+  tests/api/export/pdf.test.ts (4 failures)
+  tests/components/export/export-button.test.tsx (2 fails)
+  All raise: TypeError: object.stream is not a function
+  CAUSE: vitest's Response/Blob polyfill does not
+  implement Blob.stream() (added in Node 18). The tests
+  wrap a Blob in new Response(...) and the PDF route
+  pipes blob.stream() into the response. Environment
+  bug, not a product bug.
+  ACTION: Bump vitest environment to node with native
+  Blob.stream(), or use ReadableStream directly in tests.
+  Not in scope for S19.
+
+DISCOVERED ISSUE [S19-DI2]
+  apps/mobile/app/(app)/notifications.tsx contains 21
+  hex color strings.
+  CAUSE: Mirrors the existing mobile app pattern -- every
+  other mobile screen (auth, home, care-team,
+  medications, documents, patients) uses hex strings
+  directly. There is no mobile design-token module yet.
+  ACTION: Tokenize the entire mobile app in a single
+  pass. Already tracked as part of the Sprint 17 mobile
+  parity audit. Not in scope for S19.
+
+COMMIT
+  feat/notifications branch only. Will NOT push to main.
+  Files committed:
+    app/api/notifications/route.ts
+    app/api/notifications/[id]/read/route.ts
+    app/notifications/page.tsx
+    components/notifications/NotificationList.tsx
+    components/notifications/NotificationBell.tsx
+    components/layout/app-header.tsx
+    components/layout/app-layout.tsx
+    apps/mobile/app/(app)/notifications.tsx
+    tests/api/notifications/list.test.ts
+    tests/api/notifications/read.test.ts
+    SPRINT_LOG.md (this entry)
+    SPRINT_STATUS.md (S19 row)
+    CURRENT_SESSION.md (S19 marker)
+  No SQL written this session. notifications table already
+  exists in 20260423000006_full_schema_baseline.sql with
+  all required columns (user_id, patient_id, title,
+  message, type, action_url, read, organization_id,
+  created_at). No MIGRATION REQUIRED.

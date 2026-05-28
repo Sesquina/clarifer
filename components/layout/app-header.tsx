@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface AppHeaderProps {
   userName?: string | null;
+  userId?: string | null;
 }
 
-export function AppHeader({ userName }: AppHeaderProps) {
+export function AppHeader({ userName, userId }: AppHeaderProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -46,6 +48,7 @@ export function AppHeader({ userName }: AppHeaderProps) {
 
       {userName && (
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {userId && <NotificationBell userId={userId} />}
           <span style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: 14,
