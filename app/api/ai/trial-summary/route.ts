@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       .single(),
     supabase
       .from("patients")
-      .select("name, condition_template_id, primary_language, custom_diagnosis")
+      .select("name, condition_template_id, primary_language")
       .eq("id", patientId)
       .eq("organization_id", organizationId)
       .single(),
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let conditionContext = patient?.custom_diagnosis ?? "general oncology";
+  let conditionContext = "their condition";
 
   if (patient?.condition_template_id) {
     const { data: template } = await supabase
@@ -134,6 +134,7 @@ export async function POST(request: Request) {
     if (template?.ai_context) conditionContext = template.ai_context;
   }
 
+  const firstName = patient?.name?.split(' ')[0] ?? 'your loved one';
   const trialData = trialDataOverride ?? trialSave;
   const trialContext = [
     `Trial name: ${trialData?.trial_name ?? "Unknown trial"}`,
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join("\n");
 
-  const userMessage = `Patient name: ${patient?.name ?? "the patient"}
+  const userMessage = `Patient name: ${firstName}
 Patient condition: ${conditionContext}
 
 Trial:

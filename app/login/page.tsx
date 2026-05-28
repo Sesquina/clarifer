@@ -70,11 +70,11 @@ export default function LoginPage() {
     setError(null);
     setGoogleLoading(true);
     try {
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${origin}/auth/callback` },
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        },
       });
       if (oauthError) {
         setError(friendlyLoginError(oauthError.message));

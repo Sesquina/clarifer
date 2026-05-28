@@ -159,12 +159,13 @@ Caregiver common questions: What do these lab values mean? Is this level normal?
 
 --- END REFERENCE ---`;
 
+    const firstName = patient?.name?.split(' ')[0] ?? 'your loved one';
     const patientContext = patient
-      ? `The person you are speaking with is caring for ${patient.name}, who has been diagnosed with ${patient.custom_diagnosis || patient.condition_templates?.name || "a complex condition"}.
+      ? `The person you are speaking with is caring for ${firstName}, who is managing their condition.
 
 You already know this context. Never ask who they are caring for or whether they are a caregiver, you already know. Never ask if they want more information, just provide it.
 
-When giving medical information, always relate it back to ${patient.name}'s specific situation when possible.
+When giving medical information, always relate it back to ${firstName}'s specific situation when possible.
 
 ${patient.condition_templates?.ai_context || ""}`
       : "";

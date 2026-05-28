@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const [patientResult, symptomResult, medicationsResult] = await Promise.all([
-      supabase.from("patients").select("name, custom_diagnosis").eq("id", patientId).eq("organization_id", organizationId).single(),
+      supabase.from("patients").select("name").eq("id", patientId).eq("organization_id", organizationId).single(),
       supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary, created_at").eq("patient_id", patientId).eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("medications").select("name, dose, frequency, indication").eq("patient_id", patientId).eq("organization_id", organizationId).eq("is_active", true),
     ]);
@@ -79,7 +79,9 @@ export async function POST(request: Request) {
       ? medications.map((m) => [m.name, m.dose, m.frequency].filter(Boolean).join(" ")).join(", ")
       : "None listed";
 
-    const userMessage = `Patient name: ${patient.name}. Diagnosis: ${patient.custom_diagnosis || "Not specified"}. Recent symptoms: ${symptomSummary}. Current medications: ${medList}.`;
+    const { name: patientName } = patient;
+    const firstName = patientName?.split(' ')[0] ?? 'your loved one';
+    const userMessage = `Patient name: ${firstName}. Diagnosis: their condition. Recent symptoms: ${symptomSummary}. Current medications: ${medList}.`;
 
     if (userMessage.length > MAX_CONTENT_LENGTH) {
       return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
