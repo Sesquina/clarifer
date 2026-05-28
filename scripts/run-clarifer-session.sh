@@ -32,19 +32,10 @@ LOG="/home/sesquina/logs/clarifer-sessions.log"
 SCRIPTS="/home/sesquina/scripts"
 CLAUDE_BIN="/home/sesquina/.nvm/versions/node/v20.20.2/bin/claude"
 
-# --- Load environment variables ---
-# Your Anthropic API key must be in this file (one line: ANTHROPIC_API_KEY=sk-ant-...)
-ENV_FILE="/home/sesquina/.clarifer-env"
-if [ -f "$ENV_FILE" ]; then
-  source "$ENV_FILE"
-else
-  echo "ERROR: $ENV_FILE not found. Create it with your ANTHROPIC_API_KEY."
-  echo "  echo 'ANTHROPIC_API_KEY=sk-ant-your-key-here' > ~/.clarifer-env"
-  echo "  chmod 600 ~/.clarifer-env"
-  exit 1
-fi
-
-export ANTHROPIC_API_KEY
+# Use Claude Max subscription — do not export API key
+# Exporting API key overrides Max subscription and triggers API billing
+# Claude Code authenticates via ~/.claude.json (Max subscription)
+unset ANTHROPIC_API_KEY
 
 log() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') | $1" | tee -a "$LOG"
@@ -87,6 +78,10 @@ fi
 # =============================================================================
 
 cd "$REPO"
+
+log "DEPS: Running npm install to ensure node_modules is current..."
+cd "$REPO"
+npm install --silent 2>&1 | tail -3
 
 # Check we are not on main (safety check)
 CURRENT_BRANCH=$(git branch --show-current)
