@@ -22,4 +22,25 @@ test.describe('Patient Detail', () => {
     await expect(emergencyLink).toBeVisible({ timeout: 10000 });
   });
 
+  test('patient hub renders all dashboard sections with demo patient data', async ({ page }) => {
+    await page.goto(`/patients/${PATIENT_ID}`);
+    await assertNoError(page);
+    await expect(page.getByText('Carlos Rivera', { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Documents/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Symptoms/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Medications/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /appointments/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Care team/i })).toBeVisible({ timeout: 10000 });
+  });
+
+  test('patient hub upload action meets 48px minimum touch target', async ({ page }) => {
+    await page.goto(`/patients/${PATIENT_ID}`);
+    await assertNoError(page);
+    const uploadLink = page.getByRole('link', { name: /Upload/i }).first();
+    await expect(uploadLink).toBeVisible({ timeout: 10000 });
+    const box = await uploadLink.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) expect(box.height).toBeGreaterThanOrEqual(48);
+  });
+
 });

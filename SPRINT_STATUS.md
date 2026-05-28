@@ -35,3 +35,5 @@ S18 | fix/onboarding-hardening | DONE | 2026-05-27 | Onboarding hardened, no reb
 # ADD NEW COMPLETED SESSIONS BELOW THIS LINE
 # Format: S[N] | [branch] | DONE | [YYYY-MM-DD] | [one line summary]
 # ============================================================
+S19 | feat/notifications | DONE | 2026-05-28 | Notifications inbox, GET + PATCH API, bell badge with realtime
+S20 | feat/patient-hub | DONE | 2026-05-28 | Patient hub hardened, 2 new Playwright tests (sections + 48px touch target), orchestrator drift on insurance features flagged as S20-D-DRIFT-5

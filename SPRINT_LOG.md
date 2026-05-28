@@ -3338,3 +3338,179 @@ PER RULE 10 -- NO CODE CHANGES THIS SESSION
   - No edits to CURRENT_SESSION.md or docs/CLARIFER_SPRINT_PLAN.md
     (orchestrator-managed; left as advance-session.sh wrote them).
 ============================================================
+
+---
+[2026-05-28] ALL S20 AND S19 DECISIONS RESOLVED BY SAMIRA
+
+S20-D1 RESOLVED: Patient hub already exists. Harden what exists. Do not rebuild.
+S20-D2 RESOLVED: Use existing API routes. Do not create duplicates.
+S20-D3 RESOLVED: Branch name is feat/patient-hub
+S20-D4 RESOLVED: Orchestrator drift is a known issue. Ignore prior wip commits. Start fresh on feat/patient-hub.
+S19-D-DRIFT-3 RESOLVED: S19 is already done in f91c661. Mark it DONE and advance to S20.
+
+All blocks cleared. Runner may proceed.
+
+============================================================
+[2026-05-28] SESSION S20 COMPLETE -- PATIENT HUB HARDENED
+Branch: feat/patient-hub
+Prior context: S20-D1..D4 resolved by Samira above
+                (harden what exists, do not rebuild).
+
+STEP 0 REPORT
+  Branch:              feat/patient-hub (created fresh per S20-D3)
+  Last 5 commits:
+    bf2d416 wip(S19): re-fired by orchestrator
+    ebb3f97 infra: fix runner auth, update sprint status to S18
+    490d0df wip(S20): blocked
+    f91c661 fix(S19): notifications inbox -- COMPLETED 2026-05-27
+    b5b3635 docs: add CLARIFER_BRAIN.md
+  Uncommitted at entry: CURRENT_SESSION.md, SPRINT_LOG.md,
+                        SPRINT_STATUS.md, docs/CLARIFER_SPRINT_PLAN.md,
+                        package-lock.json (all orchestrator state).
+  TypeScript errors:   0 (npx tsc --noEmit, pre- and post-edit).
+  Test status:         320 / 330 passing.
+                       10 failures are pre-existing and unrelated
+                       to S20 -- all in
+                       tests/components/export/export-button.test.tsx
+                       (TypeError: object.stream is not a function;
+                       Blob/Response polyfill gap in jsdom). Already
+                       documented under fix/runner-setup-may28 by
+                       prior session. See DISCOVERED ISSUE entry
+                       below for the standing reference.
+  Last migrations:     no new migration -- patient hub uses existing
+                       patients / documents / symptom_logs / medications
+                       / appointments / care_relationships / audit_log.
+
+WHAT EXISTS (verified before any edit)
+  PAGE: app/(app)/patients/[id]/page.tsx
+    Comprehensive caregiver dashboard with sections for:
+    documents, symptoms (last 7 days, SVG chart), biomarkers,
+    biomarker-trial matcher, newly-connected 30-day checklist,
+    nutrition guidance, medications, upcoming appointments,
+    care team, support groups, specialist finder, patient
+    advocate connect, DPD enzyme alert (auto on fluoropyrimidines),
+    PDF export, emergency card link. Skeleton loaders + warm
+    EmptyState components. All colors via CSS variables. 48px
+    minimum touch targets on the Upload and Emergency card CTAs.
+
+  API: app/api/patients/[id]/route.ts
+    All four HIPAA gates present and verified:
+      1. AUTH:    supabase.auth.getUser() -> 401 on no user.
+      2. ROLE:    caregiver / provider / admin allowlist -> 403 on miss.
+      3. ORG_ID:  .eq("organization_id", organizationId) on every
+                  table query (patients, documents, symptom_logs,
+                  medications, appointments, care_relationships).
+                  Cross-tenant -> 404 (does not leak existence).
+      4. AUDIT:   audit_log INSERT with action=SELECT,
+                  resource_type=patients, ip_address, user_agent,
+                  status=success on the success path.
+
+  API TESTS: tests/api/patients-dashboard.test.ts
+    3 tests / passing:
+      - returns all 6 dashboard sections
+      - cross-tenant patient -> 404
+      - writes audit_log on SELECT
+
+  E2E TESTS: tests/e2e/03-patient-detail.spec.ts
+    3 pre-existing tests + 2 added this session (see below).
+
+WHAT WAS DONE THIS SESSION
+  Per S20-D1 ("Harden what exists. Do not rebuild.") and the
+  explicit task deliverable "Write Playwright test: patient hub
+  loads with demo patient data": strengthened the existing
+  Playwright spec at tests/e2e/03-patient-detail.spec.ts with
+  two additional tests against the demo Carlos Rivera record
+  (patient id 5fc76836-e2f7-47b6-a394-ddccef619c95):
+
+    TEST 4 (added): "patient hub renders all dashboard sections
+      with demo patient data" -- asserts Carlos Rivera name +
+      Documents, Symptoms, Medications, appointments, Care team
+      section headings all visible. Runs against both Desktop
+      Chrome and Mobile Chrome (Pixel 5) projects per
+      playwright.config.ts -- satisfies Rule 7 ("works on
+      desktop and mobile viewport").
+
+    TEST 5 (added): "patient hub upload action meets 48px minimum
+      touch target" -- bounding-box assertion on the Upload link
+      in the documents section. Enforces the design-system 48px
+      rule at the runtime layer.
+
+  Touch: no rebuild. No new API routes. No new pages. No new
+  components. No new env vars. No new SQL.
+
+WHAT WAS *NOT* DONE -- ORCHESTRATOR DRIFT CALLOUT
+  The CURRENT_SESSION.md task text written by advance-session.sh
+  names four sections that do not exist in the Clarifer product
+  domain: "insurance stack, coverage waterfall, authorization
+  wallet, income cliff alert." These map to an insurance-navigation
+  product, not the caregiver intelligence platform described in
+  docs/CLAUDE.md + docs/MASTER_SESSION_PROMPT.md + CLARIFER_BRAIN.md.
+  No tables back them. They are not on the Section 10 roadmap.
+  Per Samira's resolution above (S20-D1: "Do not rebuild"), these
+  were treated as orchestrator drift and not implemented.
+
+  The session task text also names a page path of
+  "app/(platform)/patients/[id]/page.tsx". The canonical hub lives
+  at app/(app)/patients/[id]/page.tsx. Creating a duplicate route
+  would have violated S20-D2 ("Use existing API routes. Do not
+  create duplicates"). The (app) route was hardened instead.
+
+DECISION REQUIRED [S20-D-DRIFT-5]: Orchestrator pulls feature
+  names from an external roadmap.
+  advance-session.sh has now twice (S20 first fire, S20 this fire)
+  written feature names ("insurance stack", "coverage waterfall",
+  "authorization wallet", "income cliff alert") that do not exist
+  in any docs/* file, any seed script, any migration, or the live
+  schema. These names look like they originated from a different
+  product specification entirely.
+  QUESTION FOR SAMIRA:
+    a. Is there a separate Clarifer financial-navigation product
+       under development that these features belong to? If so,
+       does it warrant its own SPRINT_PLAN file so the orchestrator
+       stops mixing them into the clinical-care roadmap?
+    b. Or are these placeholder names from a template that should
+       be removed from advance-session.sh's source?
+
+DISCOVERED ISSUE [S20-DI1]: Pre-existing vitest failures (10).
+  File: tests/components/export/export-button.test.tsx
+  Error: TypeError: object.stream is not a function (line 71).
+  Root cause: jsdom's Response/Blob polyfill lacks .stream() on
+  Blob objects, which @react-pdf/renderer download path relies on.
+  Already noted by fix/runner-setup-may28 prior session. Not
+  introduced by S20. Per Rule 8: logged, not fixed.
+  Suggested fix sprint: Polyfill Blob.prototype.stream in
+  tests/__setup.ts, or move ExportPDFButton.test.tsx to a
+  happy-dom environment override.
+
+DISCOVERED ISSUE [S20-DI2]: Patient hub displays custom_diagnosis.
+  File: app/(app)/patients/[id]/page.tsx, line 134.
+  The hub header renders `data.patient.custom_diagnosis ?? "Diagnosis
+  not recorded"`. The Copy Rules in CURRENT_SESSION.md include "No
+  condition names visible on caregiver-facing screens." If the demo
+  patient's custom_diagnosis contains a condition name, this is a
+  copy-rule violation.
+  Per Rule 8: logged, not fixed. Pre-existing -- not introduced by S20.
+
+PER RULE 5 -- NO NEW ENV VARS THIS SESSION.
+PER RULE 4 -- NO NEW MIGRATIONS THIS SESSION.
+PER RULE 9 -- No new web page added, so no new mobile screen
+              required. The existing mobile counterpart at
+              apps/mobile/app/(app)/patients/[id]/index.tsx
+              continues to satisfy the parity rule for the
+              hub (added in Sprint 7).
+
+VERIFICATION
+  npx tsc --noEmit  -> 0 errors.
+  npx vitest run    -> 320 / 330 passing (10 pre-existing failures
+                       in DI1 above, unchanged from baseline).
+  Playwright e2e    -> spec passes typecheck; live run requires
+                       https://clarifer.com auth state per
+                       playwright/global-setup.ts and is exercised
+                       by CI / Samira's manual run.
+
+NEXT
+  - Append S20 DONE line to SPRINT_STATUS.md per
+    CURRENT_SESSION.md "When this session is complete" block.
+  - Commit on feat/patient-hub.
+  - Stop. Do not advance to S21.
+============================================================
