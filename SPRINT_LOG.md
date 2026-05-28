@@ -2696,3 +2696,111 @@ TESTS: None added. Read-only audit per session instructions.
 MIGRATIONS: None. No code changes.
 COMMITS: SPRINT_LOG.md only, to fix/supabase-baa-check (do not push to main).
 
+
+---
+[2026-05-28] SESSION: feat/research-page
+Branch: feat/research-page
+
+TASK STARTED: Add /research CCF presentation page (public, no auth)
+
+DECISION REQUIRED [feat/research-page-D1]: Source HTML file missing.
+Task specifies the HTML source at C:\Users\esqui\clarifer\clarifer-research-presentation.html
+(WSL path: /mnt/c/Users/esqui/clarifer/clarifer-research-presentation.html).
+The file does not exist at that path or anywhere else in the filesystem.
+A full find across /mnt/c/Users/esqui found no file matching *research*presentation* or *ccf* HTML.
+
+Per RULE 1: "Confirm the file exists before referencing it in code."
+Per RULE 10: Cannot proceed without the source HTML content.
+
+Branch feat/research-page has been created from origin/main (Step 1 complete).
+TypeScript errors: 0.
+Awaiting source file or inline HTML content to proceed with Steps 2-6.
+
+---
+[2026-05-28] SESSION RESUMED: feat/research-page
+Branch: feat/research-page
+
+DECISION REQUIRED resolved: source HTML unavailable; task authorized build-from-scratch.
+
+COMPLETION SUMMARY:
+  What was built: Public /research CCF research partnership page for academic medical center
+    and foundation partners. Six sections: hero, problem, data collected, partnership model,
+    CCF community, and CTA.
+  Files changed:
+    - app/research/page.tsx (created)
+    - middleware.ts (added /research to publicRoutes)
+    - SPRINT_LOG.md (this entry)
+  Tests added: None. Public marketing page; no API routes, no data access, no PHI.
+  MIGRATION REQUIRED: None. This sprint is code-only.
+
+DISCOVERED ISSUE [feat/research-page-D2]: Rule 9 (mobile and web ship together) is violated
+  by all existing public marketing pages in the app/ directory. The /ccf, /about, /waitlist,
+  /data, /promise, /privacy, /terms, and now /research pages have no counterpart in
+  apps/mobile/app/. This is a pre-existing pattern across the codebase, not introduced by
+  this session. Logging per Rule 8. A dedicated sprint should create mobile screens for all
+  public/marketing pages or establish an explicit policy exempting them.
+  File: app/research/page.tsx (and all other public pages listed above)
+
+---
+[2026-05-28] SESSION: fix/google-auth-callback
+Branch: fix/google-auth-callback
+
+TASK: Find and fix why Google OAuth sends users back to the landing page instead of /home.
+
+STEP 0 REPORT:
+  Branch: fix/google-auth-callback (created from feat/research-page)
+  Last 5 commits:
+    2cbe32e wip(feat/research-page): blocked -- see SPRINT_LOG.md
+    0c95289 merge: S12 WHO ICTRP seed
+    213799d merge: S15 BAA audit
+    37680e9 merge: S13 RLS audit
+    cd21cf0 audit: verify RLS on all tables in last 25 migrations (S13)
+  Uncommitted changes (real, non-churn): package-lock.json (modified), tests/api/appointments-create-org.test.ts (untracked)
+  TypeScript errors: 0
+  Test status: 82 test files, 313 tests, all passed. Pre-existing failures (hospital-grade-export, website, who-ictrp-search) noted in CLARIFER_BRAIN.md are not present in this run.
+  Last 10 migrations: (see above -- latest is 20260527000002_who_ictrp_seed.sql)
+  Open DECISION REQUIRED: feat/research-page-D1 (source HTML missing -- resolved in that session), WHO ICTRP production automation
+  Open MIGRATION REQUIRED: multiple from prior sprints (see lines 1408-2503)
+
+ROOT CAUSE FOUND: Cause A -- Supabase production redirect URL not configured.
+
+DIAGNOSIS:
+  app/auth/callback/route.ts -- EXISTS. Code is correct. Exchanges code for session,
+    routes new users to /onboarding, returning users with patients to /home.
+  middleware.ts -- Correctly excludes /auth/callback via matcher pattern
+    (negative lookahead on "auth"). Not the cause.
+  supabase/config.toml -- additional_redirect_urls = ["https://127.0.0.1:3000"]
+    Does NOT include https://clarifer.com/auth/callback.
+  Production Supabase dashboard (project lrhwgswbsctfqtvdjntr) must have the full
+    callback URL in its Additional Redirect URLs allowlist. When missing, Supabase
+    ignores the redirectTo parameter and falls back to the Site URL (https://clarifer.com/),
+    sending users to the landing page without ever hitting our route handler.
+    The auth code is never exchanged. No session is created.
+
+MANUAL REQUIRED -- No code change needed. Samira must add the following URLs
+in the Supabase dashboard:
+  Dashboard: https://supabase.com/dashboard/project/lrhwgswbsctfqtvdjntr/auth/url-configuration
+  Under "Redirect URLs" (Additional Redirect URLs), add:
+    https://clarifer.com/auth/callback
+  Optional (for local development):
+    http://localhost:3000/auth/callback
+
+  These are exact-match entries. The trailing path /auth/callback is required.
+  After adding, Google OAuth will deliver the code to our route handler, which
+  will exchange it and route users to /onboarding (new) or /home (returning).
+
+STEP 6 -- ONBOARDING CHECK:
+  New Google OAuth users: app/auth/callback/route.ts calls routePostAuth() which
+    checks for a users row with organization_id, then for at least one patient.
+    New users (no users row or no organization_id) are routed to /onboarding.
+    Returning users with patients are routed to /home.
+  app/onboarding/page.tsx -- EXISTS.
+  app/home/page.tsx -- EXISTS.
+  Both redirect targets are safe. New users go to /onboarding, not directly to /home.
+  No inline fix needed.
+
+FILES CHANGED: SPRINT_LOG.md only (this entry).
+CODE CHANGES: None. Root cause is a Supabase dashboard configuration gap.
+TESTS ADDED: None. No code changed.
+MIGRATION REQUIRED: None.
+
