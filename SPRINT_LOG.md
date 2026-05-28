@@ -2804,3 +2804,107 @@ CODE CHANGES: None. Root cause is a Supabase dashboard configuration gap.
 TESTS ADDED: None. No code changed.
 MIGRATION REQUIRED: None.
 
+---
+[2026-05-28] SESSION: feat/real-test-suite
+Branch: feat/real-test-suite
+
+TASK: Build 10 Playwright smoke tests against real clarifer.com. No mocks. Real accounts.
+
+SETUP:
+  playwright.config.ts: updated with auth-setup + smoke projects (clarifer.com, timeout 60000)
+  package.json: added test:e2e and test:e2e:headed scripts
+  playwright/.auth/: created (gitignored), populated at runtime by 01-auth.spec.ts
+  tests/e2e/smoke/: 10 test files created (01-auth through 10-new-user-signup)
+
+SMOKE TEST RUN RESULTS (npx playwright test --project=smoke):
+  Tests: 31 total (1 auth-setup, 30 smoke)
+  Passed: 26
+  Failed: 5
+
+PASSED (real production validations):
+  01-auth: login + /home load verified
+  02-home (4/4): loads, Carlos visible, nav visible, no console errors
+  03-symptom-log: page loads and does not redirect
+  03-symptom-log: clicking add button opens a form (passed)
+  04-document-upload: page loads, pre-seeded doc list visible, clicking doc loads detail
+  05-chat: page loads; AI responds in <30s with no diagnostic language or stack trace
+  06-ccf-dashboard (3/3): loads, aggregate content visible, no "Carlos Rivera" displayed
+  07-research (4/4): loads 200, has expected heading, no em dash, no "serious illness"
+  08-public-pages (5/5): landing, login, privacy, terms, research all pass copy rules
+  09-phi-guardrails: AI does NOT echo "cholangiocarcinoma" or "Rivera" in chat response
+  10-new-user-signup: signup flow reached /onboarding or showed email confirmation
+
+DISCOVERED ISSUE [feat/real-test-suite-D1]:
+  File: app/(platform)/log/ (page not yet identified exactly)
+  Test: tests/e2e/smoke/03-symptom-log.spec.ts:20
+  Failure: Button with text /add|log symptom/i not found on /log page within 10 seconds.
+  Exact error: Timeout waiting for locator to be visible.
+  The symptom-log add button label does not match the expected pattern. Either the button
+  does not exist, uses different text (e.g. "New entry", "+ Symptom"), or requires
+  scrolling to reach.
+  Impact: The 48px touch-target requirement (Rule 9) cannot be verified for this button.
+
+DISCOVERED ISSUE [feat/real-test-suite-D2]:
+  File: app/(platform)/documents/ (page not yet identified exactly)
+  Test: tests/e2e/smoke/04-document-upload.spec.ts:19
+  Failure: Button with text /upload/i not found on /documents page within 10 seconds.
+  Exact error: Timeout waiting for locator to be visible.
+  Upload button label does not match "upload" (case insensitive). May use "Add document",
+  an icon-only button, or a file input element instead of a button.
+  Impact: Upload affordance and 48px touch target cannot be confirmed by smoke test.
+
+DISCOVERED ISSUE [feat/real-test-suite-D3]:
+  File: app/(platform)/chat/ (or equivalent chat page)
+  Test: tests/e2e/smoke/05-chat.spec.ts:18
+  Failure: /chat page body does not contain "diagnose", "doctor", or "care team".
+  Exact error: expect(hasGuardrail).toBeTruthy() received false
+  The AI guardrail disclaimer is either absent from the /chat page, uses different language
+  (e.g. "medical advice", "healthcare provider"), or is rendered after page body scan.
+  Per CLARIFER_BRAIN.md, a guardrail must appear above the input field. If absent, this
+  is an AI safety gap requiring a dedicated fix sprint.
+
+DISCOVERED ISSUE [feat/real-test-suite-D4]:
+  File: app/(platform)/chat/ (chat input element)
+  Test: tests/e2e/smoke/05-chat.spec.ts:29
+  Failure: Chat input field is 42px tall. Rule 9 requires >= 48px on all tappable elements.
+  Exact error: expect(42).toBeGreaterThanOrEqual(48)
+  This is a Rule 9 violation. The chat input needs 6px added to its height (padding or
+  min-height) to meet the 48px touch target requirement.
+
+DISCOVERED ISSUE [feat/real-test-suite-D5]:
+  File: app/(platform)/home/ or layout component displaying user name
+  Test: tests/e2e/smoke/09-phi-guardrails.spec.ts:40
+  Failure: /home page body contains "Rivera".
+  Exact error: expect(received).not.toContain("Rivera") — received: "...Maria Rivera Sign out..."
+  Source: "Maria Rivera" is the demo caregiver's full name, displayed in the navigation bar.
+  This is the CAREGIVER's own name, not patient PHI. However, per the design spec (first
+  name only after greeting), the nav should display "Maria" not "Maria Rivera".
+  Separately, "Caring for Carlos Rivera" (patient full name) may also appear if the home
+  screen shows it. Either way, both "Maria Rivera" and "Carlos Rivera" surfacing in the nav
+  or body is worth reviewing for privacy UX (not necessarily a HIPAA violation for the
+  caregiver's own name, but worth a product decision).
+  DECISION REQUIRED: Should the nav show "Maria Rivera" (full name) or just "Maria"?
+  This affects the PHI guardrail test interpretation.
+
+COMPLETION SUMMARY:
+  What was built: 10 E2E smoke tests against real clarifer.com. No mocks. Real accounts.
+    Tests run via: npx playwright test --project=smoke
+  Files changed:
+    - playwright.config.ts (updated: smoke + auth-setup projects added)
+    - package.json (test:e2e and test:e2e:headed scripts added)
+    - .gitignore (playwright/.auth/ added)
+    - tests/e2e/smoke/01-auth.spec.ts (created)
+    - tests/e2e/smoke/02-home.spec.ts (created)
+    - tests/e2e/smoke/03-symptom-log.spec.ts (created)
+    - tests/e2e/smoke/04-document-upload.spec.ts (created)
+    - tests/e2e/smoke/05-chat.spec.ts (created)
+    - tests/e2e/smoke/06-ccf-dashboard.spec.ts (created)
+    - tests/e2e/smoke/07-research-page.spec.ts (created)
+    - tests/e2e/smoke/08-public-pages.spec.ts (created)
+    - tests/e2e/smoke/09-phi-guardrails.spec.ts (created)
+    - tests/e2e/smoke/10-new-user-signup.spec.ts (created)
+  Tests added: 31 (1 auth-setup + 30 smoke)
+  Tests passing: 26 against real production
+  Tests failing as DISCOVERED ISSUES: 5 (see above)
+  MIGRATION REQUIRED: None.
+
