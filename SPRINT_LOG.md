@@ -1,4 +1,58 @@
 ---
+[2026-05-27] SESSION S12 -- fix/who-ictrp-empty
+Branch: fix/who-ictrp-empty
+
+Known bug: who_ictrp_trials table is empty. The mirror table was created
+by migration 20260428000003_who_ictrp_mirror.sql but is populated only by
+POST /api/admin/who-ictrp-ingest, which expects a monthly CSV download
+from the WHO ICTRP portal. That manual CSV ingest has never been run in
+production, so searchInternationalTrials() always returns [] for non-US
+patients -- breaking the international (Spanish) persona trial flow.
+
+INVESTIGATION (files touching who_ictrp / ictrp):
+  app/(app)/patients/[id]/trials/page.tsx     -- consumer (UI list)
+  app/api/admin/who-ictrp-ingest/route.ts     -- admin-only CSV ingest endpoint
+  app/api/trials/search/route.ts              -- trial search route that calls into mirror
+  lib/supabase/types.ts                       -- generated table types (Row/Insert/Update)
+  lib/trials/who-ictrp.ts                     -- searchWhoIctrp + searchInternationalTrials
+  lib/trials/who-ictrp-ingest.ts              -- CSV parser + upserter
+  lib/trials/clinicaltrials-gov.ts            -- NormalizedTrial shape (shared)
+  supabase/migrations/20260428000003_who_ictrp_mirror.sql -- table + RLS + indexes
+  supabase/migrations/20260424000006_trials_family.sql    -- trial_saves / trial_cache (sibling)
+
+ROOT CAUSE: missing data, not missing code. Pipeline is fully built;
+the WHO CSV has just never been ingested.
+
+FIX (this session): seed migration with six representative cholangio
+trials so the international trial list renders meaningful results until
+a real WHO CSV ingest replaces them. Seed prioritizes Spanish-speaking
+countries (Cuba, Mexico, Peru, Panama) for the international persona,
+plus EU/Japan/India/Australia coverage. ON CONFLICT (trial_id) DO
+NOTHING -- a real ingest later upserts over the placeholders.
+
+MIGRATION REQUIRED: supabase/migrations/20260527000002_who_ictrp_seed.sql
+  Inserts 6 sample WHO ICTRP trials into who_ictrp_trials:
+    EUCTR2024-001234-56-ES   (Spain/France/Germany, FGFR2, Phase 2)
+    JPRN-jRCT2031240001      (Japan, IDH1, Phase 3)
+    CTRI/2024/01/000123      (India, Phase 3)
+    RPCEC00000456            (Cuba/Mexico, FGFR2, Phase 2, es)
+    PER-014-24               (Peru/Panama, MSI-H, Phase 2, es)
+    ACTRN12624000789012      (Australia/New Zealand, Phase 3)
+  Idempotent via ON CONFLICT (trial_id) DO NOTHING.
+  Samira applies via supabase db push (or Supabase SQL editor).
+
+VERIFICATION:
+  tsc --noEmit -- 0 errors (no code changes; seed migration only)
+  vitest        -- not run this session (WSL bus-error on vitest@4.1.7
+                   exec; DISCOVERED ISSUE flagged for follow-up)
+
+DISCOVERED ISSUE [S12-1]: npx vitest run aborts with
+  "Bus error (core dumped)" in this WSL environment. Test suite count
+  could not be verified. Needs investigation before next sprint commit
+  that touches test files. Not blocking S12 (seed migration only,
+  no application code changed).
+
+---
 [2026-05-27] SESSION S10 -- fix/hex-strings
 Branch: fix/hex-strings
 
