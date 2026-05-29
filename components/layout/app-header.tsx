@@ -54,7 +54,7 @@ export function AppHeader({ userName, userId }: AppHeaderProps) {
             fontSize: 14,
             color: "var(--muted)",
           }}>
-            {userName}
+            {userName.split(' ')[0]}
           </span>
           <button
             type="button"
