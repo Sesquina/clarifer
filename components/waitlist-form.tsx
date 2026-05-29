@@ -35,7 +35,7 @@ export function WaitlistForm() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Something went wrong. Please try again.");
+        setError(body.error ?? "Something went wrong. Please try again or email team@clarifer.com");
         return;
       }
       setSuccess(true);

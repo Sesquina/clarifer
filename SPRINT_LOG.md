@@ -2882,3 +2882,23 @@ PRE-EXISTING TS ERRORS remaining (22 total, all pre-existing or from feat/mobile
   log/index.tsx route type mismatch (from feat/mobile-chat branch)
   ExportPDFButton.tsx DOM usage (5 errors)
   supabase-client.web.ts window refs (6 errors)
+
+---
+[2026-05-29] SESSION: fix/waitlist-brevo-error-handling
+
+MANUAL REQUIRED: Update BREVO_API_KEY in Vercel Production scope to the rotated
+key. Go to: Vercel dashboard → clarifer project → Settings → Environment Variables
+→ BREVO_API_KEY → Edit → set new value → Save → Redeploy.
+Do NOT commit the key value anywhere. This is a Vercel-only change.
+
+WHAT WAS FIXED:
+  app/api/waitlist/route.ts — Brevo /contacts and /smtp/email responses were
+    silently discarded. A 401 from Brevo (rotated key) returned 200 to the
+    client, making signups appear to succeed while nothing was written to Brevo.
+    Now: /contacts failure → console.error + 500. /smtp/email failure → logged
+    only (contact was already added, notification email is non-critical).
+  components/waitlist-form.tsx — fallback error message updated to include
+    team@clarifer.com so users have a contact path on failure.
+  .env.example — added rotation reminder comment to BREVO_API_KEY.
+  tests/api/waitlist.test.ts — 2 new tests: 200 on Brevo success, 500 on
+    Brevo 401 with console.error assertion.
