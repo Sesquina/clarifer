@@ -93,8 +93,11 @@ export async function POST(request: Request) {
     const emailRes = await brevoFetch("/smtp/email", {
       method: "POST",
       body: JSON.stringify({
-        sender: { name: "Clarifer", email: "samira@cassinidesigngroup.com" },
-        to: [{ email: "samira@cassinidesigngroup.com", name: "Samira" }],
+        sender: { name: "Clarifer", email: "team@clarifer.com" },
+        to: [
+          { email: "team@clarifer.com", name: "Clarifer" },
+          { email: "michael.barbara@clarifer.com", name: "Michael" },
+        ],
         subject: safeMessage ? "New Clarifer contact message" : "New Clarifer waitlist signup",
         textContent: `Name: ${safeName || "Not provided"}\nEmail: ${safeEmail}${safeMessage ? `\nMessage: ${safeMessage}` : ""}`,
       }),
