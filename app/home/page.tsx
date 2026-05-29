@@ -14,7 +14,11 @@ export default async function HomePage() {
     .limit(1)
     .single();
 
-  if (!patient) redirect("/onboarding");
+  console.log("[home] patient query result:", patient, "user.id:", user.id);
+  if (!patient) {
+    console.log("[home] no patient found — redirecting to /onboarding");
+    redirect("/onboarding");
+  }
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
