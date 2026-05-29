@@ -3242,3 +3242,54 @@ NEXT ACTIONS (when unblocked)
   4. Add corresponding mobile screens per Rule 9.
   5. Tests for every new API route + audit_log assertion.
 ============================================================
+
+---
+[2026-05-28] SESSION: S19 — feat/notifications (hardening pass)
+Branch: feat/notifications
+
+S19 was already committed as f91c661. Read all existing files per RULE 1.
+Applied the EXISTING FILE decision framework: hardened rather than rebuilt.
+
+HARDENED:
+  components/notifications/NotificationList.tsx
+    - Fixed "all" tab empty state copy to match spec: "You are all caught up."
+      (was: "No notifications yet. Updates from the care team...")
+
+  apps/mobile/app/(app)/notifications.tsx
+    - Updated mobile empty state title to "You are all caught up."
+    - Updated body copy to match three-category description
+
+ADDED:
+  tests/e2e/smoke/11-notifications.spec.ts
+    - Three Playwright smoke tests against clarifer.com/notifications
+    - Test 1: page loads, stays on /notifications (not redirected to /login)
+    - Test 2: at least one notification card OR empty state "You are all caught up." visible
+    - Test 3: page heading "Notifications" visible
+
+CONFIRMED COMPLETE (no changes needed):
+  app/notifications/page.tsx — server component, org-scoped query ✅
+  app/api/notifications/route.ts — all 4 HIPAA gates ✅
+  app/api/notifications/[id]/read/route.ts — auth + cross-user 404 guard ✅
+  components/notifications/NotificationBell.tsx — realtime + 60s polling ✅
+  components/layout/app-header.tsx — bell connected with userId prop ✅
+  tests/api/notifications/list.test.ts — 5 tests incl. 401 no-session ✅
+  tests/api/notifications/read.test.ts — 5 tests incl. cross-user 404 ✅
+  apps/mobile/app/(app)/notifications.tsx — mobile screen exists (Rule 9) ✅
+
+DISCOVERED ISSUE [S19-D1]:
+  File: apps/mobile/app/(app)/notifications.tsx:67-72
+  The mobile notifications query does not apply an explicit user_id or
+  organization_id filter in the application layer — it relies entirely on
+  Supabase RLS. While RLS is enabled and correctly scoped via auth.uid(),
+  the web API route explicitly double-filters (.eq("user_id").eq("organization_id"))
+  as a defence-in-depth measure. The mobile screen should mirror this pattern.
+  Do not fix inline. Schedule in a dedicated hardening sprint.
+
+STEP 0:
+  TypeScript errors: 0
+  Tests: 335 passing, 0 failing (85 test files)
+  Branch: feat/notifications
+
+VITEST (post-change): 0 new failures — empty state string change is UI-only.
+TSC: 0 errors before and after.
+

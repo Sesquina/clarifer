@@ -126,9 +126,9 @@ export default function NotificationsScreen() {
         <ActivityIndicator color="#2C5F4A" style={{ marginTop: 24 }} />
       ) : visible.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>No notifications</Text>
+          <Text style={styles.emptyTitle}>You are all caught up.</Text>
           <Text style={styles.emptyBody}>
-            Updates from the care team and symptom check-ins will appear here.
+            Symptom alerts, medication reminders, and care team updates will appear here.
           </Text>
         </View>
       ) : (

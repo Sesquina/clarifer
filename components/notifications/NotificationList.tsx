@@ -147,7 +147,7 @@ export function NotificationList({ initial }: Props) {
       <TabsContent value="all">
         <div className="space-y-2">
           {buckets.all.length === 0 ? (
-            <EmptyState label="No notifications yet. Updates from the care team and symptom check-ins will appear here." />
+            <EmptyState label="You are all caught up." />
           ) : (
             buckets.all.map((r) => (
               <NotificationCard key={r.id} row={r} onMarkRead={markRead} busy={pendingId === r.id} />
