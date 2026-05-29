@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-full flex-col">
-      <AppHeader userName={profile?.full_name} />
+      <AppHeader userName={profile?.full_name} userId={user.id} />
       <div className="flex-1">{children}</div>
       <BottomNav />
     </div>
