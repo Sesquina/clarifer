@@ -2804,3 +2804,66 @@ CODE CHANGES: None. Root cause is a Supabase dashboard configuration gap.
 TESTS ADDED: None. No code changed.
 MIGRATION REQUIRED: None.
 
+
+---
+## feat/mobile-home-real-data | 2026-05-28
+
+COMPLETION SUMMARY
+
+What was built:
+  Replaced the caregiver mobile home screen shell (apps/mobile/app/(home)/caregiver.tsx)
+  with a real-data implementation. Screen now shows:
+  - Patient first name greeting: "Caring for [name]"
+  - Next upcoming appointment (date and provider name) with empty state
+  - Last 3 symptom log entries (date, severity/10) with empty state
+  - 4 navigation tiles: Log Symptom, Documents, Chat, Medications
+    Documents -> /(app)/documents (confirmed route exists)
+    Medications -> /(app)/medications (confirmed route exists)
+  - CCF card at bottom: "Don't know where to start?"
+  - Loading state with ActivityIndicator
+  - Sign out
+
+Data source:
+  Queries Supabase client directly (same pattern as apps/mobile/app/(app)/patients/[id]/index.tsx)
+  patients: select id, name where created_by = user.id
+  symptom_logs: select id, created_at, overall_severity, last 3 desc
+  appointments: select id, datetime, provider_name, next upcoming, limit 1
+
+Files changed:
+  apps/mobile/app/(home)/caregiver.tsx
+
+Tests added:
+  None. Mobile snapshot tests are not established in this codebase. See SPRINT_STATUS.
+
+MIGRATION REQUIRED:
+  None.
+
+DECISION REQUIRED [1]:
+  apps/mobile/app/(home)/caregiver.tsx -- Log Symptom tile has no target route.
+  No apps/mobile/app/(app)/symptoms/ screen exists.
+  Question: Should /(app)/symptoms/log be created as a new screen in this codebase,
+  or should the Log Symptom tile navigate to the existing patient detail screen?
+  Tile is visually present but onPress is not wired until this is resolved (Rule 2).
+
+DECISION REQUIRED [2]:
+  apps/mobile/app/(home)/caregiver.tsx -- Chat tile has no target route.
+  No apps/mobile/app/(app)/chat/ screen exists.
+  Question: Should a mobile chat screen be built, or is Chat web-only for now?
+  Tile is visually present but onPress is not wired until this is resolved (Rule 2).
+
+DISCOVERED ISSUE [1]:
+  No lib/design-tokens.ts file exists in apps/mobile/lib/.
+  Rule 9 requires design tokens on mobile (no hex strings).
+  Multiple existing files already import from @/lib/design-tokens and fail tsc
+  (pre-existing TS errors in appointments.tsx, care-team.tsx, trials.tsx, etc.).
+  Implemented caregiver.tsx with a local C const matching the design system values.
+  This file needs to be updated once lib/design-tokens.ts is created.
+
+PRE-EXISTING TS ERRORS (30 total, not introduced by this session):
+  @/lib/design-tokens missing (6 files)
+  expo-clipboard missing (2 files)
+  router.push type mismatches (7 files)
+  ExportPDFButton.tsx uses document/DOM (3 errors)
+  supabase-client.web.ts window refs (6 errors)
+  These existed before this session. Not fixed inline per Rule 8.
+
