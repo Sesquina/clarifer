@@ -2814,3 +2814,62 @@ CODE CHANGES: None. Root cause is a Supabase dashboard configuration gap.
 TESTS ADDED: None. No code changed.
 MIGRATION REQUIRED: None.
 
+
+---
+## feat/mobile-patient-screens | 2026-05-28
+
+COMPLETION SUMMARY
+
+What was built:
+  1. Created apps/mobile/lib/design-tokens.ts (new file)
+     Single source of truth for all design system values used in mobile screens.
+     Exports: colors, radius, spacing, touchTarget, typography (including sizeHero=36, sizeMeta=11
+     which are used by emergency-card.tsx and provider/index.tsx).
+     Resolved 6 pre-existing TS2307 errors across family-update, care-team, appointments,
+     emergency-card, provider/index, and the ExportPDFButton screens.
+
+  2. Modified apps/mobile/app/(app)/patients/[id]/index.tsx
+     Changed from: full-list dashboard with patient full name, diagnosis, meds list, appts list,
+     documents list, symptoms list, ExportPDFButton.
+     Changed to: patient hub with first name only, stat cards (symptom count last 30 days,
+     active medication count), next appointment card, 4 quick-link tiles (Appointments, Family
+     update, Care team, Clinical trials), Emergency card CTA.
+     Removed ExportPDFButton import (DOM usage -- pre-existing bug, see DISCOVERED ISSUE).
+     Removed condition/diagnosis display per copy rules.
+
+  3. Installed expo-clipboard@~55.0.13 (apps/mobile/package.json)
+     Package was imported in existing family-update.tsx and care-team.tsx but missing from
+     package.json. Installed with --legacy-peer-deps.
+     Resolved 2 pre-existing TS2307 expo-clipboard errors.
+
+  4. Files family-update.tsx, care-team.tsx, appointments.tsx: no code changes needed.
+     All three were already fully implemented. Creating design-tokens.ts and installing
+     expo-clipboard resolved their TS errors.
+
+  PRE-EXISTING TS ERRORS reduced: 30 -> 22.
+  New errors introduced by this session: 0.
+
+Files changed:
+  apps/mobile/lib/design-tokens.ts (created)
+  apps/mobile/app/(app)/patients/[id]/index.tsx (modified)
+  apps/mobile/package.json (expo-clipboard added)
+
+Tests added: None.
+MIGRATION REQUIRED: None.
+
+DISCOVERED ISSUE [1]:
+  components/export/ExportPDFButton.tsx uses document (DOM API) which is unavailable
+  in React Native. Causes 3 TS errors. File: ExportPDFButton.tsx lines 86, 89, 91.
+  Not fixed inline per Rule 8.
+
+DISCOVERED ISSUE [2]:
+  apps/mobile/app/(app)/patients/[id]/care-team.tsx calls /api/auth/session (line 91)
+  which is not in the CONFIRMED API ROUTES list. Role fetch is best-effort (.catch(() => null))
+  so the screen still works, but the route may not exist. Not fixed inline per Rule 8.
+
+PRE-EXISTING TS ERRORS remaining (22 total, all pre-existing or from feat/mobile-chat branch):
+  router.push type mismatches in care-team, medications, patients/new, provider, auth screens
+  caregiver.tsx log/chat navigation (from feat/mobile-chat branch)
+  log/index.tsx route type mismatch (from feat/mobile-chat branch)
+  ExportPDFButton.tsx DOM usage (5 errors)
+  supabase-client.web.ts window refs (6 errors)

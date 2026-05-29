@@ -1,165 +1,327 @@
 /**
  * apps/mobile/app/(app)/patients/[id]/index.tsx
- * Mobile patient dashboard screen showing meds, appointments, documents, and recent symptoms.
- * Tables: reads patients, medications, appointments, documents, symptom_logs via Supabase client.
+ * Patient hub screen: greeting, stat cards, next appointment, quick links to sub-screens.
+ * Tables: patients, symptom_logs (count), medications (count), appointments (next 1)
  * Auth: any authenticated user; RLS scopes results to the user's organization.
- * Sprint: Sprint 9 -- Trials + Family Updates
- *
- * HIPAA: Renders patient name, medications, and appointment titles on screen. No PHI written to logs from this file.
+ * HIPAA: Renders patient first name only. No diagnosis, no condition names, no PHI in logs.
  */
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase-client";
-import { ExportPDFButton } from "@/components/export/ExportPDFButton";
+import { colors, radius, spacing, touchTarget } from "@/lib/design-tokens";
 
-type Patient = { id: string; name: string; custom_diagnosis: string | null };
-type MedRow = { id: string; name: string; dose: string | null; unit: string | null; frequency: string | null };
-type ApptRow = { id: string; title: string | null; datetime: string | null; provider_name: string | null };
-type DocRow = { id: string; title: string | null; analysis_status: string | null; uploaded_at: string | null };
-type SymptomRow = { id: string; overall_severity: number | null; created_at: string | null };
+type ApptRow = {
+  id: string;
+  title: string | null;
+  datetime: string | null;
+  provider_name: string | null;
+};
 
-export default function PatientDashboardMobile() {
+export default function PatientHubScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const id = typeof params.id === "string" ? params.id : "";
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [meds, setMeds] = useState<MedRow[]>([]);
-  const [appts, setAppts] = useState<ApptRow[]>([]);
-  const [docs, setDocs] = useState<DocRow[]>([]);
-  const [symptoms, setSymptoms] = useState<SymptomRow[]>([]);
+  const patientId = typeof params.id === "string" ? params.id : "";
+
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [nextAppt, setNextAppt] = useState<ApptRow | null>(null);
+  const [symptomCount, setSymptomCount] = useState<number>(0);
+  const [medCount, setMedCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      if (!id) return;
-      setLoading(true);
-      const [p, m, a, d, s] = await Promise.all([
-        supabase.from("patients").select("id, name, custom_diagnosis").eq("id", id).single(),
-        supabase.from("medications").select("id, name, dose, unit, frequency").eq("patient_id", id).eq("is_active", true),
-        supabase.from("appointments").select("id, title, datetime, provider_name").eq("patient_id", id).gte("datetime", new Date().toISOString()).order("datetime", { ascending: true }).limit(3),
-        supabase.from("documents").select("id, title, analysis_status, uploaded_at").eq("patient_id", id).order("uploaded_at", { ascending: false }).limit(3),
-        supabase.from("symptom_logs").select("id, overall_severity, created_at").eq("patient_id", id).order("created_at", { ascending: false }).limit(7),
-      ]);
-      setPatient((p.data as Patient) ?? null);
-      setMeds(((m.data ?? []) as MedRow[]));
-      setAppts(((a.data ?? []) as ApptRow[]));
-      setDocs(((d.data ?? []) as DocRow[]));
-      setSymptoms(((s.data ?? []) as SymptomRow[]));
-      setLoading(false);
-    }
+    if (!patientId) return;
     load();
-  }, [id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patientId]);
+
+  async function load() {
+    setLoading(true);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [patientRes, apptRes, symptomRes, medRes] = await Promise.all([
+      supabase
+        .from("patients")
+        .select("name")
+        .eq("id", patientId)
+        .single(),
+      supabase
+        .from("appointments")
+        .select("id, title, datetime, provider_name")
+        .eq("patient_id", patientId)
+        .gte("datetime", new Date().toISOString())
+        .order("datetime", { ascending: true })
+        .limit(1),
+      supabase
+        .from("symptom_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("patient_id", patientId)
+        .gte("created_at", thirtyDaysAgo),
+      supabase
+        .from("medications")
+        .select("*", { count: "exact", head: true })
+        .eq("patient_id", patientId)
+        .eq("is_active", true),
+    ]);
+
+    if (patientRes.data?.name) {
+      setFirstName((patientRes.data.name as string).split(" ")[0]);
+    }
+    setNextAppt(((apptRes.data ?? [])[0] ?? null) as ApptRow | null);
+    setSymptomCount(symptomRes.count ?? 0);
+    setMedCount(medRes.count ?? 0);
+    setLoading(false);
+  }
 
   if (loading) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator color="#2C5F4A" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
-  if (!patient) {
+  if (!firstName) {
     return (
-      <View style={styles.loading}>
-        <Text style={styles.subtle}>We could not find this patient.</Text>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.emptyText}>We could not find this patient.</Text>
       </View>
     );
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.card}>
-        <Text style={styles.patientName}>{patient.name}</Text>
-        <Text style={styles.patientDiag}>{patient.custom_diagnosis ?? "Diagnosis not recorded"}</Text>
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.emergencyButton}
-            onPress={() => router.push({ pathname: "/(app)/patients/emergency-card", params: { id: patient.id } } as never)}
-            accessibilityRole="button"
-            accessibilityLabel="Open emergency medical card"
-          >
-            <Text style={styles.emergencyButtonText}>Emergency card</Text>
-          </TouchableOpacity>
-          <ExportPDFButton patientId={patient.id} callerRole="caregiver" />
+      <Text style={styles.greeting}>Caring for {firstName}</Text>
+
+      {/* Stat cards */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{symptomCount}</Text>
+          <Text style={styles.statLabel}>Symptoms this month</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{medCount}</Text>
+          <Text style={styles.statLabel}>Active medications</Text>
         </View>
       </View>
 
-      <Section title="Medications" empty="Add medications to keep track of the schedule.">
-        {meds.map((m) => (
-          <View key={m.id} style={styles.row}>
-            <Text style={styles.rowTitle}>{m.name}</Text>
-            <Text style={styles.rowSub}>
-              {[m.dose, m.unit].filter(Boolean).join(" ")} · {m.frequency ?? "Schedule not set"}
+      {/* Next appointment */}
+      <View style={styles.card}>
+        <Text style={styles.sectionLabel}>Next appointment</Text>
+        {nextAppt ? (
+          <>
+            <Text style={styles.cardTitle}>{nextAppt.title ?? "Appointment"}</Text>
+            <Text style={styles.cardSub}>
+              {nextAppt.datetime
+                ? new Date(nextAppt.datetime).toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "Date to be confirmed"}
             </Text>
-          </View>
-        ))}
-      </Section>
+            {nextAppt.provider_name ? (
+              <Text style={styles.cardSub}>with {nextAppt.provider_name}</Text>
+            ) : null}
+          </>
+        ) : (
+          <Text style={styles.emptyText}>No upcoming appointments scheduled.</Text>
+        )}
+      </View>
 
-      <Section title="Upcoming appointments" empty="No upcoming appointments. Schedule one to stay on top of care.">
-        {appts.map((a) => (
-          <View key={a.id} style={styles.row}>
-            <Text style={styles.rowTitle}>{a.title ?? "Appointment"}</Text>
-            <Text style={styles.rowSub}>
-              {a.datetime ? new Date(a.datetime).toLocaleString() : "Time to be confirmed"}
-            </Text>
-          </View>
-        ))}
-      </Section>
+      {/* Quick links */}
+      <Text style={styles.sectionHeading}>Quick access</Text>
+      <View style={styles.tileGrid}>
+        <QuickLink
+          label="Appointments"
+          icon="📅"
+          onPress={() =>
+            router.push({
+              pathname: "/(app)/patients/[id]/appointments",
+              params: { id: patientId },
+            } as never)
+          }
+        />
+        <QuickLink
+          label="Family update"
+          icon="📨"
+          onPress={() =>
+            router.push({
+              pathname: "/(app)/patients/[id]/family-update",
+              params: { id: patientId },
+            } as never)
+          }
+        />
+        <QuickLink
+          label="Care team"
+          icon="👥"
+          onPress={() =>
+            router.push({
+              pathname: "/(app)/patients/[id]/care-team",
+              params: { id: patientId },
+            } as never)
+          }
+        />
+        <QuickLink
+          label="Clinical trials"
+          icon="🔬"
+          onPress={() =>
+            router.push({
+              pathname: "/(app)/patients/[id]/trials",
+              params: { id: patientId },
+            } as never)
+          }
+        />
+      </View>
 
-      <Section title="Recent documents" empty="No documents yet. Upload your first one — it takes less than a minute.">
-        {docs.map((d) => (
-          <View key={d.id} style={styles.row}>
-            <Text style={styles.rowTitle}>{d.title ?? "Untitled document"}</Text>
-            <Text style={styles.rowSub}>{d.analysis_status ?? "Pending"}</Text>
-          </View>
-        ))}
-      </Section>
-
-      <Section title="Recent symptoms" empty="Start tracking symptoms to see trends over time.">
-        {symptoms.map((s) => (
-          <View key={s.id} style={styles.row}>
-            <Text style={styles.rowTitle}>Severity {s.overall_severity ?? "—"}/10</Text>
-            <Text style={styles.rowSub}>{s.created_at?.slice(0, 10) ?? ""}</Text>
-          </View>
-        ))}
-      </Section>
+      {/* Emergency card */}
+      <TouchableOpacity
+        style={styles.emergencyButton}
+        onPress={() =>
+          router.push({
+            pathname: "/(app)/patients/emergency-card",
+            params: { id: patientId },
+          } as never)
+        }
+        accessibilityRole="button"
+        accessibilityLabel="Open emergency medical card"
+      >
+        <Text style={styles.emergencyButtonText}>Emergency card</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
-function Section({ title, empty, children }: { title: string; empty: string; children: React.ReactNode }) {
-  const hasChildren = Array.isArray(children) ? children.length > 0 : !!children;
+function QuickLink({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: string;
+  onPress: () => void;
+}) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {hasChildren ? <>{children}</> : <Text style={styles.emptyText}>{empty}</Text>}
-    </View>
+    <TouchableOpacity
+      style={styles.tile}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Text style={styles.tileIcon}>{icon}</Text>
+      <Text style={styles.tileLabel}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F7F2EA" },
-  content: { padding: 16, paddingBottom: 48 },
-  loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#F7F2EA" },
-  subtle: { color: "#6B6B6B", fontSize: 14 },
-  card: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: "#E8E2D9" },
-  patientName: { fontSize: 24, fontWeight: "700", color: "#1A1A1A" },
-  patientDiag: { marginTop: 4, fontSize: 14, color: "#6B6B6B" },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 18, color: "#2C5F4A", fontWeight: "600", marginBottom: 10 },
-  row: { backgroundColor: "#FFFFFF", padding: 14, borderRadius: 14, marginBottom: 8, borderWidth: 1, borderColor: "#E8E2D9", minHeight: 48 },
-  rowTitle: { fontSize: 15, color: "#1A1A1A", fontWeight: "500" },
-  rowSub: { marginTop: 2, fontSize: 13, color: "#6B6B6B" },
-  emptyText: { color: "#6B6B6B", fontSize: 14, backgroundColor: "#FFFFFF", padding: 14, borderRadius: 14, borderWidth: 1, borderColor: "#E8E2D9" },
-  actionsRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
-  emergencyButton: {
-    backgroundColor: "#C4714A",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    minHeight: 48,
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  loadingContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: colors.background,
   },
-  emergencyButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  greeting: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: colors.primary,
+    marginBottom: spacing.lg,
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    minHeight: 72,
+    justifyContent: "center",
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.muted,
+    marginTop: 2,
+    textAlign: "center",
+  },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  cardTitle: { fontSize: 16, fontWeight: "600", color: colors.text },
+  cardSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  tileGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  tile: {
+    width: "47%",
+    backgroundColor: colors.card,
+    borderRadius: radius.tile,
+    padding: spacing.md,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: touchTarget.minimum + 24,
+    justifyContent: "center",
+  },
+  tileIcon: { fontSize: 26, marginBottom: spacing.sm },
+  tileLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.text,
+    textAlign: "center",
+  },
+  emergencyButton: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
+    minHeight: touchTarget.minimum,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+  },
+  emergencyButtonText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  emptyText: { fontSize: 14, color: colors.muted },
 });
