@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test --project=smoke",
+    "test:e2e:headed": "playwright test --project=smoke --headed"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",

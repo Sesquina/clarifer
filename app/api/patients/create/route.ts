@@ -108,6 +108,18 @@ export async function POST(request: Request) {
     status: "success",
   });
 
+  // Ensure users row has organization_id + role set server-side.
+  // This is the authoritative write: if the handle_new_user trigger hasn't run
+  // or the client-side fallback in onboarding failed silently, this guarantees
+  // routePostAuth() won't loop the user back to /onboarding on their next sign-in.
+  await supabase
+    .from("users")
+    .update({ organization_id: organizationId, role: userRecord.role ?? "caregiver" })
+    .eq("id", user.id)
+    .then(() => undefined, () => undefined);
+
+  console.log("[patients/create] user_id:", user.id, "org_id:", organizationId, "patient_id:", inserted.id);
+
   return NextResponse.json(
     { id: inserted.id, full_name: inserted.name, condition_template_id: inserted.condition_template_id },
     { status: 201 }

@@ -67,3 +67,4 @@ supabase/.temp/
 .supabase/
 test-results/
 tests/e2e/helpers/.auth-state.json
+playwright/.auth/
