@@ -56,6 +56,18 @@ export async function GET(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: patientId,
+    action: "SELECT",
+    resource_type: "trial_save",
+    organization_id: orgId,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  }).then(() => undefined, () => undefined);
+
   return NextResponse.json({ saves: data ?? [] });
 }
 

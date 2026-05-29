@@ -75,6 +75,17 @@ export async function GET(
     .order("created_at", { ascending: true });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    organization_id: orgId,
+    patient_id: member.patient_id,
+    action: "SELECT",
+    resource_type: "care_team_message_templates",
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  }).then(() => undefined, () => undefined);
+
   return NextResponse.json({ templates: data ?? [] });
 }
 

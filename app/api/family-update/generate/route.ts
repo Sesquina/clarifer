@@ -10,6 +10,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import { checkFamilyUpdateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -45,6 +46,14 @@ export async function POST(request: Request) {
     });
   }
   const orgId = userRecord.organization_id;
+
+  // Rate limit: max 3 family-update generations per minute per user
+  if (!checkFamilyUpdateLimit(user.id)) {
+    return new Response(JSON.stringify({ error: "Too many requests. Please wait before generating another update." }), {
+      status: 429,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const body = (await request.json().catch(() => null)) as {
     patient_id?: string;

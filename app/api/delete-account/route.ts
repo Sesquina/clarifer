@@ -148,6 +148,8 @@ export async function DELETE(request: Request) {
   return NextResponse.json({ success: true });
 }
 
+const SELF_SERVICE_ROLES = ["caregiver", "patient", "provider", "admin"];
+
 export async function GET(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
@@ -162,13 +164,24 @@ export async function GET(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = getAdmin() as any;
 
-  // Audit log: record data export
+  // Role check + org_id capture — required before audit log
+  const { data: userRecord } = await admin
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", user.id)
+    .single();
+  if (!userRecord || !SELF_SERVICE_ROLES.includes(userRecord.role ?? "")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const orgId: string | null = userRecord.organization_id ?? null;
+
+  // Audit log: record data export with real org_id
   await admin.from("audit_log").insert({
     user_id: user.id,
     action: "EXPORT_ACCOUNT_DATA",
     resource_type: "account",
     resource_id: user.id,
-    organization_id: null,
+    organization_id: orgId,
     ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
     user_agent: request.headers.get("user-agent"),
     status: "success",
