@@ -20,7 +20,10 @@ export default function CaregiverHomeScreen() {
           <Text style={styles.tileIcon}>👤</Text>
           <Text style={styles.tileLabel}>My Patients</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tile}>
+        <TouchableOpacity
+          style={styles.tile}
+          onPress={() => (router.push as (href: string) => void)("/(app)/log")}
+        >
           <Text style={styles.tileIcon}>📋</Text>
           <Text style={styles.tileLabel}>Symptom Log</Text>
         </TouchableOpacity>
@@ -31,6 +34,15 @@ export default function CaregiverHomeScreen() {
         <TouchableOpacity style={styles.tile}>
           <Text style={styles.tileIcon}>💊</Text>
           <Text style={styles.tileLabel}>Medications</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tile}
+          onPress={() => (router.push as (href: string) => void)("/(app)/chat")}
+          accessibilityRole="button"
+          accessibilityLabel="Open chat"
+        >
+          <Text style={styles.tileIcon}>💬</Text>
+          <Text style={styles.tileLabel}>Chat</Text>
         </TouchableOpacity>
       </View>
 

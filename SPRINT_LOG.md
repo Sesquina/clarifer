@@ -1,4 +1,13 @@
 ---
+[2026-05-28] SESSION S36 -- feat/mobile-chat
+Branch: feat/mobile-chat
+Files changed: apps/mobile/app/(app)/chat/index.tsx (new), apps/mobile/app/(home)/caregiver.tsx (Chat tile added)
+TypeScript baseline: 30 pre-existing errors. Post-session: 22 (net -8, no new errors introduced).
+DISCOVERED ISSUE -- apps/mobile/app/(home)/caregiver.tsx: entire file uses hardcoded hex strings (#f8f9fa, #2C5F4A, #888, etc.) violating design token rule. Fix in a dedicated mobile design-token cleanup sprint.
+DISCOVERED ISSUE -- apps/mobile/lib/ has no design-tokens.ts. The @/lib/design-tokens import in family-update.tsx and other screens resolves to apps/mobile/lib/ (per tsconfig @/* = ./*) but the file doesn't exist there — it lives at repo root lib/design-tokens.ts. Causes pre-existing TS errors. Fix: add tsconfig paths entry or symlink.
+DISCOVERED ISSUE -- Expo typed routes types (.expo/types/) are stale — router.push() to (app)/* routes fails TS typecheck. All 9 instances are pre-existing. Fix: run npx expo export or npx expo start --clear to regenerate typed routes.
+
+---
 [2026-05-28] SESSION S35 -- feat/ccf-dashboard-audit
 Branch: feat/ccf-dashboard-audit
 Files changed: app/ccf-dashboard/page.tsx, tests/e2e/smoke/ccf-dashboard-final.spec.ts
