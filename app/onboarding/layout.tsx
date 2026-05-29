@@ -1,1 +1,9 @@
-export { default } from "@/components/layout/app-layout";
+import { ReactNode } from "react";
+
+export default function OnboardingLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return <>{children}</>;
+}

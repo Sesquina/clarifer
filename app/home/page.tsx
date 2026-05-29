@@ -12,11 +12,11 @@ export default async function HomePage() {
     .select("id, name, custom_diagnosis")
     .eq("created_by", user.id)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   console.log("[home] patient query result:", patient, "user.id:", user.id);
   if (!patient) {
-    console.log("[home] no patient found — redirecting to /onboarding");
+    console.error("[home] no patient for user", user.id, "— redirecting to onboarding");
     redirect("/onboarding");
   }
 

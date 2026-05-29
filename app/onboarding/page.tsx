@@ -111,7 +111,6 @@ export default function OnboardingPage() {
           }),
         });
 
-        console.log("[onboarding] POST /api/patients/create status:", patientRes.status);
         if (!patientRes.ok) {
           const body = await patientRes.json().catch(() => ({}));
           setError(friendlyOnboardingError((body as { error?: string }).error ?? "Could not create patient profile. Please try again."));
@@ -134,9 +133,6 @@ export default function OnboardingPage() {
 
       // Step 8: onboarding complete
       router.push("/onboarding/complete");
-      console.log("[onboarding] router.push called to /onboarding/complete");
-      router.refresh();
-      console.log("[onboarding] router.refresh called — this may interfere");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       setError(friendlyOnboardingError(msg));
