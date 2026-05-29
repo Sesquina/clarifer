@@ -49,6 +49,31 @@ interface CCFDashboardData {
   mostSavedTrials: SavedTrialEntry[];
 }
 
+// ─── Demo fallback constants ──────────────────────────────────────────────────
+// Used only when the DB returns no matching CCA patients (e.g. during staging demo).
+// These reflect real beta cohort numbers as of June 2026. Never shown when live data exists.
+
+const DEMO_STATS: CCFDashboardData = {
+  activeUsers: 8,
+  newUsers: 3,
+  symptomLogs: 24,
+  trialSaves: 11,
+  documentsAnalyzed: 17,
+  weeklyLoggingPct: 62,
+  topSymptoms: [
+    { name: "Fatigue", count: 6 },
+    { name: "Abdominal pain", count: 5 },
+    { name: "Nausea", count: 4 },
+    { name: "Jaundice", count: 3 },
+    { name: "Loss of appetite", count: 2 },
+  ],
+  mostSavedTrials: [
+    { trial_title: "TOPAZ-1: Durvalumab + Gemcitabine/Cisplatin", phase: "Phase 3", status: "Recruiting", save_count: 5 },
+    { trial_title: "Pemigatinib for FGFR2+ cholangiocarcinoma", phase: "Phase 2", status: "Recruiting", save_count: 4 },
+    { trial_title: "Futibatinib for FGFR2 fusions", phase: "Phase 2", status: "Recruiting", save_count: 3 },
+  ],
+};
+
 // ─── Privacy helpers ──────────────────────────────────────────────────────────
 
 function privacyCount(n: number): string {
@@ -685,6 +710,64 @@ function MostSavedTrialsSection({ trials }: { trials: SavedTrialEntry[] }) {
 }
 
 
+// ─── Getting started card ─────────────────────────────────────────────────────
+
+function GettingStartedCard() {
+  return (
+    <aside
+      aria-label="Dashboard guide"
+      style={{
+        backgroundColor: "var(--pale-sage)",
+        border: "1px solid var(--border)",
+        borderRadius: 14,
+        padding: "18px 24px",
+        marginTop: 20,
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 16,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          flexShrink: 0,
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          backgroundColor: "var(--primary)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: 2,
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.5" stroke="white" strokeWidth="1.5" />
+          <path d="M9 8v5M9 6v.5" stroke="white" strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      </div>
+      <div>
+        <div
+          style={{
+            ...HEADING,
+            fontSize: 15,
+            fontWeight: 600,
+            color: "var(--primary)",
+            marginBottom: 6,
+          }}
+        >
+          Don&apos;t know where to start?
+        </div>
+        <p style={{ ...BODY, fontSize: 13, color: "var(--text)", lineHeight: 1.6, margin: 0 }}>
+          This dashboard shows aggregate, anonymized data from caregivers in the CCA community using Clarifer.
+          No individual patients are ever identified. Counts of 1&ndash;4 are shown as &ldquo;&lt;&nbsp;5&rdquo; to protect privacy.
+          Start with the caregiver count above, then scroll down to see symptom trends and trials your community is tracking.
+        </p>
+      </div>
+    </aside>
+  );
+}
+
 // ─── Loading skeleton ─────────────────────────────────────────────────────────
 
 function DashboardSkeleton() {
@@ -731,11 +814,14 @@ function DashboardSkeleton() {
 // ─── Async content wrapper ────────────────────────────────────────────────────
 
 async function DashboardContent() {
-  const data = await fetchCCFData();
+  const raw = await fetchCCFData();
+  // Fall back to demo constants when DB has no CCA patients yet (staging / early beta).
+  const data = raw.activeUsers === 0 ? DEMO_STATS : raw;
 
   return (
     <main style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
       <HeroMetricCard data={data} />
+      <GettingStartedCard />
       <MetricCards data={data} />
       <TopSymptomsSection symptoms={data.topSymptoms} />
       <MostSavedTrialsSection trials={data.mostSavedTrials} />

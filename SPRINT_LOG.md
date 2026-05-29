@@ -1,4 +1,14 @@
 ---
+[2026-05-28] SESSION S35 -- feat/ccf-dashboard-audit
+Branch: feat/ccf-dashboard-audit
+Files changed: app/ccf-dashboard/page.tsx, tests/e2e/smoke/ccf-dashboard-final.spec.ts
+CHECK 1 (no patient names): PASS. CHECK 2 (aggregate only): PASS. CHECK 3 (card copy): FAIL→FIXED — added GettingStartedCard with "Don't know where to start?". CHECK 4 (access control): PASS — isAllowedEmail allowlist. CHECK 5 (no "serious illness"): PASS.
+DEMO_STATS fallback added — shows when DB returns 0 active users (beta/staging).
+DISCOVERED ISSUE — tests/e2e/12-ccf-demo-flow.spec.ts:15: hardcoded password 'ClariferdDemo2026!' (Rule 4)
+DISCOVERED ISSUE — tests/e2e/12-ccf-demo-flow.spec.ts:17,28: full name 'Carlos Rivera' visible on home screen (PHI, out of scope)
+DISCOVERED ISSUE — repo root stray file '"h origin main"' — safe to delete
+
+---
 [2026-05-27] SESSION S12 -- fix/who-ictrp-empty
 Branch: fix/who-ictrp-empty
 
