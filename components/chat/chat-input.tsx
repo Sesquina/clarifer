@@ -121,6 +121,7 @@ export function ChatInput({ onSend, onFileSelect, disabled, placeholder = "Ask C
           border: "1.5px solid var(--border)",
           backgroundColor: "var(--card)",
           fontFamily: "var(--font-dm-sans)",
+          minHeight: 48,
         }}
         onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
         onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
