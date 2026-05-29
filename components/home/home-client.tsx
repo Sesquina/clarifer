@@ -368,10 +368,10 @@ export function HomeClient({ patient, statusLine, logs, appointments, loggedToda
                 FROM CCF
               </p>
               <p style={{ fontSize: 18, fontWeight: 600, color: "#1A1A1A", marginBottom: 8 }}>
-                Are you newly diagnosed?
+                Don&apos;t know where to start?
               </p>
               <p style={{ fontSize: 16, color: "#6B6B6B", lineHeight: 1.6, marginBottom: 16 }}>
-                CCF offers a free care kit, a 1:1 meeting with a patient advocate, and a resource roadmap for families navigating this diagnosis.
+                CCF offers a free care kit, a 1:1 advocate meeting, and a resource roadmap for families who need support.
               </p>
               <a
                 href="https://www.cholangiocarcinoma.org/newly-diagnosed/"
