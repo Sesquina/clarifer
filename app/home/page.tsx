@@ -12,9 +12,13 @@ export default async function HomePage() {
     .select("id, name, custom_diagnosis")
     .eq("created_by", user.id)
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (!patient) redirect("/onboarding");
+  console.log("[home] patient query result:", patient, "user.id:", user.id);
+  if (!patient) {
+    console.error("[home] no patient for user", user.id, "— redirecting to onboarding");
+    redirect("/onboarding");
+  }
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();

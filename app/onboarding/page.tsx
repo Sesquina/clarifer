@@ -133,7 +133,6 @@ export default function OnboardingPage() {
 
       // Step 8: onboarding complete
       router.push("/onboarding/complete");
-      router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       setError(friendlyOnboardingError(msg));
