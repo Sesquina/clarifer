@@ -60,6 +60,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Something went wrong on our end." }, { status: 500 });
   }
 
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: patientId,
+    action: "SELECT",
+    resource_type: "biomarkers",
+    organization_id: organizationId,
+    ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+    user_agent: request.headers.get("user-agent"),
+    status: "success",
+  }).then(() => undefined, () => undefined);
+
   return NextResponse.json({ biomarkers: data ?? [] });
 }
 
