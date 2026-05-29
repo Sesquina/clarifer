@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     const listId = await getOrCreateList();
 
-    await brevoFetch("/contacts", {
+    const contactRes = await brevoFetch("/contacts", {
       method: "POST",
       body: JSON.stringify({
         email: safeEmail,
@@ -81,7 +81,16 @@ export async function POST(request: Request) {
       }),
     });
 
-    await brevoFetch("/smtp/email", {
+    if (!contactRes.ok) {
+      const errBody = await contactRes.text().catch(() => "");
+      console.error("[waitlist] Brevo /contacts failed:", contactRes.status, errBody);
+      return NextResponse.json(
+        { error: "Signup failed. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    const emailRes = await brevoFetch("/smtp/email", {
       method: "POST",
       body: JSON.stringify({
         sender: { name: "Clarifer", email: "samira@cassinidesigngroup.com" },
@@ -90,6 +99,11 @@ export async function POST(request: Request) {
         textContent: `Name: ${safeName || "Not provided"}\nEmail: ${safeEmail}${safeMessage ? `\nMessage: ${safeMessage}` : ""}`,
       }),
     });
+
+    if (!emailRes.ok) {
+      const errBody = await emailRes.text().catch(() => "");
+      console.error("[waitlist] Brevo /smtp/email failed:", emailRes.status, errBody);
+    }
 
     return NextResponse.json({ success: true });
   } catch {
