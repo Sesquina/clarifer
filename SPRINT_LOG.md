@@ -1,4 +1,52 @@
 ---
+[2026-05-30] SESSION -- feat/waitlist-form
+Branch: feat/waitlist-form
+Files changed:
+  app/waitlist/page.tsx              — full rewrite: custom form replacing Brevo iframe
+  app/api/waitlist/route.ts          — updated to accept new field set + Upstash rate limit
+  lib/ratelimit.ts                   — added waitlistLimiter (3/IP/hour)
+  supabase/migrations/20260530000001_waitlist_fields.sql — new file (see MIGRATION REQUIRED)
+  tests/api/waitlist.test.ts         — updated + 3 new test cases (5 total, all passing)
+
+WHAT WAS BUILT:
+  Replaced Brevo iframe embed with a pixel-perfect native React form.
+  EN/ES full translation including headings, labels, pills, chips, placeholders,
+  opt-in text, error banner, and success state. Browser language detection defaults
+  to ES when navigator.language starts with "es".
+  Dual-submit: direct Brevo form POST (mode no-cors, fire-and-forget) +
+  POST /api/waitlist JSON (stores in Supabase, sends Brevo API contact + internal email).
+  Rate limit: 3 signups per IP per hour via Upstash (waitlistLimiter).
+  Validation: firstName + email required; error banner + field highlight on failure.
+
+MIGRATION REQUIRED [feat/waitlist-form]:
+  supabase/migrations/20260530000001_waitlist_fields.sql
+  Run in Supabase SQL Editor on project lrhwgswbsctfqtvdjntr.
+  Adds to public.waitlist:
+    last_name TEXT
+    language_preference TEXT DEFAULT 'en'
+    caring_for TEXT
+    challenges TEXT[]
+    why_clarifer TEXT
+    marketing_optin BOOLEAN DEFAULT FALSE
+
+TypeScript: 0 errors.
+Tests: 385 passing, 2 pre-existing failures (analyze-document, documents-analyze — unchanged).
+
+DISCOVERED ISSUE [feat/waitlist-form-1]:
+  app/waitlist/page.tsx is now a client component ("use client").
+  The metadata export (title, description) that existed in the old iframe version
+  was removed because Next.js does not allow metadata exports from client components.
+  SEO metadata for /waitlist is now missing.
+  Fix: create app/waitlist/layout.tsx and move the metadata export there.
+
+DISCOVERED ISSUE [feat/waitlist-form-2]:
+  Rule 9 (mobile and web ship together) — no mobile waitlist screen exists in
+  apps/mobile/app/. The waitlist is a pre-launch web-only signup page and the
+  mobile app directory (as listed in CLARIFER_UI_HANDOFF.md) does not include
+  a waitlist screen. DECISION REQUIRED: should a mobile waitlist screen be built,
+  or is this page intentionally web-only?
+
+---
 [2026-05-28] SESSION S36 -- feat/mobile-chat
 Branch: feat/mobile-chat
 Files changed: apps/mobile/app/(app)/chat/index.tsx (new), apps/mobile/app/(home)/caregiver.tsx (Chat tile added)
