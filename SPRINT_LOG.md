@@ -2884,6 +2884,72 @@ PRE-EXISTING TS ERRORS remaining (22 total, all pre-existing or from feat/mobile
   supabase-client.web.ts window refs (6 errors)
 
 ---
+[2026-05-29] SESSION: fix/p0-demo-blockers
+
+TASK STARTED: p0 demo blockers — analysis trigger, markdown, PHI log, sign in link
+
+WHAT WAS FIXED:
+
+  TASK 1 — AnalysisTrigger stream body check
+    components/documents/AnalysisTrigger.tsx
+    Bug: component called router.refresh() on ANY HTTP 200, even when the analyze-document
+    route returned {"error":"..."} in the body (Anthropic failure path). Result: page
+    refresh showed no summary and appeared to succeed when the API key was missing.
+    Fix: read the response body after res.ok. JSON-parse it. If json.error is set →
+    setState("error"). If non-JSON (streaming AI text) → setState("done") + router.refresh().
+    Test: tests/components/analysis-trigger.test.ts (5 cases: error JSON, plain text,
+    JSON no error, 503, 429).
+
+  TASK 2 — Family update markdown
+    app/api/family-update/generate/route.ts — strengthened system prompt with explicit
+    forbidden-characters list (# * ** _ __ ` ``` > ---) and prohibition on list/numbered items.
+    lib/family-update/strip-markdown.ts (new) — stripMarkdown() utility strips headings,
+    bold, italic, underline, list prefixes, numbered lists, code spans, blockquotes,
+    horizontal rules, and excess blank lines.
+    app/(app)/patients/[id]/family-update/page.tsx — replaced 3-regex chain with
+    import of stripMarkdown(). Applied to every text chunk from the stream.
+    Test: tests/lib/strip-markdown.test.ts (13 cases including full-markdown cleanup).
+
+  TASK 3 — PHI console.log removal
+    app/home/page.tsx:17 — removed console.log("[home] patient query result:", patient, ...)
+    which logged patient.name and patient.custom_diagnosis on every dashboard load.
+    HIPAA violation per CLARIFER_BRAIN.md Rule 6 audit requirement.
+    Also removed console.error("[home] no patient for user...", user.id) on line 19 —
+    replaced with silent redirect per Rule: no PHI in logs.
+
+  TASK 4 — Sign in link on landing page header
+    components/layout/header.tsx — added "Sign in" link (href="/login", aria-label="Sign in")
+    to desktop right-side actions (left of "Join the waitlist") and mobile drawer
+    (before "Join the waitlist" button). Uses design tokens (var(--muted), var(--text)).
+    Test: tests/e2e/00-landing.spec.ts (Playwright, 3 cases: link visible, navigates to /login,
+    waitlist button still present).
+
+DISCOVERED ISSUE:
+  app/api/ai/analyze-document/route.ts:29 logs ANTHROPIC_API_KEY presence on every
+  request (before auth). Not PHI, but fires even for unauthenticated requests.
+  File: app/api/ai/analyze-document/route.ts:29. Not fixed inline per Rule 8.
+
+DISCOVERED ISSUE:
+  app/api/patients/create/route.ts:198 logs user_id, org_id, and patient_id UUIDs.
+  These are system identifiers, not PHI content, but per the principle of minimal
+  logging should be removed or guarded by a DEBUG flag in a future sprint.
+  File: app/api/patients/create/route.ts:198. Not fixed inline per Rule 8.
+
+Files changed:
+  components/documents/AnalysisTrigger.tsx (bug fix — body parsing)
+  app/api/family-update/generate/route.ts (system prompt strengthened)
+  lib/family-update/strip-markdown.ts (new utility)
+  app/(app)/patients/[id]/family-update/page.tsx (uses stripMarkdown)
+  app/home/page.tsx (PHI console.log removed)
+  components/layout/header.tsx (Sign in link added)
+  tests/components/analysis-trigger.test.ts (new, 5 tests)
+  tests/lib/strip-markdown.test.ts (new, 13 tests)
+  tests/e2e/00-landing.spec.ts (new Playwright, 3 tests)
+
+TypeScript: 0 errors.
+Migration required: None.
+
+---
 [2026-05-29] SESSION: fix/waitlist-brevo-error-handling
 
 MANUAL REQUIRED: Update BREVO_API_KEY in Vercel Production scope to the rotated

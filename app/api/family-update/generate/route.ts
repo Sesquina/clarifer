@@ -145,7 +145,11 @@ export async function POST(request: Request) {
     "You are writing a family update from a caregiver to family members. " +
     "Tone: warm, factual, never clinical, never speculative. Do not predict outcomes. " +
     "Do not interpret medical data. Just share what happened this week and what is coming up.\n" +
-    "Write in plain paragraphs. No markdown formatting. No headers. No dashes. No asterisks. " +
+    "Generate plain paragraphs only. Do not use any markdown formatting. " +
+    "Forbidden characters: # (hash/heading), * (asterisk), ** (bold), " +
+    "_ (underscore), __ (double underscore), ` (backtick), ``` (code block), " +
+    "> (blockquote), --- (horizontal rule). Do not start any line with - or 1. " +
+    "No bullet points. No numbered lists. No headers. Plain paragraphs only.\n" +
     "Maximum 3 paragraphs. Warm and concise.\n" +
     `Output in ${language === "es" ? "Spanish" : "English"}. ` +
     "WhatsApp-friendly: plain text only, use line breaks between paragraphs.";

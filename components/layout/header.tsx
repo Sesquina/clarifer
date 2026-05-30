@@ -67,7 +67,21 @@ export function Header(_props: HeaderProps = {}) {
         </nav>
 
         {/* RIGHT: Actions */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center" style={{ gap: 20 }}>
+          <Link
+            href="/login"
+            aria-label="Sign in"
+            style={{
+              color: "var(--muted)",
+              fontSize: 14,
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              textDecoration: "none",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted)")}
+          >
+            Sign in
+          </Link>
           <Link
             href="/waitlist"
             aria-label="Join the waitlist"
@@ -150,6 +164,22 @@ export function Header(_props: HeaderProps = {}) {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Sign in"
+            className="flex items-center"
+            style={{
+              height: 48,
+              padding: "0 24px",
+              color: "var(--muted)",
+              fontSize: 16,
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              textDecoration: "none",
+            }}
+          >
+            Sign in
+          </Link>
           <div style={{ padding: "12px 24px 0" }}>
             <Link
               href="/waitlist"
