@@ -80,28 +80,11 @@ export default function HQLoginPage() {
             marginBottom: 28,
           }}
         >
-          {/* Lighthouse logo placeholder -- 40x48 dark sage square */}
-          <div
-            aria-hidden="true"
-            style={{
-              width: 40,
-              height: 48,
-              backgroundColor: "var(--primary)",
-              borderRadius: 8,
-              marginBottom: 10,
-            }}
+          <img
+            src="/logo-with-text.png"
+            alt="Clarifer"
+            style={{ height: 48, width: "auto", objectFit: "contain" }}
           />
-          <span
-            style={{
-              ...BODY,
-              fontSize: 20,
-              fontWeight: 500,
-              color: "var(--text)",
-              letterSpacing: 0.2,
-            }}
-          >
-            Clarifer
-          </span>
         </div>
 
         <h1

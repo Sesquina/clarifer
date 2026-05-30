@@ -110,7 +110,7 @@ export default function LoginPage() {
       >
         <div className="hidden md:block" style={{ width: "100%" }}>
           <div style={{ marginBottom: 32 }}>
-            <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
+            <img src="/logo-mark.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
           </div>
           <h1
             style={{
@@ -192,7 +192,7 @@ export default function LoginPage() {
       >
         <div style={{ maxWidth: 420, margin: "0 auto", width: "100%" }}>
           <div className="md:hidden" style={{ marginBottom: 24 }}>
-            <img src="/clarifer-logo.png" alt="Clarifer" width={40} height={40} style={{ objectFit: "contain" }} />
+            <img src="/logo-mark.png" alt="Clarifer" width={40} height={40} style={{ objectFit: "contain" }} />
           </div>
           <h2
             style={{

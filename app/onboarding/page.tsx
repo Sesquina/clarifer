@@ -75,7 +75,7 @@ export default function OnboardingPage() {
       {/* Logo — above card */}
       <div style={{ marginBottom: 24 }}>
         <img
-          src="/clarifer-logo.png"
+          src="/logo-mark.png"
           alt="Clarifer"
           width={48}
           height={48}

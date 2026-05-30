@@ -17,7 +17,7 @@ export default function PromisePage() {
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "64px 24px" }}>
         <div style={{ marginBottom: 48 }}>
           <img
-            src="/clarifer-logo.png"
+            src="/logo-mark.png"
             alt="Clarifer"
             width={40}
             height={40}

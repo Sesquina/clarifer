@@ -19,7 +19,7 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
           className="h-8 w-8 shrink-0 text-xs"
         />
       ) : (
-        <img src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} className="rounded-full shrink-0" style={{ objectFit: "contain" }} />
+        <img src="/logo-mark.png" alt="Clarifer" width={28} height={28} className="rounded-full shrink-0" style={{ objectFit: "contain" }} />
       )}
       <div
         className={cn(

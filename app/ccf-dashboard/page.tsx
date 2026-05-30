@@ -10,7 +10,6 @@ import { redirect } from "next/navigation";
 import { internalSupabase } from "@/lib/internal/supabase";
 import { createClient } from "@/lib/supabase/server";
 import { isAllowedEmail } from "@/lib/internal/types";
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
 import { ReachCommunity } from "./ReachCommunity";
 
 export const dynamic = "force-dynamic";
@@ -336,7 +335,7 @@ function StandaloneHeader() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <AnchorLogo size={28} color="var(--white)" ariaLabel="Clarifer" />
+        <img src="/logo-mark.png" alt="Clarifer" width={28} height={28} style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
         <span
           style={{
             ...BODY,

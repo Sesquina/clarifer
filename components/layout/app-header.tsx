@@ -34,16 +34,8 @@ export function AppHeader({ userName, userId }: AppHeaderProps) {
         zIndex: 40,
       }}
     >
-      <Link href="/home" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-        <img src="/clarifer-logo.png" alt="Clarifer" width={32} height={32} style={{ objectFit: "contain" }} />
-        <span style={{
-          fontFamily: "var(--font-playfair), 'Playfair Display', serif",
-          fontSize: 18,
-          fontWeight: 600,
-          color: "var(--primary)",
-        }}>
-          Clarifer
-        </span>
+      <Link href="/home" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+        <img src="/logo-with-text.png" alt="Clarifer" style={{ height: 32, width: "auto", objectFit: "contain" }} />
       </Link>
 
       {userName && (

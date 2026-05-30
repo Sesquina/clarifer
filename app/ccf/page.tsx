@@ -41,7 +41,7 @@ export default function CCFLandingPage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img
-            src="/clarifer-logo.png"
+            src="/logo-mark.png"
             alt="Clarifer"
             width={40}
             height={40}

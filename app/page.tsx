@@ -37,7 +37,7 @@ export default function LandingPage() {
           style={{ maxWidth: 720, margin: "0 auto" }}
         >
           <div style={{ marginBottom: 28 }}>
-            <img src="/clarifer-logo.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
+            <img src="/logo-mark.png" alt="Clarifer" width={48} height={48} style={{ objectFit: "contain" }} />
           </div>
           <h1
             className="text-[36px] md:text-[52px] text-center"
@@ -688,7 +688,7 @@ export default function LandingPage() {
               style={{ gap: 10 }}
               aria-label="Clarifer home"
             >
-              <img src="/clarifer-logo.png" alt="Clarifer" width={24} height={24} style={{ objectFit: "contain" }} />
+              <img src="/logo-mark.png" alt="Clarifer" width={24} height={24} style={{ objectFit: "contain" }} />
               <span
                 style={{
                   ...BODY_FONT,

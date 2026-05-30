@@ -105,17 +105,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
           className="flex items-center"
           style={{ padding: "20px 16px", gap: 10 }}
         >
-          <img src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
-          <span
-            style={{
-              ...BODY,
-              fontSize: 18,
-              fontWeight: 700,
-              color: "var(--white)",
-            }}
-          >
-            Clarifer
-          </span>
+          <img src="/logo-mark.png" alt="Clarifer" width={28} height={28} style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
         </div>
 
         <nav className="flex flex-col" style={{ padding: "4px 8px", gap: 2 }}>

@@ -51,7 +51,7 @@ export default function UpdatePasswordPage() {
       className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-12"
     >
       <img
-        src="/clarifer-logo.png"
+        src="/logo-mark.png"
         alt="Clarifer"
         width={48}
         height={48}

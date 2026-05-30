@@ -29,21 +29,9 @@ export function Header(_props: HeaderProps = {}) {
         <Link
           href="/"
           className="flex items-center no-underline"
-          style={{ gap: 10 }}
           aria-label="Clarifer home"
         >
-          <img src="/clarifer-logo.png" alt="Clarifer" width={28} height={28} style={{ objectFit: "contain" }} />
-          <span
-            className="font-bold"
-            style={{
-              color: "var(--primary)",
-              fontSize: 18,
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontWeight: 700,
-            }}
-          >
-            Clarifer
-          </span>
+          <img src="/logo-horizontal.png" alt="Clarifer" width={140} height={44} style={{ objectFit: "contain", height: 44, width: "auto" }} />
         </Link>
 
         {/* CENTER: Desktop nav */}

@@ -22,7 +22,7 @@ export default function DownloadPage() {
         style={{ maxWidth: 600, margin: "0 auto", padding: "80px 24px" }}
       >
         <div style={{ marginBottom: 24 }}>
-          <img src="/clarifer-logo.png" alt="Clarifer" width={64} height={64} style={{ objectFit: "contain" }} />
+          <img src="/logo-mark.png" alt="Clarifer" width={64} height={64} style={{ objectFit: "contain" }} />
         </div>
         <h1
           style={{

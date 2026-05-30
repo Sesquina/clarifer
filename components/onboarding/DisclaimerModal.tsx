@@ -58,7 +58,7 @@ export function DisclaimerModal({ onAccept }: Props) {
         }}
       >
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-          <Image src="/clarifer-logo.png" alt="Clarifer" width={40} height={40} />
+          <Image src="/logo-mark.png" alt="Clarifer" width={40} height={40} />
         </div>
 
         <h2

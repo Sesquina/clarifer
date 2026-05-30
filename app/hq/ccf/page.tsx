@@ -11,7 +11,6 @@
 import { Suspense } from "react";
 import { internalSupabase } from "@/lib/internal/supabase";
 import { createClient } from "@/lib/supabase/server";
-import { AnchorLogo } from "@/components/ui/AnchorLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -340,7 +339,7 @@ function DashboardHeader() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <AnchorLogo size={28} color="var(--card)" ariaLabel="Clarifer" />
+        <img src="/logo-mark.png" alt="Clarifer" width={28} height={28} style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
         <span
           style={{
             ...BODY,

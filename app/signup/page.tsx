@@ -169,7 +169,7 @@ export default function SignupPage() {
           }}
         >
           <img
-            src="/clarifer-logo.png"
+            src="/logo-mark.png"
             alt="Clarifer"
             width={48}
             height={48}
@@ -217,7 +217,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
           <img
-            src="/clarifer-logo.png"
+            src="/logo-mark.png"
             alt="Clarifer"
             width={48}
             height={48}
