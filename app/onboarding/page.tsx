@@ -47,6 +47,8 @@ export default function OnboardingPage() {
       });
 
       if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.error('[onboarding] POST failed:', res.status, body);
         setError("Something went wrong. Please try again.");
         setLoading(false);
         return;
