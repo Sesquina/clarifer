@@ -2950,6 +2950,65 @@ TypeScript: 0 errors.
 Migration required: None.
 
 ---
+[2026-05-29] SESSION: fix/app-layout-chrome
+
+TASK STARTED: create app/(app)/layout.tsx — desktop chrome + mobile nav for all patient pages
+
+AUDIT RESULT:
+  app/(app)/layout.tsx — FILE WAS MISSING.
+  Routes confirmed without chrome: patients/[id]/*, patients/[id]/appointments,
+  patients/[id]/care-team, patients/[id]/emergency-card, patients/[id]/family-update,
+  patients/[id]/trials, patients/new, provider/*, provider/patients/[id].
+
+EXISTING COMPONENTS FOUND AND REUSED (no changes made to these):
+  components/layout/app-header.tsx — mobile top header (56px, sticky, logo + NotificationBell + sign out)
+  components/layout/bottom-nav.tsx — mobile bottom nav (64px, fixed, 5 items with elevated Ask circle)
+  components/notifications/NotificationBell.tsx — bell icon with realtime unread badge
+  components/layout/app-layout.tsx — server component wrapper (used as reference, not modified)
+
+NEW COMPONENTS CREATED:
+  components/nav/nav-rail.tsx — desktop left rail (52px wide, icon-only, lg+ only,
+    var(--pale-sage) bg, 44x44px touch targets, active=var(--primary) pill,
+    inactive=var(--muted), Home/Log/Documents/Tools + Sign out at bottom)
+  components/nav/patient-crumb.tsx — desktop header center, reads /patients/[id]
+    from usePathname(), fetches patient name via GET /api/patients/[id] (confirmed
+    route exists in CLARIFER_BRAIN.md), renders "Caring for • [first name]" or nothing
+
+NEW LAYOUT CREATED:
+  app/(app)/layout.tsx — server component
+    Auth guard: getUser() → redirect /login if no session
+    Desktop (lg+): NavRail (left, 52px) + header bar (52px, Clarifer logo + PatientCrumb
+      + Ask Clarifer button → /chat) + main content
+    Mobile (<lg): AppHeader (top, sticky) + main (padding-bottom 64px) + BottomNav (fixed bottom)
+    Fetches users.full_name for AppHeader userName prop
+
+Routes now covered by this layout (previously had no chrome):
+  /patients/[id], /patients/[id]/appointments, /patients/[id]/care-team,
+  /patients/[id]/emergency-card, /patients/[id]/family-update, /patients/[id]/trials,
+  /patients/new, /provider, /provider/patients/[id]
+
+Tests:
+  tests/app/app-layout.test.ts (new, 2 Vitest tests):
+    - No session → redirect("/login") called
+    - Valid session → no redirect, resolves normally
+  tests/e2e/14-app-layout-chrome.spec.ts (new Playwright, 4 tests):
+    - Desktop 1280px: NavRail visible with correct aria-label
+    - Desktop 1280px: Home/Log/Documents/Tools links present in NavRail
+    - Mobile 390px: bottom nav visible (BottomNav)
+    - Mobile 390px: NavRail hidden
+
+Files changed:
+  app/(app)/layout.tsx (new)
+  components/nav/nav-rail.tsx (new)
+  components/nav/patient-crumb.tsx (new)
+  tests/app/app-layout.test.ts (new)
+  tests/e2e/14-app-layout-chrome.spec.ts (new)
+
+TypeScript: 0 errors.
+Vitest: 353 passed / 4 failed (same 4 pre-existing failures, 2 new passing tests added).
+Migration required: None.
+
+---
 [2026-05-29] SESSION: fix/waitlist-brevo-error-handling
 
 MANUAL REQUIRED: Update BREVO_API_KEY in Vercel Production scope to the rotated
