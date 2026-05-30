@@ -30,6 +30,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { stripMarkdown } from "@/lib/family-update/strip-markdown";
 
 // ─── CCF support group links ────────────────────────────────────────────────
 const CCF_GROUPS = [
@@ -163,7 +164,7 @@ export function HomeClient({
         const { done, value } = await reader.read();
         if (done) break;
         text += decoder.decode(value, { stream: true });
-        const captured = text;
+        const captured = stripMarkdown(text);
         setUpdateText(captured);
       }
     } catch {
@@ -227,7 +228,7 @@ export function HomeClient({
         icon: Calendar,
         title: a.title ?? "Appointment",
         subtitle: fmtAppt(a.datetime),
-        href: `/appointments`,
+        href: `/patients/${patient.id}/appointments`,
       };
     }
     if (logs.length > 0) {
@@ -280,7 +281,7 @@ export function HomeClient({
         appointments.length > 0
           ? fmtAppt(appointments[0].datetime)
           : "Add an appointment",
-      href: "/appointments",
+      href: `/patients/${patient.id}/appointments`,
     },
     {
       icon: FileText,
