@@ -1,58 +1,17 @@
 /**
  * app/api/waitlist/route.ts
- * Accepts waitlist signups, stores in Supabase, and notifies Brevo via API.
+ * Accepts waitlist signups, stores in Supabase, and sends a team notification via SMTP.
+ * Brevo list subscription is handled client-side via direct form POST (no-cors).
  * Tables: waitlist
  * Auth: Public
  * HIPAA: No PHI in this file.
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import nodemailer from "nodemailer";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
 import { waitlistLimiter } from "@/lib/ratelimit";
-
-const BREVO_API = "https://api.brevo.com/v3";
-const CLARIFER_LIST_NAME = "Clarifer Waitlist";
-
-let cachedListId: number | null = null;
-
-async function brevoFetch(path: string, options: RequestInit = {}) {
-  return fetch(`${BREVO_API}${path}`, {
-    ...options,
-    headers: {
-      "api-key": process.env.BREVO_API_KEY!,
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-}
-
-async function getOrCreateList(): Promise<number> {
-  if (cachedListId) return cachedListId;
-
-  const listsRes = await brevoFetch("/contacts/lists?limit=50");
-  if (listsRes.ok) {
-    const data = await listsRes.json();
-    const existing = data.lists?.find((l: { name: string }) => l.name === CLARIFER_LIST_NAME);
-    if (existing) {
-      cachedListId = existing.id;
-      return existing.id;
-    }
-  }
-
-  const createRes = await brevoFetch("/contacts/lists", {
-    method: "POST",
-    body: JSON.stringify({ name: CLARIFER_LIST_NAME, folderId: 1 }),
-  });
-
-  if (createRes.ok) {
-    const data = await createRes.json();
-    cachedListId = data.id;
-    return data.id;
-  }
-
-  return 2;
-}
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
@@ -111,62 +70,38 @@ export async function POST(request: Request) {
       marketing_optin: safeMarketingOptin,
     });
 
-    const listId = await getOrCreateList();
+    const textContent = [
+      `Name: ${safeName ?? "Not provided"} ${safeLastName ?? ""}`.trim(),
+      `Email: ${safeEmail}`,
+      `Language: ${safeLang}`,
+      `Caring for: ${safeCaringFor ?? "Not selected"}`,
+      `Challenges: ${safeChallenges.join(", ") || "None selected"}`,
+      `Why Clarifer: ${safeWhyClarifer ?? "Not provided"}`,
+      `Marketing opt-in: ${safeMarketingOptin ? "Yes" : "No"}`,
+    ].join("\n");
 
-    const contactRes = await brevoFetch("/contacts", {
-      method: "POST",
-      body: JSON.stringify({
-        email: safeEmail,
-        attributes: {
-          FIRSTNAME: safeName ?? "",
-          LASTNAME: safeLastName ?? "",
-          LANGUAGE_PREFERENCE: safeLang,
-          CARING_FOR: safeCaringFor ?? "",
-          CHALLENGES: safeChallenges.join(", "),
-          WHY_CLARIFER: safeWhyClarifer ?? "",
-          MARKETING_OPTIN: safeMarketingOptin ? "1" : "0",
-        },
-        listIds: [listId],
-        updateEnabled: true,
-      }),
+    // Transporter created inside handler — serverless functions must not share state
+    const transporter = nodemailer.createTransport({
+      host: process.env.BREVO_SMTP_HOST,
+      port: 587,
+      auth: {
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_SMTP_PASS,
+      },
     });
 
-    if (!contactRes.ok) {
-      const errBody = await contactRes.text().catch(() => "");
-      console.error("[waitlist] Brevo /contacts failed:", contactRes.status, errBody);
-      return NextResponse.json(
-        { error: "Signup failed. Please try again." },
-        { status: 500 }
-      );
-    }
-
-    console.log("[waitlist] sending notification email to team for:", safeEmail);
-    const emailRes = await brevoFetch("/smtp/email", {
-      method: "POST",
-      body: JSON.stringify({
-        sender: { name: "Clarifer", email: "team@clarifer.com" },
-        to: [
-          { email: "team@clarifer.com", name: "Clarifer" },
-          { email: "michael.barbara@clarifer.com", name: "Michael" },
-          { email: "samira.esquina@clarifer.com", name: "Samira" },
-        ],
+    try {
+      await transporter.sendMail({
+        from: "Clarifer <team@clarifer.com>",
+        to: ["team@clarifer.com", "samira.esquina@clarifer.com", "michael.barbara@clarifer.com"],
         subject: "New Clarifer waitlist signup",
-        textContent: [
-          `Name: ${safeName ?? "Not provided"} ${safeLastName ?? ""}`.trim(),
-          `Email: ${safeEmail}`,
-          `Language: ${safeLang}`,
-          `Caring for: ${safeCaringFor ?? "Not selected"}`,
-          `Challenges: ${safeChallenges.join(", ") || "None selected"}`,
-          `Why Clarifer: ${safeWhyClarifer ?? "Not provided"}`,
-          `Marketing opt-in: ${safeMarketingOptin ? "Yes" : "No"}`,
-        ].join("\n"),
-      }),
-    });
-
-    console.log("[waitlist] notification email sent, status:", emailRes.status);
-    if (!emailRes.ok) {
-      const errBody = await emailRes.text().catch(() => "");
-      console.error("[waitlist] Brevo /smtp/email failed:", emailRes.status, errBody);
+        text: textContent,
+      });
+      console.log("[waitlist] SMTP notification sent to team for:", safeEmail);
+    } catch (smtpErr) {
+      // Signup already succeeded — Supabase insert is done, client-side Brevo form posted.
+      // Log the failure and continue; do not block the caregiver's confirmation.
+      console.error("[waitlist] SMTP notification failed:", smtpErr);
     }
 
     return NextResponse.json({ success: true });
