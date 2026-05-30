@@ -48,6 +48,13 @@ export const resetLimiter = new Ratelimit({
   prefix: "rl:reset",
 });
 
+// Waitlist signup: 3 per IP per hour
+export const waitlistLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, "1 h"),
+  prefix: "rl:waitlist",
+});
+
 // Summarize: 10 per user per hour
 export const summarizeLimiter = new Ratelimit({
   redis,
