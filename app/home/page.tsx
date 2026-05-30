@@ -14,9 +14,7 @@ export default async function HomePage() {
     .limit(1)
     .maybeSingle();
 
-  console.log("[home] patient query result:", patient, "user.id:", user.id);
   if (!patient) {
-    console.error("[home] no patient for user", user.id, "— redirecting to onboarding");
     redirect("/onboarding");
   }
 

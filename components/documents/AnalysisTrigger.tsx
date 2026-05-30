@@ -4,7 +4,7 @@
  * Mounts, POSTs to /api/ai/analyze-document, then refreshes the server component.
  * Tables: documents (indirect -- analysis route writes summary back)
  * Auth: caregiver role required (enforced by the API route)
- * Sprint: feat/document-analysis-trigger
+ * Sprint: fix/p0-demo-blockers
  * HIPAA: No PHI in this file. documentId and patientId are UUIDs only.
  */
 
@@ -54,9 +54,25 @@ export function AnalysisTrigger({ documentId, patientId }: Props) {
           return;
         }
 
-        // Analysis complete -- refresh server component so summary renders
-        setState("done");
-        router.refresh();
+        // The route streams text/plain on success and enqueues JSON {"error":"..."}
+        // with HTTP 200 on Anthropic failures. Read the body to distinguish them:
+        // non-JSON body = genuine streaming AI text = success.
+        // JSON body with error field = Anthropic failed = show error, don't refresh.
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text) as { error?: string };
+          if (json.error) {
+            setState("error");
+            return;
+          }
+          // Valid JSON without error field — treat as success
+          setState("done");
+          router.refresh();
+        } catch {
+          // Non-JSON body = streaming AI analysis text = genuine success
+          setState("done");
+          router.refresh();
+        }
       } catch {
         if (!cancelled) setState("error");
       }

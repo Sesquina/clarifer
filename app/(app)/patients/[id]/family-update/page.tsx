@@ -11,6 +11,7 @@
 
 import { useCallback, useState } from "react";
 import { useParams } from "next/navigation";
+import { stripMarkdown } from "@/lib/family-update/strip-markdown";
 
 const BODY: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
@@ -111,13 +112,7 @@ export default function FamilyUpdatePage() {
             continue;
           }
           if (evt.kind === "meta") setMeta(evt);
-          else if (evt.kind === "text") {
-            const clean = evt.text
-              .replace(/\*\*/g, "")
-              .replace(/---/g, "")
-              .replace(/#{1,6}\s/g, "");
-            setText((prev) => prev + clean);
-          }
+          else if (evt.kind === "text") setText((prev) => prev + stripMarkdown(evt.text));
           else if (evt.kind === "error") setError(evt.message || t.error);
         }
       }
