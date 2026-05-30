@@ -1,25 +1,37 @@
+/**
+ * components/onboarding/DisclaimerModal.tsx
+ * Disclaimer gate shown on /onboarding/complete before entering the app.
+ * onAccept is async: must succeed before navigation. Error shown on failure.
+ * Tables: users (via POST /api/users/disclaimer — handled by caller)
+ * Auth: required (caller provides async onAccept that calls the API)
+ * HIPAA: No PHI in this file
+ */
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 
 interface Props {
-  onAccept: () => void;
+  onAccept: () => Promise<void>;
 }
 
 export function DisclaimerModal({ onAccept }: Props) {
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
 
   async function handleAccept() {
     if (!checked || loading) return;
     setLoading(true);
-    await fetch("/api/users/disclaimer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accepted: true }),
-    });
-    onAccept();
+    setError("");
+    try {
+      await onAccept();
+      // onAccept navigates on success — if we reach here the caller didn't navigate
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -83,7 +95,7 @@ export function DisclaimerModal({ onAccept }: Props) {
             alignItems: "flex-start",
             gap: 12,
             cursor: "pointer",
-            marginBottom: 28,
+            marginBottom: error ? 12 : 28,
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: 14,
             color: "var(--text)",
@@ -99,6 +111,24 @@ export function DisclaimerModal({ onAccept }: Props) {
           I understand Clarifer is a care coordination tool, not a medical device.
         </label>
 
+        {error && (
+          <div
+            role="alert"
+            style={{
+              backgroundColor: "#FFF0F0",
+              border: "1px solid var(--severity-high)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: 13,
+              color: "var(--severity-high)",
+              marginBottom: 16,
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <button
           type="button"
           onClick={handleAccept}
@@ -107,6 +137,7 @@ export function DisclaimerModal({ onAccept }: Props) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            gap: 8,
             width: "100%",
             height: 52,
             borderRadius: 26,
@@ -120,6 +151,7 @@ export function DisclaimerModal({ onAccept }: Props) {
             opacity: !checked || loading ? 0.6 : 1,
           }}
         >
+          {loading && <Loader2 size={18} className="animate-spin" />}
           {loading ? "Saving..." : "I understand, continue"}
         </button>
       </div>
