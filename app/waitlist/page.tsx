@@ -365,37 +365,12 @@ export default function WaitlistPage() {
               marginBottom: 28,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  backgroundColor: sage,
-                  borderRadius: 7,
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <img
-                  src="/logo-mark.png"
-                  alt="Clarifer"
-                  width={28}
-                  height={28}
-                  style={{ objectFit: "contain", display: "block" }}
-                />
-              </div>
-              <span
-                style={{
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 600,
-                  fontSize: 15,
-                  color: sage,
-                }}
-              >
-                Clarifer
-              </span>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <img
+                src="/logo-horizontal.png"
+                alt="Clarifer"
+                style={{ height: 32, width: "auto", display: "block" }}
+              />
             </div>
 
             <div
