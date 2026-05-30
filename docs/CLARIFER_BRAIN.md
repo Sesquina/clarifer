@@ -30,7 +30,15 @@ RULE 1 — READ BEFORE TOUCHING
 cat every file in full before editing it. Never edit from memory.
 Confirm the file exists before referencing it in code.
 
+MANDATORY — read before any session that touches UI:
+  cat docs/CLARIFER_UI_HANDOFF.md
+
+This file contains: every screen's Figma node ID and direct link,
+every file path, every copy rule, every component state, all API
+routes, the full HIPAA checklist, and demo account credentials.
+Never build a screen without reading this first.
 RULE 2 — ROUTES MUST EXIST BEFORE REDIRECTING
+
 Before any router.push, redirect, or Link href — confirm the target
 page.tsx exists. Run: find app -name "page.tsx" | grep [path]
 If not found: log DECISION REQUIRED. Do not create a redirect to nowhere.
