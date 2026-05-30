@@ -21,6 +21,10 @@ function makeSupabase(opts: { user?: { id: string } | null; role?: string; organ
           single: vi.fn().mockResolvedValue({
             data: organizationId ? { role, organization_id: organizationId } : null,
           }),
+          // Required for the post-insert users.update() call in the route (org_id + role sync)
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue(Promise.resolve({ error: null })),
+          }),
         };
       }
       if (table === "patients") {
@@ -198,6 +202,19 @@ describe("POST /api/patients/create", () => {
     const res = await postBody({ full_name: "Carlos", state: "x".repeat(101) });
     expect(res.status).toBe(400);
     expect(patientInserts).toHaveLength(0);
+  });
+
+  // Regression: new onboarding sends first_name, old code only read full_name/name → always 400
+  it("new onboarding payload {first_name} → 201, not 400", async () => {
+    const res = await postBody({
+      first_name: "Carlos",
+      language_preference: "en",
+      role: "caregiver",
+    });
+    expect(res.status).toBe(201);
+    expect(patientInserts).toHaveLength(1);
+    expect(patientInserts[0].name).toBe("Carlos");
+    expect(patientInserts[0].language_preference).toBe("en");
   });
 
   it("valid full onboarding payload (caregiver) → 201 and DB receives normalized fields", async () => {

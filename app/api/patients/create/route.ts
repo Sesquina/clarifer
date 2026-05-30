@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     condition_template_id?: string;
     primary_language?: string;
     // Onboarding aliases (app/onboarding/page.tsx)
+    first_name?: string;
     name?: string;
     dob?: string;
     custom_diagnosis?: string;
@@ -61,8 +62,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  // Accept both naming conventions (full_name from API callers, name from onboarding)
-  const fullName = (body.full_name ?? body.name ?? "").trim();
+  // Accept all naming conventions: first_name (new onboarding), full_name (API callers), name (legacy onboarding)
+  const fullName = (body.first_name ?? body.full_name ?? body.name ?? "").trim();
   if (!fullName) {
     return NextResponse.json(
       { error: "Please enter the patient's full name." },
