@@ -140,6 +140,7 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("[waitlist] sending notification email to team for:", safeEmail);
     const emailRes = await brevoFetch("/smtp/email", {
       method: "POST",
       body: JSON.stringify({
@@ -147,6 +148,7 @@ export async function POST(request: Request) {
         to: [
           { email: "team@clarifer.com", name: "Clarifer" },
           { email: "michael.barbara@clarifer.com", name: "Michael" },
+          { email: "samira.esquina@clarifer.com", name: "Samira" },
         ],
         subject: "New Clarifer waitlist signup",
         textContent: [
@@ -161,6 +163,7 @@ export async function POST(request: Request) {
       }),
     });
 
+    console.log("[waitlist] notification email sent, status:", emailRes.status);
     if (!emailRes.ok) {
       const errBody = await emailRes.text().catch(() => "");
       console.error("[waitlist] Brevo /smtp/email failed:", emailRes.status, errBody);
