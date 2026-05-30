@@ -1,7 +1,7 @@
 /**
  * tests/api/waitlist.test.ts
- * POST /api/waitlist — new field structure, rate limiting, and Brevo error handling.
- * All external calls (Brevo fetch, Supabase insert, Upstash) are mocked.
+ * POST /api/waitlist — Supabase insert, SMTP notification, rate limiting.
+ * All external calls (Supabase, nodemailer, Upstash) are mocked.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -23,6 +23,20 @@ vi.mock("@/lib/ratelimit", () => ({
   waitlistLimiter: { limit: vi.fn().mockImplementation(() => Promise.resolve({ success: rl.success })) },
 }));
 
+// Mutable closure lets test 5 simulate SMTP failure without re-mocking
+const smtp = { shouldFail: false };
+vi.mock("nodemailer", () => ({
+  default: {
+    createTransport: vi.fn().mockImplementation(() => ({
+      sendMail: vi.fn().mockImplementation(() =>
+        smtp.shouldFail
+          ? Promise.reject(new Error("SMTP connection refused"))
+          : Promise.resolve({ messageId: "test-id" })
+      ),
+    })),
+  },
+}));
+
 function makeRequest(body: Record<string, unknown> = {}): Request {
   return new Request("http://localhost/api/waitlist", {
     method: "POST",
@@ -36,29 +50,20 @@ function makeRequest(body: Record<string, unknown> = {}): Request {
   });
 }
 
-function listLookupOk() {
-  return new Response(
-    JSON.stringify({ lists: [{ id: 1, name: "Clarifer Waitlist" }] }),
-    { status: 200 }
-  );
-}
-
 describe("POST /api/waitlist", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
     rl.success = true;
-    process.env.BREVO_API_KEY = "test-key";
+    smtp.shouldFail = false;
+    process.env.BREVO_SMTP_HOST = "smtp-relay.brevo.com";
+    process.env.BREVO_SMTP_USER = "aaa008001@smtp-brevo.com";
+    process.env.BREVO_SMTP_PASS = "test-smtp-pass";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
   });
 
-  it("returns 200 and success:true when Brevo accepts the contact", async () => {
-    vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce(listLookupOk())
-      .mockResolvedValueOnce(new Response("{}", { status: 201 }))
-      .mockResolvedValueOnce(new Response("{}", { status: 202 }));
-
+  it("returns 200 and success:true on a valid minimal signup", async () => {
     const { POST } = await import("@/app/api/waitlist/route");
     const res = await POST(makeRequest());
 
@@ -67,12 +72,7 @@ describe("POST /api/waitlist", () => {
     expect(body.success).toBe(true);
   });
 
-  it("returns 200 with full new field set (all optional fields populated)", async () => {
-    vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce(listLookupOk())
-      .mockResolvedValueOnce(new Response("{}", { status: 201 }))
-      .mockResolvedValueOnce(new Response("{}", { status: 202 }));
-
+  it("returns 200 with full field set (all optional fields populated)", async () => {
     const { POST } = await import("@/app/api/waitlist/route");
     const res = await POST(
       makeRequest({
@@ -111,23 +111,19 @@ describe("POST /api/waitlist", () => {
     expect(res.status).toBe(429);
   });
 
-  it("returns 500 and logs console.error when Brevo /contacts returns 401", async () => {
+  it("SMTP failure logs error but still returns 200 (signup already succeeded)", async () => {
+    smtp.shouldFail = true;
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce(listLookupOk())
-      .mockResolvedValueOnce(new Response("Unauthorized", { status: 401 }));
 
     const { POST } = await import("@/app/api/waitlist/route");
     const res = await POST(makeRequest());
 
-    expect(res.status).toBe(500);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toBe("Signup failed. Please try again.");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { success: boolean };
+    expect(body.success).toBe(true);
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("[waitlist]"),
-      401,
-      expect.any(String)
+      expect.any(Error)
     );
   });
 });
