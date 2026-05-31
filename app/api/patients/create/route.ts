@@ -196,8 +196,6 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .then(() => undefined, () => undefined);
 
-  console.log("[patients/create] user_id:", user.id, "org_id:", organizationId, "patient_id:", inserted.id);
-
   return NextResponse.json(
     { id: inserted.id, full_name: inserted.name, condition_template_id: inserted.condition_template_id },
     { status: 201 }
