@@ -27,9 +27,8 @@ import {
   Home,
   Users,
   Sparkles,
-  LogOut,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { stripMarkdown } from "@/lib/family-update/strip-markdown";
 
 // ─── CCF support group links ────────────────────────────────────────────────
 const CCF_GROUPS = [
@@ -97,14 +96,6 @@ function fmtDate(dateStr: string | null): string {
   });
 }
 
-// ─── Desktop left-rail nav items ─────────────────────────────────────────────
-const RAIL_NAV = [
-  { href: "/home", icon: Home, label: "Home" },
-  { href: "/log", icon: Activity, label: "Log" },
-  { href: "/documents", icon: FileText, label: "Docs" },
-  { href: "/tools", icon: Wrench, label: "Tools" },
-];
-
 // ─── Component ───────────────────────────────────────────────────────────────
 export function HomeClient({
   patient,
@@ -163,7 +154,7 @@ export function HomeClient({
         const { done, value } = await reader.read();
         if (done) break;
         text += decoder.decode(value, { stream: true });
-        const captured = text;
+        const captured = stripMarkdown(text);
         setUpdateText(captured);
       }
     } catch {
@@ -207,13 +198,6 @@ export function HomeClient({
     window.location.reload();
   }
 
-  // Sign out for desktop rail
-  const supabase = createClient();
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    window.location.href = "/login";
-  }
-
   // ── Priority card: most actionable item from existing data ─────────────────
   const priorityItem: {
     icon: React.ElementType;
@@ -227,7 +211,7 @@ export function HomeClient({
         icon: Calendar,
         title: a.title ?? "Appointment",
         subtitle: fmtAppt(a.datetime),
-        href: `/appointments`,
+        href: `/patients/${patient.id}/appointments`,
       };
     }
     if (logs.length > 0) {
@@ -280,7 +264,7 @@ export function HomeClient({
         appointments.length > 0
           ? fmtAppt(appointments[0].datetime)
           : "Add an appointment",
-      href: "/appointments",
+      href: `/patients/${patient.id}/appointments`,
     },
     {
       icon: FileText,
@@ -322,74 +306,8 @@ export function HomeClient({
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* ── DESKTOP: Fixed left nav rail (hidden on mobile) ──────────────────── */}
-      <nav
-        aria-label="Main navigation"
-        className="hidden md:flex"
-        style={{
-          position: "fixed",
-          top: 56,
-          left: 0,
-          bottom: 0,
-          width: 52,
-          flexDirection: "column",
-          alignItems: "center",
-          backgroundColor: "var(--card)",
-          borderRight: "1px solid var(--border)",
-          zIndex: 30,
-          paddingTop: 16,
-          paddingBottom: 12,
-        }}
-      >
-        {RAIL_NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            title={item.label}
-            aria-label={item.label}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              color: "var(--muted)",
-              textDecoration: "none",
-              marginBottom: 4,
-            }}
-          >
-            <item.icon size={20} aria-hidden="true" />
-          </Link>
-        ))}
-
-        <div style={{ flex: 1 }} />
-
-        <button
-          type="button"
-          onClick={handleSignOut}
-          title="Sign out"
-          aria-label="Sign out"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            color: "var(--muted)",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <LogOut size={18} aria-hidden="true" />
-        </button>
-      </nav>
-
-      {/* ── MAIN CONTENT (offset by left rail on desktop) ─────────────────────── */}
+      {/* ── MAIN CONTENT ──────────────────────────────────────────────────────── */}
       <div
-        className="md:ml-[52px]"
         style={{ display: "flex", flexDirection: "column", flex: 1 }}
       >
         {/* ── DESKTOP: Breadcrumb sub-header ──────────────────────────────────── */}

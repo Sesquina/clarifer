@@ -102,7 +102,7 @@ export default function LandingPage() {
                 marginBottom: 16,
               }}
             >
-              When someone you love is seriously ill, you become a coordinator,
+              When someone you love is navigating complex care, you become a coordinator,
               an advocate, an interpreter, and a communicator, all at once. Most
               caregivers do this with a folder of papers, a notes app, and
               sheer determination.

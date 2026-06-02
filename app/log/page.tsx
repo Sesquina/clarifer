@@ -437,7 +437,7 @@ export default function LogPage() {
               <Alert
                 bg="#FDECEA"
                 textColor="#8B1A1A"
-                message="These signs may indicate infection. If you are concerned, call the care team or go to the nearest emergency room."
+                message="Call 911 or go to the emergency room immediately if two or more of these signs are present."
               />
             )}
           </SectionCard>
