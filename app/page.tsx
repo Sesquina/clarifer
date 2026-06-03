@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { CookieBanner } from "@/components/cookie-banner";
-import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata = {
   title: "Clarifer. Care coordination for caregivers.",
@@ -68,7 +67,75 @@ export default function LandingPage() {
             documents, track symptoms, and keep family informed. All in one
             place.
           </p>
-          <WaitlistForm />
+          <div
+            style={{
+              marginTop: 36,
+              maxWidth: 480,
+              marginLeft: "auto",
+              marginRight: "auto",
+              width: "100%",
+            }}
+          >
+            <h2
+              style={{
+                ...SECTION_HEADING,
+                fontSize: 30,
+                color: "var(--primary)",
+                fontWeight: 700,
+                marginBottom: 14,
+                textAlign: "center",
+                lineHeight: 1.2,
+              }}
+            >
+              Coming June 15, 2026
+            </h2>
+            <p
+              style={{
+                ...BODY_FONT,
+                fontSize: 16,
+                color: "var(--muted)",
+                lineHeight: 1.65,
+                marginBottom: 24,
+                textAlign: "center",
+              }}
+            >
+              We are looking for families who want to be part of something meaningful. If you are a family caregiver, we would love to have you.
+            </p>
+            <Link
+              href="/waitlist"
+              aria-label="Join the waitlist"
+              style={{
+                ...BODY_FONT,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: "var(--primary)",
+                color: "var(--white)",
+                fontSize: 16,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                width: "100%",
+                textDecoration: "none",
+              }}
+            >
+              Join the waitlist
+            </Link>
+            <p
+              style={{
+                ...BODY_FONT,
+                fontSize: 13,
+                color: "var(--muted)",
+                marginTop: 14,
+                textAlign: "center",
+                lineHeight: 1.5,
+              }}
+            >
+              Free for caregivers. Always. Launching June 15, 2026.
+            </p>
+          </div>
         </div>
       </section>
 
