@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 /**
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchangeData, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`);
   }
@@ -77,6 +78,46 @@ export async function GET(request: Request) {
   // routing so new users never land on a broken page.
   if (next && next.startsWith("/hq")) {
     return NextResponse.redirect(`${origin}/hq`);
+  }
+
+  // Self-heal: provision org and users row if handle_new_user trigger didn't fire.
+  // Covers: migration not applied to production, user predates the trigger,
+  // Google OAuth first sign-in where trigger fired but failed silently.
+  // Uses service-role client to bypass RLS. Non-fatal: failure is logged and
+  // ignored so routePostAuth still runs and routes to /onboarding correctly.
+  const authedUser = exchangeData?.user;
+  if (authedUser) {
+    try {
+      const { data: existing } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", authedUser.id)
+        .maybeSingle();
+
+      if (!existing?.organization_id) {
+        const admin = createAdminClient();
+        const { data: newOrg, error: orgError } = await admin
+          .from("organizations")
+          .insert({ name: "Personal" })
+          .select("id")
+          .single();
+        if (orgError || !newOrg) throw orgError ?? new Error("org insert failed");
+        const { error: userError } = await admin
+          .from("users")
+          .upsert(
+            {
+              id: authedUser.id,
+              email: authedUser.email ?? "",
+              organization_id: newOrg.id,
+              role: "caregiver",
+            },
+            { onConflict: "id" }
+          );
+        if (userError) throw userError;
+      }
+    } catch (err) {
+      console.error("[auth/callback] self-heal failed for user", authedUser.id, err);
+    }
   }
 
   try {
