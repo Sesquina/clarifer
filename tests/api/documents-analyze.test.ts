@@ -6,9 +6,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TEST_CAREGIVER, TEST_PATIENT_CARLOS } from "../fixtures/users";
 
 vi.mock("pdf-parse", () => ({
-  PDFParse: class {
-    getText = vi.fn().mockResolvedValue({ text: "Cholangiocarcinoma pathology report content.", pages: [] });
-  },
+  PDFParse: vi.fn().mockImplementation(function () {
+    return {
+      getText: vi.fn().mockResolvedValue({
+        text: "Cholangiocarcinoma pathology report content.",
+        pages: [],
+      }),
+    };
+  }),
 }));
 
 const { messagesStream } = vi.hoisted(() => ({ messagesStream: vi.fn() }));
@@ -60,6 +65,14 @@ function makeMockSupabase(userOverride: unknown, roleOverride: unknown) {
       if (table === "audit_log") return { insert: auditInsert };
       return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: null }) };
     }),
+    storage: {
+      from: vi.fn().mockReturnValue({
+        createSignedUrl: vi.fn().mockResolvedValue({
+          data: { signedUrl: "https://mock-storage.supabase.co/signed/doc.pdf" },
+          error: null,
+        }),
+      }),
+    },
     _chatInsert: chatInsert,
     _auditInsert: auditInsert,
     _docUpdate: docUpdate,

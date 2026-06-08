@@ -6,9 +6,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TEST_CAREGIVER, TEST_PROVIDER, TEST_PATIENT_CARLOS } from "../fixtures/users";
 
 vi.mock("pdf-parse", () => ({
-  PDFParse: class {
-    getText = vi.fn().mockResolvedValue({ text: "Fake document text for testing.", pages: [] });
-  },
+  PDFParse: vi.fn().mockImplementation(function () {
+    return {
+      getText: vi.fn().mockResolvedValue({
+        text: "Fake document text for testing.",
+        pages: [],
+      }),
+    };
+  }),
 }));
 
 const { messagesStream } = vi.hoisted(() => ({ messagesStream: vi.fn() }));
