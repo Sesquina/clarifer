@@ -46,38 +46,6 @@ export default function LoginPage() {
     if (loading || googleLoading) return;
     setError(null);
     setLoading(true);
-
-    // Demo bypass: when Supabase Auth is down, demo@clarifer.com
-    // authenticates via a signed cookie instead.
-    if (email.toLowerCase().trim() === "demo@clarifer.com") {
-      try {
-        const res = await fetch("/api/auth/demo-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        if (res.ok) {
-          router.push("/home");
-          router.refresh();
-          return;
-        }
-        const data = await res.json().catch(() => ({}));
-        setError(
-          data.error === "Invalid credentials"
-            ? "Incorrect email or password."
-            : "Demo login failed. Please try again."
-        );
-        setLoading(false);
-        return;
-      } catch {
-        setError(
-          "We are having trouble connecting right now. Please wait a moment and try again."
-        );
-        setLoading(false);
-        return;
-      }
-    }
-
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,

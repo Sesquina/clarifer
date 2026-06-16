@@ -50,16 +50,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Demo session check: redirect authenticated demo users away from
-  // login/signup. Full token verification happens in the page layer.
-  if (request.cookies.get("clarifer_demo_session")?.value) {
-    if (pathname === "/login" || pathname === "/signup") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/home";
-      return NextResponse.redirect(url);
-    }
-  }
-
   // Rate limit auth endpoints by IP before anything else.
   // 5 per 15 min on /login; 3 per hour on /signup (defined in lib/ratelimit.ts).
   if (pathname === "/login" && request.method === "POST") {
@@ -83,21 +73,6 @@ export async function middleware(request: NextRequest) {
         { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }
-  }
-
-  // DEMO BYPASS: check demo cookie before any Supabase network call.
-  // When Supabase Auth is down this prevents the redirect loop.
-  // Actual token verification happens in app/home/page.tsx server component.
-  const demoCookieRaw =
-    request.cookies.get("clarifer_demo_session")?.value;
-  if (demoCookieRaw) {
-    if (pathname === "/login" || pathname === "/signup") {
-      const demoRedirectUrl = request.nextUrl.clone();
-      demoRedirectUrl.pathname = "/home";
-      return NextResponse.redirect(demoRedirectUrl);
-    }
-    // Let the request through -- page layer verifies the token.
-    return NextResponse.next({ request });
   }
 
   let supabaseResponse = NextResponse.next({ request });
