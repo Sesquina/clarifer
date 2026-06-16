@@ -62,9 +62,21 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data: exchangeData, error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  let exchangeError: Error | null = null;
+  let exchangeData: Awaited<ReturnType<typeof supabase.auth.exchangeCodeForSession>>["data"] | undefined;
+  try {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) exchangeError = error;
+    else exchangeData = data;
+  } catch (err) {
+    exchangeError = err instanceof Error ? err : new Error("network_error");
+  }
+  if (exchangeError) {
+    const isNetwork =
+      exchangeError.message?.toLowerCase().includes("fetch") ||
+      exchangeError.message?.toLowerCase().includes("network");
+    const errorCode = isNetwork ? "service_unavailable" : "auth_failed";
+    return NextResponse.redirect(`${origin}/login?error=${errorCode}`);
   }
 
   // Password-reset recovery flow: redirect to the update-password page so
