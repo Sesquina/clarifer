@@ -1,16 +1,21 @@
-import { PDFParse } from "pdf-parse";
+import {
+  extractText as unpdfExtractText,
+  getDocumentProxy,
+} from "unpdf";
 
 export async function extractText(
   input: File | Buffer,
   mimeType: string
 ): Promise<string> {
   const buffer =
-    input instanceof Buffer ? input : Buffer.from(await (input as File).arrayBuffer());
+    input instanceof Buffer
+      ? input
+      : Buffer.from(await (input as File).arrayBuffer());
 
   if (mimeType === "application/pdf") {
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    return result.text.trim();
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await unpdfExtractText(pdf, { mergePages: true });
+    return text.trim();
   }
 
   if (mimeType.startsWith("image/")) {
