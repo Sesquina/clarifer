@@ -29,12 +29,12 @@
     "lucide-react": "^1.7.0",
     "next": "^16.2.4",
     "nodemailer": "^8.0.10",
-    "pdf-parse": "^2.4.5",
     "posthog-js": "^1.373.5",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.5.0",
+    "unpdf": "^1.6.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -45,7 +45,6 @@
     "@types/minimatch": "^6.0.0",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.0",
-    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.1",
