@@ -85,6 +85,21 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // DEMO BYPASS: check demo cookie before any Supabase network call.
+  // When Supabase Auth is down this prevents the redirect loop.
+  // Actual token verification happens in app/home/page.tsx server component.
+  const demoCookieRaw =
+    request.cookies.get("clarifer_demo_session")?.value;
+  if (demoCookieRaw) {
+    if (pathname === "/login" || pathname === "/signup") {
+      const demoRedirectUrl = request.nextUrl.clone();
+      demoRedirectUrl.pathname = "/home";
+      return NextResponse.redirect(demoRedirectUrl);
+    }
+    // Let the request through -- page layer verifies the token.
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
