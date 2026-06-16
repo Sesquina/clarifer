@@ -57,6 +57,15 @@ export async function GET(request: Request) {
     row = insert.data ?? null;
   }
 
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: patientId,
+    action: "READ_CHECKLIST",
+    resource_type: "newly_connected_checklists",
+    resource_id: row?.id ?? null,
+    organization_id: organizationId,
+  });
+
   return NextResponse.json({
     id: row?.id ?? null,
     items: ((row?.checklist_items as unknown) as NewlyConnectedItem[]) ?? buildChecklist(),
@@ -104,6 +113,15 @@ export async function PATCH(request: Request) {
   if (error) {
     return NextResponse.json({ error: "We could not save your progress." }, { status: 500 });
   }
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    patient_id: body.patient_id,
+    action: "UPDATE_CHECKLIST",
+    resource_type: "newly_connected_checklists",
+    resource_id: null,
+    organization_id: organizationId,
+  });
 
   return NextResponse.json({ ok: true, completed: allDone });
 }

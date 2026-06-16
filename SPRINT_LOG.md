@@ -1,4 +1,14 @@
 ---
+[2026-06-07] SESSION: fix/pre-flutter-audit
+Branch: fix/pre-flutter-audit
+Date: June 7, 2026
+Status: COMPLETE
+What was built: PHI removed from chat, trial-summary, and family-update AI prompts. "serious illness" copy violation fixed in HQ content generator. audit_log added to newly-connected GET and PATCH. Models standardized to claude-sonnet-4-6 in family-update and trial-summary routes.
+Files changed: app/api/chat/route.ts, app/api/ai/trial-summary/route.ts, app/api/ai/family-update/route.ts, app/api/hq/content/generate/route.ts, app/api/newly-connected/route.ts, SPRINT_LOG.md
+TypeScript errors: 0
+Test result: 384 passing, 1 pre-existing failure (unchanged)
+
+---
 [2026-05-30] SESSION -- feat/waitlist-form
 Branch: feat/waitlist-form
 Files changed:

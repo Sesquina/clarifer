@@ -5,6 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
@@ -21,11 +22,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: userRecord } = await supabase
+  let { data: userRecord } = await supabase
     .from("users")
     .select("role, organization_id")
     .eq("id", user.id)
     .single();
+
+  if (!userRecord?.organization_id) {
+    // Self-heal: the handle_new_user trigger may not have run (migration not applied
+    // or user predates the trigger). Provision org and users row with service-role
+    // client so this request can succeed without blocking the user.
+    console.error(
+      `[patients/create] self-heal triggered for user ${user.id} at ${new Date().toISOString()}`
+    );
+    try {
+      const admin = createAdminClient();
+      const { data: newOrg, error: orgError } = await admin
+        .from("organizations")
+        .insert({ name: "Personal" })
+        .select("id")
+        .single();
+      if (orgError || !newOrg) throw orgError ?? new Error("org insert failed");
+      const { error: userError } = await admin
+        .from("users")
+        .upsert(
+          { id: user.id, email: user.email ?? "", organization_id: newOrg.id, role: "caregiver" },
+          { onConflict: "id" }
+        );
+      if (userError) throw userError;
+      const { data: healed } = await supabase
+        .from("users")
+        .select("role, organization_id")
+        .eq("id", user.id)
+        .single();
+      userRecord = healed;
+    } catch (err) {
+      console.error(`[patients/create] self-heal failed for user ${user.id}:`, err);
+    }
+  }
 
   if (!userRecord?.organization_id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

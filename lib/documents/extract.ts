@@ -14,7 +14,7 @@ export async function extractText(
   }
 
   if (mimeType.startsWith("image/")) {
-    return "[Image document — OCR text extraction available in Sprint 8]";
+    return "[Image document — text extraction not yet available]";
   }
 
   return buffer.toString("utf8").trim();
