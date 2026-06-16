@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 
   const { data: patient } = await supabase
     .from("patients")
-    .select("primary_language, custom_diagnosis")
+    .select("primary_language")
     .eq("id", patientId)
     .eq("organization_id", organizationId)
     .single();
@@ -172,7 +172,7 @@ Recent documents: ${documentHighlights}
 Please write the family update now.`;
 
   const result = streamText({
-    model: anthropic("claude-haiku-4-5-20251001"),
+    model: anthropic("claude-sonnet-4-6"),
     system: buildSystemPrompt(language),
     messages: [{ role: "user", content: userMessage }],
     onFinish: async () => {

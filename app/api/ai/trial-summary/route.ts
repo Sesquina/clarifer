@@ -134,7 +134,6 @@ export async function POST(request: Request) {
     if (template?.ai_context) conditionContext = template.ai_context;
   }
 
-  const firstName = patient?.name?.split(' ')[0] ?? 'your loved one';
   const trialData = trialDataOverride ?? trialSave;
   const trialContext = [
     `Trial name: ${trialData?.trial_name ?? "Unknown trial"}`,
@@ -148,7 +147,7 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join("\n");
 
-  const userMessage = `Patient name: ${firstName}
+  const userMessage = `Patient context:
 Patient condition: ${conditionContext}
 
 Trial:
@@ -157,7 +156,7 @@ ${trialContext}
 Please summarize eligibility for this trial using the format in the system prompt.`;
 
   const result = streamText({
-    model: anthropic("claude-haiku-4-5-20251001"),
+    model: anthropic("claude-sonnet-4-6"),
     system: buildSystemPrompt(),
     messages: [{ role: "user", content: userMessage }],
     onFinish: async () => {

@@ -28,11 +28,12 @@ export default function OnboardingPage() {
   const [name, setName] = useState("");
   const [lang, setLang] = useState<"en" | "es">("en");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<"" | "transient" | "persistent">("");
+  const [failCount, setFailCount] = useState(0);
   const [nameFocused, setNameFocused] = useState(false);
   const router = useRouter();
 
-  const canSubmit = name.trim().length > 0 && !loading;
+  const canSubmit = name.trim().length > 0 && !loading && failCount < 2;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -47,16 +48,20 @@ export default function OnboardingPage() {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        console.error('[onboarding] POST failed:', res.status, body);
-        setError("Something went wrong. Please try again.");
+        const errBody = await res.json().catch(() => ({}));
+        console.error('[onboarding] POST failed:', res.status, errBody);
+        const next = failCount + 1;
+        setFailCount(next);
+        setError(next >= 2 ? "persistent" : "transient");
         setLoading(false);
         return;
       }
 
       router.push("/onboarding/complete");
     } catch {
-      setError("Something went wrong. Please try again.");
+      const next = failCount + 1;
+      setFailCount(next);
+      setError(next >= 2 ? "persistent" : "transient");
       setLoading(false);
     }
   }
@@ -226,7 +231,31 @@ export default function OnboardingPage() {
         </div>
 
         {/* Error */}
-        {error && (
+        {error === "persistent" ? (
+          <div
+            role="alert"
+            style={{
+              backgroundColor: "#FFF0F0",
+              border: "1px solid var(--severity-high)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: 14,
+              color: "var(--severity-high)",
+              marginBottom: 16,
+              lineHeight: 1.5,
+              ...BODY,
+            }}
+          >
+            We&rsquo;re having trouble setting up your account.{" "}
+            <a
+              href="mailto:team@clarifer.com"
+              style={{ color: "inherit", fontWeight: 600, textDecoration: "underline" }}
+            >
+              Email team@clarifer.com
+            </a>{" "}
+            and we&rsquo;ll get you in within 24 hours.
+          </div>
+        ) : error === "transient" ? (
           <div
             role="alert"
             style={{
@@ -240,9 +269,9 @@ export default function OnboardingPage() {
               ...BODY,
             }}
           >
-            {error}
+            Something went wrong. Please try again.
           </div>
-        )}
+        ) : null}
 
         {/* Submit button */}
         <button
