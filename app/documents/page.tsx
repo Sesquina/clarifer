@@ -13,12 +13,20 @@ export default async function DocumentsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("id")
-    .eq("created_by", user.id)
-    .limit(1)
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
     .single();
+
+  const { data: patient } = userRecord?.organization_id
+    ? await supabase
+        .from("patients")
+        .select("id")
+        .eq("organization_id", userRecord.organization_id)
+        .limit(1)
+        .single()
+    : { data: null };
 
   const { data: documents } = patient
     ? await supabase
