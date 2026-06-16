@@ -50,6 +50,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Demo session check: redirect authenticated demo users away from
+  // login/signup. Full token verification happens in the page layer.
+  if (request.cookies.get("clarifer_demo_session")?.value) {
+    if (pathname === "/login" || pathname === "/signup") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Rate limit auth endpoints by IP before anything else.
   // 5 per 15 min on /login; 3 per hour on /signup (defined in lib/ratelimit.ts).
   if (pathname === "/login" && request.method === "POST") {
