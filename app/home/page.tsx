@@ -7,10 +7,20 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: userRecord } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userRecord?.organization_id) {
+    redirect("/onboarding");
+  }
+
   const { data: patient } = await supabase
     .from("patients")
     .select("id, name, custom_diagnosis")
-    .eq("created_by", user.id)
+    .eq("organization_id", userRecord.organization_id)
     .limit(1)
     .maybeSingle();
 
