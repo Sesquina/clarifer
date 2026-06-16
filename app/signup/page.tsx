@@ -102,8 +102,21 @@ export default function SignupPage() {
         setError(friendlySignupError(oauthError));
         setGoogleLoading(false);
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (
+        msg.toLowerCase().includes("failed to fetch") ||
+        msg.toLowerCase().includes("network") ||
+        msg.toLowerCase().includes("fetch")
+      ) {
+        setError(
+          "We are having trouble connecting right now. " +
+          "Please wait a moment and try again, or sign in " +
+          "if you already have an account."
+        );
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
       setGoogleLoading(false);
     }
   }
@@ -143,8 +156,21 @@ export default function SignupPage() {
 
       setError("Something went wrong. Please try again.");
       setLoading(false);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (
+        msg.toLowerCase().includes("failed to fetch") ||
+        msg.toLowerCase().includes("network") ||
+        msg.toLowerCase().includes("fetch")
+      ) {
+        setError(
+          "We are having trouble connecting right now. " +
+          "Please wait a moment and try again, or sign in " +
+          "if you already have an account."
+        );
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
       setLoading(false);
     }
   }
