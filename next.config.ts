@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://*.posthog.com https://us-assets.i.posthog.com https://us.i.posthog.com https://13337e95.sibforms.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://clinicaltrials.gov https://api.brevo.com https://*.posthog.com https://us.i.posthog.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://13337e95.sibforms.com",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://13337e95.sibforms.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://clinicaltrials.gov https://api.brevo.com https://*.posthog.com https://us.i.posthog.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://13337e95.sibforms.com",
           },
           {
             key: "Strict-Transport-Security",
@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://*.posthog.com https://us-assets.i.posthog.com https://us.i.posthog.com https://13337e95.sibforms.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://clinicaltrials.gov https://api.brevo.com https://*.posthog.com https://us.i.posthog.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://13337e95.sibforms.com; frame-src https://13337e95.sibforms.com",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://13337e95.sibforms.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://clinicaltrials.gov https://api.brevo.com https://*.posthog.com https://us.i.posthog.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://13337e95.sibforms.com; frame-src https://13337e95.sibforms.com",
           },
           {
             key: "Strict-Transport-Security",
