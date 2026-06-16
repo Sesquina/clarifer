@@ -5,28 +5,61 @@ import { HomeClient } from "@/components/home/home-client";
 export default async function HomePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
+  // Demo session fallback: when Supabase Auth is down,
+  // demo@clarifer.com authenticates via a signed cookie instead.
+  let demoOrgId: string | null = null;
+  if (!user) {
+    const { cookies } = await import("next/headers");
+    const store = await cookies();
+    const raw = store.get("clarifer_demo_session")?.value;
+    if (raw) {
+      const { verifyDemoToken, DEMO_ORG_ID } = await import(
+        "@/lib/auth/demo-session"
+      );
+      const payload = verifyDemoToken(raw);
+      if (payload) {
+        demoOrgId = DEMO_ORG_ID;
+      } else {
+        redirect("/login");
+      }
+    } else {
+      redirect("/login");
+    }
+  }
 
-  if (!userRecord?.organization_id) {
-    redirect("/onboarding");
+  // For real users, resolve organization_id from the users table.
+  // For demo bypass, org ID comes directly from the verified cookie.
+  let orgId: string;
+  if (demoOrgId) {
+    orgId = demoOrgId;
+  } else {
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user!.id)
+      .single();
+
+    if (!userRecord?.organization_id) {
+      redirect("/onboarding");
+    }
+    orgId = userRecord.organization_id as string;
   }
 
   const { data: patient } = await supabase
     .from("patients")
     .select("id, name, custom_diagnosis")
-    .eq("organization_id", userRecord.organization_id)
+    .eq("organization_id", orgId)
     .limit(1)
     .maybeSingle();
 
   if (!patient) {
     redirect("/onboarding");
   }
+
+  // Null-safe for documents query below. In demo mode (user is null),
+  // uploaded_by returns no rows — documentsCount will be 0.
+  const uploadedBy = user?.id ?? "";
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -56,7 +89,7 @@ export default async function HomePage() {
     supabase
       .from("documents")
       .select("id")
-      .eq("uploaded_by", user.id)
+      .eq("uploaded_by", uploadedBy)
       .limit(1),
   ]);
 
