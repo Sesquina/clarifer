@@ -663,3 +663,48 @@ biomarkers (12), family updates (EN + ES), newly_connected_checklist.
 - Next.js on Hetzner: deferred to I6 if needed
 
 ---
+
+## Session I6: Full Stack Verification
+
+**Date:** 2026-06-17
+**Result:** GATE 3 FAILED -- stopped per spec
+
+| Gate | Check | Result |
+|------|-------|--------|
+| 0 | tsc --noEmit 0 errors, 375/375 tests | PASS |
+| 1 | All server services active | PASS |
+| 2 | Keycloak health/ready + OIDC issuer | PASS |
+| 3 | Demo login returns clarifer_token cookie | FAIL |
+| 4 | Patient data returns Carlos | NOT RUN |
+| 5 | MinIO health live | NOT RUN |
+| 6 | Database row counts > 0 | NOT RUN |
+
+### Gate 3 Failure Details
+
+**Command:** `curl -s -X POST https://clarifer.com/api/auth/demo-login -H "Content-Type: application/json"`
+
+**Response 1 (clarifer.com):**
+- Status: 307 Temporary Redirect
+- Location: https://www.clarifer.com/api/auth/demo-login
+- Server: Vercel
+
+**Response 2 (www.clarifer.com after following redirect):**
+- Status: 404 Not Found
+- Body: Next.js "Page not found" HTML
+
+**Root cause (diagnosis only -- not fixed):**
+Vercel is redirecting apex domain (clarifer.com) to www subdomain (www.clarifer.com).
+The API route /api/auth/demo-login does not exist on www.clarifer.com.
+The deployment appears to be scoped to clarifer.com only, or the www subdomain
+is pointing to a different/older deployment.
+
+**Gates 1 and 2 results (for record):**
+- PostgreSQL: active
+- pgbouncer: active
+- MinIO: active
+- Keycloak: Up 16 hours
+- Nginx: active
+- UFW: only 22/80/443 open
+- Keycloak health: {"status":"UP"}
+- OIDC issuer: https://auth.clarifer.com/realms/clarifer
+
