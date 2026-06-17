@@ -279,6 +279,191 @@ Created `/var/log/pgbouncer/` and `/run/pgbouncer/` directories, owned by
 
 ---
 
-## What I3 Will Do
+---
 
-Session I3 installs Keycloak as the identity provider.
+## Session I3: Keycloak 26 Identity Provider
+
+**Date:** 2026-06-16
+**Host:** clarifer-prod-1 (same as I1/I2)
+**Engineer:** Claude (Anthropic), authorized by Samira Esquina
+
+---
+
+## Objective
+
+Install Keycloak 26 as the identity provider for Clarifer. Keycloak serves
+OIDC tokens to the web and mobile apps via a public client. All provisioning
+is autonomous via SSH; no manual server commands required.
+
+---
+
+## Stack Installed
+
+- Keycloak 26.2 (quay.io/keycloak/keycloak:26.2)
+- Docker / Docker Compose v2 (already present from I2)
+- Nginx TLS reverse proxy (already present from I1)
+- Let's Encrypt SSL for auth.clarifer.com
+- PostgreSQL 15 clarifer database (reused from I2)
+
+---
+
+## Commands Run and Verified Output
+
+### Phase 1: Install Docker
+
+Docker and Docker Compose v2 plugin were already installed on the server
+from a previous session. Verified with `sudo docker --version`.
+
+### Phase 2: Fix PostgreSQL schema permissions
+
+Keycloak 26 on PostgreSQL 15 requires explicit CREATE on the public schema.
+PostgreSQL 15 removed the default grant.
+
+```sql
+GRANT ALL ON SCHEMA public TO clarifer_app;
+```
+
+Verified: clarifer_app shows `UC` (USAGE + CREATE) in `\dn+` output.
+
+### Phase 3: Deploy Keycloak container
+
+Created `/opt/keycloak/docker-compose.yml`:
+
+```yaml
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    container_name: keycloak
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://127.0.0.1:5432/clarifer
+      KC_DB_USERNAME: clarifer_app
+      KC_DB_PASSWORD: ClarifDB2026!Prod
+      KC_HOSTNAME: auth.clarifer.com
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8080"
+      KC_HTTP_MANAGEMENT_PORT: "9000"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "false"
+      KC_PROXY_HEADERS: xforwarded
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ClarifKeycloak2026!Admin
+    network_mode: host
+    command: start
+```
+
+Started with `sudo docker compose up -d`. Container came up in ~45 seconds.
+
+**Note on management port:** Keycloak 26 moved health/metrics endpoints
+to a separate management port (9000 by default). `KC_HTTP_MANAGEMENT_PORT`
+must be set explicitly to activate it; otherwise the port is not bound.
+
+### Phase 4: Configure Nginx + TLS
+
+Obtained Let's Encrypt certificate for auth.clarifer.com via certbot --nginx.
+Certificate valid through 2026-09-14.
+
+`/etc/nginx/sites-available/keycloak`:
+
+```nginx
+server {
+    listen 80;
+    server_name auth.clarifer.com;
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name auth.clarifer.com;
+    ssl_certificate /etc/letsencrypt/live/auth.clarifer.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/auth.clarifer.com/privkey.pem;
+
+    location /health {
+        proxy_pass http://127.0.0.1:9000/health;
+        proxy_set_header Host $host;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
+    }
+}
+```
+
+`/health` proxies to port 9000 (management); all other paths to port 8080
+(main application). This split is required because Keycloak 26 does not
+serve health endpoints on the main port.
+
+### Phase 5: Provision realm, client, and user
+
+All commands run via `sudo docker exec keycloak /opt/keycloak/bin/kcadm.sh`:
+
+```bash
+# Authenticate to master realm
+kcadm.sh config credentials --server http://127.0.0.1:8080 \
+  --realm master --user admin --password ClarifKeycloak2026!Admin
+
+# Create clarifer realm
+kcadm.sh create realms -s realm=clarifer -s enabled=true \
+  -s displayName="Clarifer"
+
+# Create clarifer-app public client
+kcadm.sh create clients -r clarifer \
+  -s clientId=clarifer-app -s publicClient=true -s enabled=true \
+  -s 'redirectUris=["https://clarifer.com/*","https://app.clarifer.com/*","com.clarifer.app:/*"]' \
+  -s 'webOrigins=["https://clarifer.com","https://app.clarifer.com"]' \
+  -s standardFlowEnabled=true -s directAccessGrantsEnabled=true
+
+# Create caregiver realm role
+kcadm.sh create roles -r clarifer -s name=caregiver
+
+# Create demo user
+kcadm.sh create users -r clarifer \
+  -s username=demo@clarifer.com -s email=demo@clarifer.com \
+  -s firstName=Demo -s lastName=User \
+  -s enabled=true -s emailVerified=true
+kcadm.sh set-password -r clarifer \
+  --username demo@clarifer.com --new-password ClariferdDemo2026!
+kcadm.sh add-roles -r clarifer \
+  --uusername demo@clarifer.com --rolename caregiver
+```
+
+---
+
+## Verification Gates: All Passed
+
+| Gate | Check | Result |
+|------|-------|--------|
+| 1 | `curl -s https://auth.clarifer.com/health/ready` returns `{"status":"UP"}` | PASS |
+| 2 | `curl -s https://auth.clarifer.com/realms/clarifer/.well-known/openid-configuration` returns JSON with correct issuer | PASS |
+| 3 | `demo@clarifer.com` authenticates via ROPC grant; access token issued | PASS |
+| 4 | JWT payload: `iss=https://auth.clarifer.com/realms/clarifer`, `azp=clarifer-app`, `realm_access.roles` includes `caregiver` | PASS |
+
+---
+
+## Current Server State (post-I3)
+
+- Keycloak 26.2 running in Docker on localhost:8080 (main) + localhost:9000 (management)
+- Container name: keycloak; restart policy: unless-stopped
+- Nginx proxies auth.clarifer.com:443 to Keycloak; TLS via Let's Encrypt (expires 2026-09-14)
+- Realm: clarifer (enabled, displayName="Clarifer")
+- Client: clarifer-app (public, standard flow + ROPC, redirect URIs for web + mobile)
+- Role: caregiver (realm-level)
+- User: demo@clarifer.com (caregiver role, emailVerified=true)
+- Admin credentials in 1Password: Keycloak Admin (auth.clarifer.com)
+- Application OIDC issuer: https://auth.clarifer.com/realms/clarifer
+
+---
+
+## What I4 Will Do
+
+Session I4 integrates the app with Keycloak: replace Supabase Auth with
+Keycloak OIDC tokens, update Next.js middleware, and update the mobile
+Expo app to use the PKCE flow via clarifer-app client.
