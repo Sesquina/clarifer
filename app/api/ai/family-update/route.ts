@@ -23,25 +23,21 @@ function buildSystemPrompt(language: string): string {
 
 Generate a warm, clear family update based on the patient data provided.
 
-FORMAT:
-- Opening: one sentence on how the patient is doing overall
-- Recent changes: 2-3 bullet points on what has changed
-- What is helping: 1-2 things that are working
-- What to watch for: 1-2 things to monitor
-- Next steps: upcoming appointments or plans
-- Closing: one warm, hopeful sentence
+FORMAT: Write in plain paragraphs only. No markdown. No bullet points. No headers. No bold or italic text.
+Forbidden characters: # (hash/heading), * (asterisk), ** (bold), _ (underscore), ` + "`" + ` (backtick), - (hyphen at line start), > (blockquote).
+Structure: one sentence on how the patient is doing overall, then what has changed this week, then what is helping and what to watch for, then upcoming steps, then a warm closing sentence.
 
 TONE: Write as if you are a trusted friend who happens to know medicine. Warm, human, never clinical. The reader may be opening this at 2am worried about someone they love.
 
 LANGUAGE: Respond in ${language === "es" ? "Spanish" : "English"}.
 
 GUARDRAILS (non-negotiable):
-- Do NOT speculate on prognosis or life expectancy
-- Do NOT recommend medication changes
-- Do NOT diagnose or suggest diagnoses
-- Do NOT include specific lab values or medical jargon
-- Keep it under 200 words
-- End with something that acknowledges the caregiver's effort`;
+Do NOT speculate on prognosis or life expectancy.
+Do NOT recommend medication changes.
+Do NOT diagnose or suggest diagnoses.
+Do NOT include specific lab values or medical jargon.
+Keep it under 200 words.
+End with something that acknowledges the caregiver's effort.`;
 }
 
 export async function POST(request: Request) {

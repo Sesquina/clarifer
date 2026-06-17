@@ -30,7 +30,10 @@ export default function ToolsPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: patient } = await supabase.from("patients").select("id").eq("created_by", user.id).limit(1).single();
+      const { data: userRecord } = await supabase.from("users").select("organization_id").eq("id", user.id).single();
+      const organizationId = userRecord?.organization_id;
+      if (!organizationId) return;
+      const { data: patient } = await supabase.from("patients").select("id").eq("organization_id", organizationId).limit(1).single();
       if (!patient) return;
       setPatientId(patient.id);
       const { data } = await supabase.from("trial_saves").select("id, trial_id, trial_name, phase, status").eq("patient_id", patient.id).order("saved_at", { ascending: false });

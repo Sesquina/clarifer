@@ -5,6 +5,7 @@ import { summarizeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { getDocumentAnalyzer } from "@/lib/documents/analyze";
 
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 // Maps file extensions stored in documents.file_type to MIME types.
@@ -18,6 +19,22 @@ const EXT_TO_MIME: Record<string, string> = {
   csv: "text/csv",
   md: "text/markdown",
 };
+
+const STREAM_SYSTEM_PROMPT = `You are a medical document assistant helping family caregivers understand documents.
+Write in plain, simple language a non-medical person can understand.
+Use short paragraphs. No markdown. No # headers. No ** bold. No bullet points.
+Never mention the patient by name. Never include diagnosis names.
+Refer to the person as "the person you are caring for".
+You are a caregiver support assistant. You help families understand medical information.
+You never diagnose. You never recommend changing medications or dosages.
+You never speculate on prognosis or survival.
+Always recommend consulting the care team for clinical decisions.`;
+
+const STREAMING_HEADERS = {
+  "Content-Type": "text/plain; charset=utf-8",
+  "Cache-Control": "no-cache",
+  "X-Content-Type-Options": "nosniff",
+} as const;
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
@@ -62,11 +79,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing documentId" }, { status: 400 });
   }
 
+  // Capture header values before the async boundary so they are available
+  // inside ReadableStream start() callbacks.
+  const ipAddress = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip");
+  const userAgent = request.headers.get("user-agent");
+
   try {
-    // Fetch document metadata and file location in one query.
     const { data: doc } = await supabase
       .from("documents")
-      .select("file_url, file_type, patient_id")
+      .select("file_url, file_type, patient_id, summary")
       .eq("id", documentId)
       .eq("organization_id", organizationId)
       .single();
@@ -75,9 +96,97 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
-    // Download the file from the signed URL stored at upload time.
-    // Signed URLs expire after 3600 seconds. A 403 here means the URL
-    // expired before analysis ran -- rare in practice but handled explicitly.
+    // Cache hit: stream the stored summary directly without calling Anthropic.
+    if (doc.summary) {
+      const encoder = new TextEncoder();
+      const cached = doc.summary as string;
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode(cached));
+            controller.close();
+          },
+        }),
+        { headers: STREAMING_HEADERS }
+      );
+    }
+
+    // Try to read extracted_text (available after migration 20260617000001_add_extracted_text).
+    // Falls back gracefully to the file-download path if the column does not exist yet.
+    let extractedText: string | null = null;
+    try {
+      const { data: textRow } = await supabase
+        .from("documents")
+        .select("extracted_text")
+        .eq("id", documentId)
+        .eq("organization_id", organizationId)
+        .single();
+      extractedText =
+        (textRow as { extracted_text?: string | null } | null)?.extracted_text ?? null;
+    } catch {
+      // Column absent until migration runs; continue to file-download fallback.
+    }
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    const encoder = new TextEncoder();
+
+    if (extractedText) {
+      // Fast streaming path: first tokens reach the client in ~2 seconds.
+      const stream = await anthropic.messages.stream({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        system: STREAM_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: extractedText }],
+      });
+
+      const readable = new ReadableStream({
+        async start(controller) {
+          let fullText = "";
+          try {
+            for await (const event of stream) {
+              if (
+                event.type === "content_block_delta" &&
+                event.delta.type === "text_delta"
+              ) {
+                const chunk = event.delta.text;
+                fullText += chunk;
+                controller.enqueue(encoder.encode(chunk));
+              }
+            }
+            await supabase
+              .from("documents")
+              .update({
+                summary: fullText,
+                analysis_status: "complete",
+                analyzed_at: new Date().toISOString(),
+              })
+              .eq("id", documentId);
+            await supabase.from("audit_log").insert({
+              user_id: user.id,
+              patient_id: doc.patient_id ?? null,
+              action: "SELECT",
+              resource_type: "document_summary",
+              resource_id: documentId,
+              organization_id: organizationId,
+              ip_address: ipAddress,
+              user_agent: userAgent,
+              status: "success",
+            });
+          } catch (err) {
+            console.error(
+              JSON.stringify({ route: "api/summarize", error: String(err), step: "streaming" })
+            );
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readable, { headers: STREAMING_HEADERS });
+    }
+
+    // Fallback path: download file and run structured analyzer.
+    // Used for images and PDFs uploaded before the extracted_text migration.
     const fileRes = await fetch(doc.file_url);
     if (!fileRes.ok) {
       if (fileRes.status === 403 || fileRes.status === 401) {
@@ -92,7 +201,6 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await fileRes.arrayBuffer());
     const base64 = buffer.toString("base64");
 
-    // Normalize extension to full MIME type so analyze.ts can branch correctly.
     const rawType = (doc.file_type ?? "pdf").toLowerCase();
     const mimeType = rawType.includes("/")
       ? rawType
@@ -104,73 +212,15 @@ export async function POST(request: Request) {
         setTimeout(() => reject(new Error("AI timeout")), 25000)
       ),
     ]);
-    const headline = result.headline;
-    const keyFindings = result.findings;
-    const fullSummary = result.fullSummary;
-
-    let symptomConnection: string | null = null;
-
-    if (doc.patient_id) {
-      const [patientResult, logResult] = await Promise.all([
-        supabase.from("patients").select("name").eq("id", doc.patient_id).eq("organization_id", organizationId).single(),
-        supabase.from("symptom_logs").select("symptoms, overall_severity, ai_summary").eq("patient_id", doc.patient_id).eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(1).single(),
-      ]);
-
-      const patient = patientResult.data;
-      const recentLog = logResult.data;
-
-      if (patient && keyFindings.length > 0) {
-        const findingsText = keyFindings.map((f) => `${f.label}: ${f.value}`).join("; ");
-        const symptomsText = recentLog
-          ? `Recent symptoms: severity ${recentLog.overall_severity}/10. ${recentLog.ai_summary || JSON.stringify(recentLog.symptoms)}`
-          : "No recent symptom logs available.";
-
-        try {
-          const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-          const connectionResult = await Promise.race([
-            anthropic.messages.create({
-              model: "claude-sonnet-4-6",
-              max_tokens: 300,
-              system: "You are a warm, knowledgeable medical assistant helping a family caregiver. Write in plain language. Be practical and caring.",
-              messages: [{
-                role: "user",
-                content: `Based on these lab findings: ${findingsText}
-
-And this patient's condition:
-
-${symptomsText}
-
-What symptoms might the patient be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
-              }],
-            }),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error("AI timeout")), 25000)
-            ),
-          ]);
-
-          symptomConnection = connectionResult.content
-            .filter((block): block is Anthropic.TextBlock => block.type === "text")
-            .map((block) => block.text)
-            .join("");
-        } catch {
-          // Non-critical -- continue without symptom connection
-        }
-      }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {
-      summary: fullSummary,
-      key_findings: keyFindings,
-      analyzed_at: new Date().toISOString(),
-    };
-    if (symptomConnection) {
-      updateData.symptom_connection = symptomConnection;
-    }
 
     await supabase
       .from("documents")
-      .update(updateData)
+      .update({
+        summary: result.fullSummary,
+        key_findings: result.findings,
+        analysis_status: "complete",
+        analyzed_at: new Date().toISOString(),
+      })
       .eq("id", documentId);
 
     await supabase.from("audit_log").insert({
@@ -180,18 +230,23 @@ What symptoms might the patient be experiencing that are connected to these resu
       resource_type: "document_summary",
       resource_id: documentId,
       organization_id: organizationId,
-      ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
-      user_agent: request.headers.get("user-agent"),
+      ip_address: ipAddress,
+      user_agent: userAgent,
       status: "success",
     });
 
-    return NextResponse.json({
-      summary: fullSummary,
-      headline,
-      keyFindings,
-      symptomConnection,
-    });
-  } catch {
+    const summaryText = result.fullSummary;
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(summaryText));
+          controller.close();
+        },
+      }),
+      { headers: STREAMING_HEADERS }
+    );
+  } catch (err) {
+    console.error(JSON.stringify({ route: "api/summarize", error: String(err), step: "outer" }));
     return NextResponse.json({ error: "Failed to summarize" }, { status: 500 });
   }
 }

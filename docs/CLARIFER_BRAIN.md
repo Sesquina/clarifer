@@ -94,6 +94,15 @@ Log DECISION REQUIRED in SPRINT_LOG.md with your question and context.
 Commit whatever exists with: wip(SN): blocked — see SPRINT_LOG.md
 Stop. Do not guess on product, schema, or scope decisions.
 
+RULE 16 — NODEJS RUNTIME ON EVERY API ROUTE THAT USES NODE BUILT-INS
+Every API route that imports from lib/auth/verify-token.ts, lib/auth/get-user.ts,
+lib/db.ts, or any package that uses Node.js built-ins (jose, pg, pdf-parse,
+@sentry/nextjs) MUST have this as the very first line of the file, before any imports:
+  export const runtime = 'nodejs';
+Without this, Vercel Edge Runtime fails with:
+  Failed to load external module node:util/types
+Check for this before every commit on any new API route.
+
 ---
 
 ## DECISION FRAMEWORK
