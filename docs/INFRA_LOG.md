@@ -567,10 +567,99 @@ Gates 3-5 depend on I5 (deploy Next.js to 87.99.152.26 + seed demo data in produ
 
 ---
 
-## What I5 Will Do
+## Session I5: MinIO Object Storage + Demo Data Seed
 
-1. Deploy Next.js app on production server (PM2 / `next start` on port 3000)
-2. Configure Nginx to proxy clarifer.com -> localhost:3000
-3. Set DATABASE_URL in process environment
-4. Seed demo data: run seed-demo-data.ts against production PostgreSQL
-   with Keycloak user ID for demo@clarifer.com as the user ID
+**Date:** 2026-06-17
+**Host:** clarifer-prod-1
+**IP:** 87.99.152.26
+**Engineer:** Claude (Anthropic), authorized by Samira Esquina
+**Scope change:** Next.js deployment to Hetzner is deferred; clarifer.com remains on Vercel. I5 covers MinIO only + Supabase demo seed.
+
+---
+
+### Phase 1: MinIO Object Storage
+
+**Binary and service user**
+```
+curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio
+chmod +x /usr/local/bin/minio
+# version: RELEASE.2025-09-07T16-13-09Z
+useradd -r -s /sbin/nologin minio-user
+mkdir -p /opt/minio/data /etc/minio
+```
+
+**Config at /etc/minio/minio.env**
+```
+MINIO_ROOT_USER=clarifer-minio-access
+MINIO_ROOT_PASSWORD=ClarifMinio2026!Secret
+MINIO_VOLUMES=/opt/minio/data
+```
+
+**Systemd service at /etc/systemd/system/minio.service**
+- Runs as minio-user
+- Binds API on :9100, console on :9101
+- Internal only -- no UFW rules added
+- `systemctl enable minio && systemctl start minio` -- active
+
+**MinIO client**
+```
+curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+mc alias set local http://localhost:9100 clarifer-minio-access ClarifMinio2026!Secret
+mc mb local/clarifer-documents
+mc ls local  # -> clarifer-documents/ confirmed
+```
+
+### Phase 2: TLS via Let's Encrypt
+
+DNS A record (added by Samira in Hostinger): minio -> 87.99.152.26
+
+```
+certbot certonly --nginx -d minio.clarifer.com --non-interactive --agree-tos -m team@clarifer.com
+# Certificate saved at: /etc/letsencrypt/live/minio.clarifer.com/fullchain.pem
+# Expires: 2026-09-15 (auto-renews via certbot timer)
+```
+
+**Nginx config at /etc/nginx/sites-available/minio**
+- HTTP :80 redirects to HTTPS
+- HTTPS :443 proxies to localhost:9100
+- proxy_connect_timeout 300; chunked_transfer_encoding off
+- Symlinked to sites-enabled; nginx reloaded
+
+**Verification:** `curl -sk https://minio.clarifer.com/minio/health/live` -> HTTP 200
+
+### Phase 3: Demo Data Seed
+
+Seed script uses Supabase Auth Admin API directly (not local PostgreSQL).
+Created /opt/clarifer/.env.local with NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
+
+```
+cd /opt/clarifer && npx tsx scripts/seed-demo-data.ts
+# Seeding Carlos Rivera demo environment...
+#   caregiver: 0191131d-9722-4746-b911-db0a57b03a2f
+#   patient  : 5fc76836-e2f7-47b6-a394-ddccef619c95
+# Done.
+```
+
+Seeded into Supabase (cloud): users, patients, care_relationships, symptom_logs (30 days),
+documents (3), medications (5), care team, appointments (2), trial_saves (3),
+biomarkers (12), family updates (EN + ES), newly_connected_checklist.
+
+### Verification Gates
+
+| Gate | Check | Result |
+|------|-------|--------|
+| 4 | `mc ls local/clarifer-documents` | PASS -- bucket exists |
+| 5 | `sudo systemctl is-active minio` | PASS -- active |
+| Seed | caregiver + patient IDs returned | PASS -- patient 5fc76836 confirmed |
+| HTTPS | `curl -sk https://minio.clarifer.com/minio/health/live` | PASS -- HTTP 200 |
+
+### State After I5
+
+- MinIO running on :9100 (internal), proxied via https://minio.clarifer.com
+- Bucket: clarifer-documents (empty -- ready for document uploads)
+- Credentials in 1Password: MinIO Root (minio.clarifer.com)
+- Carlos Rivera demo data seeded into Supabase project lrhwgswbsctfqtvdjntr
+- clarifer.com: remains on Vercel (no change)
+- Next.js on Hetzner: deferred to I6 if needed
+
+---
