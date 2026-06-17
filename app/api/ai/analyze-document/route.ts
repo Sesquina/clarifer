@@ -19,19 +19,27 @@ import { generateSignedUrl } from "@/lib/documents/storage";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const ROUTE = 'api/ai/analyze-document';
+
 const ALLOWED_ROLES = ["caregiver"];
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  // Step 5: log API key presence so errors appear in Vercel logs
   console.log("[analyze-document] ANTHROPIC_API_KEY present:", !!process.env.ANTHROPIC_API_KEY);
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: 'none',
+      timestamp: new Date().toISOString(),
+    }));
     return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
   }
 
@@ -42,6 +50,13 @@ export async function POST(request: Request) {
     .single();
 
   if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    }));
     return NextResponse.json({ error: "Forbidden", code: "FORBIDDEN" }, { status: 403 });
   }
 
@@ -64,7 +79,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     documentId = body.documentId;
     patientId = body.patientId;
-  } catch {
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'parse_request_body',
+    }));
     return NextResponse.json({ error: "Invalid request body", code: "BAD_REQUEST" }, { status: 400 });
   }
 
@@ -84,7 +109,17 @@ export async function POST(request: Request) {
   }
 
   if (!doc.file_url) {
-    console.error("[analyze-document] document has no file_url, documentId:", documentId);
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: 'Document has no file_url',
+      code: null,
+      stack: null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'check_file_url',
+      documentId,
+    }));
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
@@ -96,8 +131,18 @@ export async function POST(request: Request) {
   if (!fetchUrl.startsWith("http")) {
     try {
       fetchUrl = await generateSignedUrl(doc.file_url);
-    } catch (urlErr) {
-      console.error("[analyze-document] generateSignedUrl failed:", urlErr, "path:", doc.file_url);
+    } catch (error: any) {
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: error?.message ?? String(error),
+        code: error?.code ?? null,
+        stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'generate_signed_url',
+        documentId,
+      }));
       return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
     }
   }
@@ -106,15 +151,32 @@ export async function POST(request: Request) {
   try {
     const fileResponse = await fetch(fetchUrl);
     if (!fileResponse.ok) {
-      console.error(
-        "[analyze-document] file fetch failed — status:", fileResponse.status,
-        "url prefix:", fetchUrl.slice(0, 80)
-      );
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: `File fetch returned status ${fileResponse.status}`,
+        code: String(fileResponse.status),
+        stack: null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'fetch_document_file',
+        documentId,
+      }));
       return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
     }
     buffer = Buffer.from(await fileResponse.arrayBuffer());
-  } catch (fetchErr) {
-    console.error("[analyze-document] fetch threw:", fetchErr, "file_url was:", doc.file_url);
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'fetch_document_file',
+      documentId,
+    }));
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
@@ -123,8 +185,19 @@ export async function POST(request: Request) {
   let documentText: string;
   try {
     documentText = await extractText(buffer, mimeType);
-  } catch (extractErr) {
-    console.error("[analyze-document] extractText threw:", extractErr, "mimeType:", mimeType);
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'extract_text',
+      documentId,
+      mimeType,
+    }));
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
@@ -148,8 +221,17 @@ export async function POST(request: Request) {
   let anthropicClient: Anthropic;
   try {
     anthropicClient = new Anthropic();
-  } catch (initErr) {
-    console.error("[analyze-document] Anthropic() constructor threw:", initErr);
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'init_anthropic_client',
+    }));
     return NextResponse.json({ error: "Analysis temporarily unavailable" }, { status: 503 });
   }
 
@@ -203,8 +285,18 @@ export async function POST(request: Request) {
           })(),
         ]);
         controller.close();
-      } catch (streamErr) {
-        console.error("[analyze-document] stream error:", streamErr);
+      } catch (error: any) {
+        console.error(JSON.stringify({
+          route: ROUTE,
+          method: request.method,
+          error: error?.message ?? String(error),
+          code: error?.code ?? null,
+          stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+          step: 'ai_stream',
+          documentId,
+        }));
         controller.enqueue(
           encoder.encode(JSON.stringify({ error: "Analysis temporarily unavailable" }))
         );

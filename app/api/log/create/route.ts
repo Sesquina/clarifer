@@ -14,6 +14,8 @@ import type { Json } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 
+const ROUTE = 'api/log/create';
+
 const ALLOWED_ROLES = ["caregiver", "patient", "provider"];
 
 export async function POST(request: Request) {
@@ -23,7 +25,10 @@ export async function POST(request: Request) {
   // 1. Auth check
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   // 2. Role check + org_id
   const { data: userRecord } = await supabase
@@ -33,9 +38,11 @@ export async function POST(request: Request) {
     .single();
 
   if (!userRecord?.organization_id) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const orgId = userRecord.organization_id;
@@ -93,6 +100,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !inserted) {
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: insertError?.message ?? 'insert returned no data', code: (insertError as any)?.code ?? null, stack: null, userId: user.id, timestamp: new Date().toISOString(), step: 'insert_symptom_log' }));
     return NextResponse.json(
       { error: "Could not save your log entry. Please try again." },
       { status: 500 }
