@@ -13,6 +13,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+const ROUTE = 'api/notifications';
+
 const READ_ROLES = ["caregiver", "patient", "provider", "admin"];
 
 function forensicColumns(request: Request) {
@@ -29,7 +31,10 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { data: userRecord } = await supabase
     .from("users")
@@ -37,9 +42,11 @@ export async function GET(request: Request) {
     .eq("id", user.id)
     .single();
   if (!userRecord?.organization_id) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!READ_ROLES.includes(userRecord.role ?? "")) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const orgId = userRecord.organization_id;
@@ -72,6 +79,7 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) {
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: error.message, code: (error as any)?.code ?? null, stack: null, userId: user.id, timestamp: new Date().toISOString(), step: 'query_notifications' }));
     return NextResponse.json({ error: "Failed to load notifications" }, { status: 500 });
   }
 

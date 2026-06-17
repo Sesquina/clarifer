@@ -16,6 +16,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+const ROUTE = 'api/documents/upload';
+
 const ALLOWED_ROLES = ["caregiver", "provider"];
 
 export async function POST(request: Request) {
@@ -24,7 +26,10 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { data: userRecord } = await supabase
     .from("users")
@@ -33,6 +38,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!userRecord?.organization_id || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -66,8 +72,9 @@ export async function POST(request: Request) {
   let filePath: string;
   try {
     filePath = await uploadToStorage(file, organizationId, patientId);
-  } catch (error) {
-    Sentry.captureException(error, { tags: { route: "api/documents/upload", phase: "storage" } });
+  } catch (error: any) {
+    Sentry.captureException(error, { tags: { route: ROUTE, phase: "storage" } });
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: error?.message ?? String(error), code: error?.code ?? null, stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null, userId: user.id, timestamp: new Date().toISOString(), step: 'upload_to_storage' }));
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 
@@ -86,6 +93,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !document) {
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: insertError?.message ?? 'insert returned no data', code: (insertError as any)?.code ?? null, stack: null, userId: user.id, timestamp: new Date().toISOString(), step: 'insert_document_metadata' }));
     return NextResponse.json({ error: "Database insert failed" }, { status: 500 });
   }
 

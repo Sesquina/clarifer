@@ -15,6 +15,8 @@ import { checkFamilyUpdateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const ROUTE = 'api/family-update/generate';
+
 const ALLOWED_ROLES = ["caregiver"];
 
 const DISCLAIMER_EN = "This update was AI-assisted. Please review before sharing.";
@@ -28,6 +30,13 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: 'none',
+      timestamp: new Date().toISOString(),
+    }));
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
@@ -40,6 +49,13 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
   if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    }));
     return new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403,
       headers: { "Content-Type": "application/json" },
@@ -74,6 +90,13 @@ export async function POST(request: Request) {
     .eq("id", patientId)
     .single();
   if (!patient || patient.organization_id !== orgId) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    }));
     return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
   }
 
@@ -194,7 +217,17 @@ export async function POST(request: Request) {
             }
           })(),
         ]);
-      } catch (err) {
+      } catch (err: any) {
+        console.error(JSON.stringify({
+          route: ROUTE,
+          method: request.method,
+          error: err?.message ?? String(err),
+          code: err?.code ?? null,
+          stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+          step: 'ai_stream',
+        }));
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
@@ -215,8 +248,17 @@ export async function POST(request: Request) {
           date_range_days: days,
           update_text: fullText,
         });
-      } catch {
-        // table may not exist before migration runs
+      } catch (err: any) {
+        console.error(JSON.stringify({
+          route: ROUTE,
+          method: request.method,
+          error: err?.message ?? String(err),
+          code: err?.code ?? null,
+          stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+          step: 'persist_family_update',
+        }));
       }
       try {
         await supabase.from("audit_log").insert({
@@ -226,8 +268,17 @@ export async function POST(request: Request) {
           resource_type: "family_update",
           patient_id: patientId,
         });
-      } catch {
-        // ignore
+      } catch (err: any) {
+        console.error(JSON.stringify({
+          route: ROUTE,
+          method: request.method,
+          error: err?.message ?? String(err),
+          code: err?.code ?? null,
+          stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+          step: 'write_audit_log',
+        }));
       }
       controller.enqueue(encoder.encode(JSON.stringify({ kind: "done" }) + "\n"));
       controller.close();
