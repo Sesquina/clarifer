@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -30,8 +31,8 @@ function forensicColumns(request: Request) {
   };
 }
 
-async function loadUserAndOrg(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function loadUserAndOrg(request: Request, supabase: Awaited<ReturnType<typeof createClient>>) {
+  const user = await getUserFromRequest(request);
   if (!user) return { user: null, orgId: null, role: null };
   const { data: userRecord } = await supabase
     .from("users")
@@ -54,7 +55,7 @@ export async function GET(
 
   const { id } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadUserAndOrg(supabase);
+  const { user, orgId, role } = await loadUserAndOrg(request, supabase);
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!READ_ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -93,7 +94,7 @@ export async function PATCH(
 
   const { id } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadUserAndOrg(supabase);
+  const { user, orgId, role } = await loadUserAndOrg(request, supabase);
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!WRITE_ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -183,7 +184,7 @@ export async function DELETE(
 
   const { id } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadUserAndOrg(supabase);
+  const { user, orgId, role } = await loadUserAndOrg(request, supabase);
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!WRITE_ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

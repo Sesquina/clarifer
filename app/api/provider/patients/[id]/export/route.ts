@@ -18,6 +18,7 @@
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getUserFromRequest } from '@/lib/auth/get-user';
 import { checkOrigin } from "@/lib/cors";
 import { fetchExportData } from "@/lib/pdf/fetch-export-data";
 import { renderHospitalGradePdf } from "@/lib/pdf/hospital-grade-export";
@@ -49,7 +50,7 @@ export async function POST(
 
   const { id: patientId } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: userRecord } = await supabase

@@ -11,6 +11,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
 import { checkFamilyUpdateLimit } from "@/lib/rate-limit";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
   if (!user) {
     console.warn(JSON.stringify({
       route: ROUTE,

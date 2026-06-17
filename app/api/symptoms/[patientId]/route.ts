@@ -4,6 +4,7 @@
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getUserFromRequest } from '@/lib/auth/get-user';
 import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
@@ -31,7 +32,7 @@ export async function GET(
   const days = ALLOWED_WINDOWS.includes(daysRaw) ? daysRaw : 30;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: userRecord } = await supabase

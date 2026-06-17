@@ -8,8 +8,8 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/lib/supabase/server";
 import { isAllowedEmail } from "@/lib/internal/types";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 
 const client = new Anthropic();
 
@@ -47,10 +47,7 @@ type Target = "both" | "substack" | "linkedin";
 
 export async function POST(req: NextRequest) {
   // Auth guard -- internal only
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(req);
 
   if (!user || !isAllowedEmail(user.email ?? null)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

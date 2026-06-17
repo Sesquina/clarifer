@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { chatLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { stripHtml } from "@/lib/sanitize";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 
 export const maxDuration = 60;
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     const { messages, patientId } = body;
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUserFromRequest(req);
 
     if (!user) {
       console.warn(JSON.stringify({

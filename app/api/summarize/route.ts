@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { summarizeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { getDocumentAnalyzer } from "@/lib/documents/analyze";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
