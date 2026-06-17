@@ -79,9 +79,7 @@ export async function POST(request: Request) {
       ? medications.map((m: any) => [m.name, m.dose, m.frequency].filter(Boolean).join(" ")).join(", ")
       : "None listed";
 
-    const { name: patientName } = patient;
-    const firstName = patientName?.split(' ')[0] ?? 'your loved one';
-    const userMessage = `Patient name: ${firstName}. Diagnosis: their condition. Recent symptoms: ${symptomSummary}. Current medications: ${medList}.`;
+    const userMessage = `Diagnosis: their condition. Recent symptoms: ${symptomSummary}. Current medications: ${medList}.`;
 
     if (userMessage.length > MAX_CONTENT_LENGTH) {
       return NextResponse.json({ error: "Content too large. Please shorten your message." }, { status: 400 });
