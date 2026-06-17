@@ -69,8 +69,8 @@ export async function GET(request: Request) {
     .eq("organization_id", orgId);
 
   const patientIds: string[] = (relationships ?? [])
-    .map((r) => r.patient_id)
-    .filter((id): id is string => typeof id === "string");
+    .map((r: any) => r.patient_id)
+    .filter((id: any): id is string => typeof id === "string");
 
   if (patientIds.length === 0) {
     await supabase
@@ -96,7 +96,7 @@ export async function GET(request: Request) {
   // 3. Per-patient activity counts. Done in parallel; each query is
   //    org-scoped (defense in depth -- RLS would enforce too).
   const cards: PatientCard[] = await Promise.all(
-    (patients ?? []).map(async (p) => {
+    (patients ?? []).map(async (p: any) => {
       const [lastLog, nextAppt, medCount, alertCount] = await Promise.all([
         supabase
           .from("symptom_logs")

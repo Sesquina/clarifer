@@ -13,7 +13,7 @@
  * over RLS). On any per-table error, the affected slice falls back to
  * an empty array so the PDF still renders -- the function never throws.
  */
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ClarifSupabase } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
 type Patient = Database["public"]["Tables"]["patients"]["Row"];
@@ -41,7 +41,7 @@ export interface ExportData {
 export type Role = "caregiver" | "patient" | "provider" | "admin" | string;
 
 interface FetchExportDataArgs {
-  supabase: SupabaseClient<Database>;
+  supabase: ClarifSupabase;
   patientId: string;
   orgId: string;
   callerId: string;
