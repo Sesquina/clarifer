@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 
 export const runtime = "nodejs";
 
@@ -12,9 +13,9 @@ const ALLOWED_ROLES = ["caregiver", "provider", "admin"];
 const ALLOWED_STATUSES = ["positive", "negative", "not_tested", "pending", "inconclusive"];
 
 async function authorize(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  const supabase = await createClient();
 
   const { data: userRecord } = await supabase
     .from("users")

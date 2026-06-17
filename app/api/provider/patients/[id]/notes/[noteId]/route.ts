@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -31,11 +32,12 @@ function forensicColumns(request: Request) {
 }
 
 async function authorizeAndOwn(
+  request: Request,
   supabase: Awaited<ReturnType<typeof createClient>>,
   patientId: string,
   noteId: string
 ) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
   if (!user) return { ok: false as const, status: 401, message: "Unauthorized" };
   const { data: userRecord } = await supabase
     .from("users")
@@ -70,7 +72,7 @@ export async function PATCH(
 
   const { id: patientId, noteId } = await params;
   const supabase = await createClient();
-  const auth = await authorizeAndOwn(supabase, patientId, noteId);
+  const auth = await authorizeAndOwn(request, supabase, patientId, noteId);
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
@@ -127,7 +129,7 @@ export async function DELETE(
 
   const { id: patientId, noteId } = await params;
   const supabase = await createClient();
-  const auth = await authorizeAndOwn(supabase, patientId, noteId);
+  const auth = await authorizeAndOwn(request, supabase, patientId, noteId);
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
   const { error } = await supabase
