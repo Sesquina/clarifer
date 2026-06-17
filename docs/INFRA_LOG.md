@@ -708,3 +708,40 @@ is pointing to a different/older deployment.
 - Keycloak health: {"status":"UP"}
 - OIDC issuer: https://auth.clarifer.com/realms/clarifer
 
+---
+
+## Migrations: 4 previously unapplied migrations + 1 prerequisite run on Hetzner PostgreSQL
+
+**Date:** 2026-06-17
+**Host:** clarifer-prod-1 (87.99.152.26)
+**Engineer:** Claude (Anthropic), authorized by Samira Esquina
+
+### Migrations applied (in order)
+
+| Migration | Result | Notes |
+|-----------|--------|-------|
+| `20250328000005_care_team.sql` | ✅ Applied | Prerequisite — base `care_team` table was missing from Hetzner DB; applied first |
+| `20260428000003_who_ictrp_mirror.sql` | ✅ Applied | Table already existed; NOTICE only (policy already present — non-fatal) |
+| `20260428000004_care_team_directory.sql` | ✅ Applied | ALTER TABLE added specialty, fax, address, npi, organization_id, is_primary; `care_team_message_templates` created |
+| `20260428000005_appointments_action_items.sql` | ✅ Applied | `post_visit_action_items` column and index added via IF NOT EXISTS |
+| `20260428000006_provider_portal.sql` | ✅ Applied | `organizations_cache` created; columns added to care_relationships; provider_notes and indexes already existed |
+
+### Verified table state after migrations
+
+`public.care_team` columns confirmed present:
+- Base columns: id, patient_id, name, role, phone, email, notes, created_at
+- Directory columns: specialty, fax, address, npi, organization_id, is_primary
+- RLS policies: care_team_select, care_team_insert, care_team_update, care_team_delete
+- FK: patient_id → patients(id), organization_id → organizations(id)
+
+`public.care_team_message_templates` confirmed present:
+- Columns: id, care_team_member_id, label, body, created_at
+- RLS policy: message_templates_org_isolation
+- FK: care_team_member_id → care_team(id) ON DELETE CASCADE
+
+### Unblocked features
+
+- C7: Care team directory screen
+- C9: Appointments screen
+- I1–I6: Provider portal
+
