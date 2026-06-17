@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { loginLimiter, signupLimiter } from "@/lib/ratelimit";
@@ -15,9 +15,9 @@ async function sha256Hex(input: string): Promise<string> {
     .join("");
 }
 
-// 30 minutes of inactivity → force re-authentication
-const SESSION_TIMEOUT_SECONDS = 30 * 60;
-const SESSION_COOKIE = "cf_last_activity";
+// 30 minutes — token lifetime is configured in Keycloak realm settings.
+// Middleware just validates the JWT; expiry is enforced by jose.
+const SESSION_COOKIE = "clarifer_token";
 
 function getClientIp(request: NextRequest): string {
   return (
@@ -27,13 +27,67 @@ function getClientIp(request: NextRequest): string {
   );
 }
 
+let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJWKS(): ReturnType<typeof createRemoteJWKSet> | null {
+  if (_jwks) return _jwks;
+  const base = process.env.KEYCLOAK_URL;
+  const realm = process.env.KEYCLOAK_REALM;
+  if (!base || !realm) return null;
+  try {
+    _jwks = createRemoteJWKSet(
+      new URL(`${base}/realms/${realm}/protocol/openid-connect/certs`)
+    );
+  } catch {
+    return null;
+  }
+  return _jwks;
+}
+
+async function isValidToken(token: string): Promise<boolean> {
+  const jwksSet = getJWKS();
+  if (!jwksSet) return false;
+  const base = process.env.KEYCLOAK_URL;
+  const realm = process.env.KEYCLOAK_REALM;
+  if (!base || !realm) return false;
+  try {
+    await jwtVerify(token, jwksSet, {
+      issuer: `${base}/realms/${realm}`,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// /hq is listed as a public route so the Keycloak check is bypassed for it.
+// /hq/* pages have their own passcode gate (below).
+const publicRoutes = [
+  "/",
+  "/login",
+  "/signup",
+  "/auth/callback",
+  "/update-password",
+  "/privacy",
+  "/terms",
+  "/about",
+  "/security",
+  "/ccf",
+  "/disclaimer",
+  "/data",
+  "/waitlist",
+  "/promise",
+  "/privacy-notice",
+  "/hq",
+  "/research",
+  "/demo",
+];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // /hq passcode gate -- protects all /hq/* pages except /hq/login.
   // Validation: cookie "hq_session" must equal sha256(INTERNAL_PASSCODE + "clarifer-hq-salt").
-  // If INTERNAL_PASSCODE is missing or cookie is absent/wrong, redirect to /hq/login.
-  // Note: /api/* paths are excluded by the matcher below, so /api/hq/auth is never checked here.
   if (pathname.startsWith("/hq") && pathname !== "/hq/login") {
     const passcode = process.env.INTERNAL_PASSCODE;
     if (!passcode) {
@@ -51,7 +105,6 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rate limit auth endpoints by IP before anything else.
-  // 5 per 15 min on /login; 3 per hour on /signup (defined in lib/ratelimit.ts).
   if (pathname === "/login" && request.method === "POST") {
     const ip = getClientIp(request);
     const { success, reset } = await loginLimiter.limit(`ip:${ip}`);
@@ -75,80 +128,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // /ccf-dashboard is intentionally absent -- it is protected and requires isAllowedEmail.
-  // /hq is protected by its own cookie gate above; exempt from Supabase session check.
-  const publicRoutes = ["/", "/login", "/signup", "/auth/callback", "/update-password", "/privacy", "/terms", "/about", "/security", "/ccf", "/disclaimer", "/data", "/waitlist", "/promise", "/privacy-notice", "/hq", "/research", "/demo"];
-  // Use startsWith(route + "/") not startsWith(route) to prevent /ccf from matching /ccf-dashboard.
+  // Determine if this is a public route (no auth required).
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || (route !== "/" && pathname.startsWith(route + "/"))
+    (route) =>
+      pathname === route ||
+      (route !== "/" && pathname.startsWith(route + "/"))
   );
 
-  if (!user && !isPublicRoute) {
+  // Verify Keycloak JWT from cookie or Authorization header.
+  const token =
+    request.cookies.get(SESSION_COOKIE)?.value ??
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  const authenticated = token ? await isValidToken(token) : false;
+
+  if (!authenticated && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // Session inactivity timeout (30 min).
-  // Uses an HTTP-only cookie carrying the last-activity timestamp.
-  if (user) {
-    const now = Math.floor(Date.now() / 1000);
-    const lastActivityRaw = request.cookies.get(SESSION_COOKIE)?.value;
-    const lastActivity = lastActivityRaw ? parseInt(lastActivityRaw, 10) : 0;
-
-    if (lastActivity && now - lastActivity > SESSION_TIMEOUT_SECONDS) {
-      await supabase.auth.signOut();
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("reason", "session_timeout");
-      const redirect = NextResponse.redirect(url);
-      redirect.cookies.delete(SESSION_COOKIE);
-      return redirect;
-    }
-
-    supabaseResponse.cookies.set(SESSION_COOKIE, String(now), {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_TIMEOUT_SECONDS,
-    });
-  }
-
-  if (user && (pathname === "/login" || pathname === "/signup")) {
+  // Redirect already-authenticated users away from login/signup.
+  if (authenticated && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/home";
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return NextResponse.next({ request });
 }
 
 export const config = {
