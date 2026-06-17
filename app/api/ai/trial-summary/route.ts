@@ -14,6 +14,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const maxDuration = 60;
 
+const ROUTE = 'api/ai/trial-summary';
+
 const ALLOWED_ROLES = ["caregiver"];
 
 function buildSystemPrompt(): string {
@@ -43,111 +45,136 @@ export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized", code: "UNAUTHORIZED", status: 401 },
-      { status: 401 }
-    );
-  }
-
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
-    return NextResponse.json(
-      { error: "Forbidden", code: "FORBIDDEN", status: 403 },
-      { status: 403 }
-    );
-  }
-
-  const organizationId = userRecord.organization_id;
-
-  const { success } = await trialSummaryLimiter.limit(user.id);
-  if (!success) {
-    return NextResponse.json(
-      { error: "Too many requests. Please wait before trying again.", code: "RATE_LIMITED", status: 429 },
-      { status: 429 }
-    );
-  }
-
-  let trialId: string;
-  let patientId: string;
-  let trialDataOverride: Record<string, unknown> | undefined;
   try {
-    const body = await request.json();
-    trialId = body.trialId;
-    patientId = body.patientId;
-    trialDataOverride = body.trialData;
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid request body", code: "BAD_REQUEST", status: 400 },
-      { status: 400 }
-    );
-  }
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!trialId || !patientId) {
-    return NextResponse.json(
-      { error: "trialId and patientId are required", code: "BAD_REQUEST", status: 400 },
-      { status: 400 }
-    );
-  }
+    if (!user) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: 'none',
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json(
+        { error: "Unauthorized", code: "UNAUTHORIZED", status: 401 },
+        { status: 401 }
+      );
+    }
 
-  const [trialResult, patientResult] = await Promise.all([
-    supabase
-      .from("trial_saves")
-      .select("trial_id, trial_name, phase, location, status, match_criteria")
-      .eq("id", trialId)
-      .eq("organization_id", organizationId)
-      .single(),
-    supabase
-      .from("patients")
-      .select("name, condition_template_id, primary_language")
-      .eq("id", patientId)
-      .eq("organization_id", organizationId)
-      .single(),
-  ]);
-
-  const trialSave = trialResult.data;
-  const patient = patientResult.data;
-
-  if (!trialSave && !trialDataOverride) {
-    return NextResponse.json(
-      { error: "Trial not found", code: "NOT_FOUND", status: 404 },
-      { status: 404 }
-    );
-  }
-
-  let conditionContext = "their condition";
-
-  if (patient?.condition_template_id) {
-    const { data: template } = await supabase
-      .from("condition_templates")
-      .select("ai_context")
-      .eq("id", patient.condition_template_id ?? "")
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("role, organization_id")
+      .eq("id", user.id)
       .single();
-    if (template?.ai_context) conditionContext = template.ai_context;
-  }
 
-  const trialData = trialDataOverride ?? trialSave;
-  const trialContext = [
-    `Trial name: ${trialData?.trial_name ?? "Unknown trial"}`,
-    `Phase: ${trialData?.phase ?? "Unknown"}`,
-    `Status: ${trialData?.status ?? "Unknown"}`,
-    `Location: ${trialData?.location ?? "Unknown"}`,
-    trialData?.match_criteria
-      ? `Eligibility criteria: ${JSON.stringify(trialData.match_criteria)}`
-      : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+    if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json(
+        { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+        { status: 403 }
+      );
+    }
 
-  const userMessage = `Patient context:
+    const organizationId = userRecord.organization_id;
+
+    const { success } = await trialSummaryLimiter.limit(user.id);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait before trying again.", code: "RATE_LIMITED", status: 429 },
+        { status: 429 }
+      );
+    }
+
+    let trialId: string;
+    let patientId: string;
+    let trialDataOverride: Record<string, unknown> | undefined;
+    try {
+      const body = await request.json();
+      trialId = body.trialId;
+      patientId = body.patientId;
+      trialDataOverride = body.trialData;
+    } catch (error: any) {
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: error?.message ?? String(error),
+        code: error?.code ?? null,
+        stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'parse_request_body',
+      }));
+      return NextResponse.json(
+        { error: "Invalid request body", code: "BAD_REQUEST", status: 400 },
+        { status: 400 }
+      );
+    }
+
+    if (!trialId || !patientId) {
+      return NextResponse.json(
+        { error: "trialId and patientId are required", code: "BAD_REQUEST", status: 400 },
+        { status: 400 }
+      );
+    }
+
+    const [trialResult, patientResult] = await Promise.all([
+      supabase
+        .from("trial_saves")
+        .select("trial_id, trial_name, phase, location, status, match_criteria")
+        .eq("id", trialId)
+        .eq("organization_id", organizationId)
+        .single(),
+      supabase
+        .from("patients")
+        .select("name, condition_template_id, primary_language")
+        .eq("id", patientId)
+        .eq("organization_id", organizationId)
+        .single(),
+    ]);
+
+    const trialSave = trialResult.data;
+    const patient = patientResult.data;
+
+    if (!trialSave && !trialDataOverride) {
+      return NextResponse.json(
+        { error: "Trial not found", code: "NOT_FOUND", status: 404 },
+        { status: 404 }
+      );
+    }
+
+    let conditionContext = "their condition";
+
+    if (patient?.condition_template_id) {
+      const { data: template } = await supabase
+        .from("condition_templates")
+        .select("ai_context")
+        .eq("id", patient.condition_template_id ?? "")
+        .single();
+      if (template?.ai_context) conditionContext = template.ai_context;
+    }
+
+    const trialData = trialDataOverride ?? trialSave;
+    const trialContext = [
+      `Trial name: ${trialData?.trial_name ?? "Unknown trial"}`,
+      `Phase: ${trialData?.phase ?? "Unknown"}`,
+      `Status: ${trialData?.status ?? "Unknown"}`,
+      `Location: ${trialData?.location ?? "Unknown"}`,
+      trialData?.match_criteria
+        ? `Eligibility criteria: ${JSON.stringify(trialData.match_criteria)}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const userMessage = `Patient context:
 Patient condition: ${conditionContext}
 
 Trial:
@@ -155,24 +182,37 @@ ${trialContext}
 
 Please summarize eligibility for this trial using the format in the system prompt.`;
 
-  const result = streamText({
-    model: anthropic("claude-sonnet-4-6"),
-    system: buildSystemPrompt(),
-    messages: [{ role: "user", content: userMessage }],
-    onFinish: async () => {
-      await supabase.from("audit_log").insert({
-        user_id: user.id,
-        patient_id: patientId,
-        action: "ai_trial_summary",
-        resource_type: "trial_saves",
-        resource_id: trialId,
-        organization_id: organizationId,
-        ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
-        user_agent: request.headers.get("user-agent"),
-        status: "success",
-      });
-    },
-  });
+    const result = streamText({
+      model: anthropic("claude-sonnet-4-6"),
+      system: buildSystemPrompt(),
+      messages: [{ role: "user", content: userMessage }],
+      onFinish: async () => {
+        await supabase.from("audit_log").insert({
+          user_id: user.id,
+          patient_id: patientId,
+          action: "ai_trial_summary",
+          resource_type: "trial_saves",
+          resource_id: trialId,
+          organization_id: organizationId,
+          ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+          user_agent: request.headers.get("user-agent"),
+          status: "success",
+        });
+      },
+    });
 
-  return result.toTextStreamResponse();
+    return result.toTextStreamResponse();
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: null,
+      timestamp: new Date().toISOString(),
+      step: 'handler',
+    }));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

@@ -10,6 +10,8 @@ import { stripHtml } from "@/lib/sanitize";
 
 export const maxDuration = 60;
 
+const ROUTE = 'api/chat';
+
 const MAX_MESSAGE_LENGTH = 10000;
 const MAX_TOTAL_CONTENT = 50000;
 
@@ -30,6 +32,13 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: req.method,
+        event: 'unauthorized',
+        userId: 'none',
+        timestamp: new Date().toISOString(),
+      }));
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,9 +49,23 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!userRecord?.organization_id) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: req.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if (userRecord.role !== "caregiver") {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: req.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -209,9 +232,18 @@ ${patient.condition_templates?.ai_context || ""}`
             })(),
           ]);
           controller.close();
-        } catch (error) {
-          Sentry.captureException(error, { tags: { route: "api/chat", phase: "stream" } });
-          console.error('[chat/route] stream error:', error);
+        } catch (error: any) {
+          Sentry.captureException(error, { tags: { route: ROUTE, phase: "stream" } });
+          console.error(JSON.stringify({
+            route: ROUTE,
+            method: req.method,
+            error: error?.message ?? String(error),
+            code: error?.code ?? null,
+            stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+            userId: user.id,
+            timestamp: new Date().toISOString(),
+            step: 'ai_stream',
+          }));
           controller.enqueue(encoder.encode("Sorry, something went wrong. Please try again."));
           controller.close();
         }
@@ -224,8 +256,18 @@ ${patient.condition_templates?.ai_context || ""}`
         "Transfer-Encoding": "chunked",
       },
     });
-  } catch (error) {
-    Sentry.captureException(error, { tags: { route: "api/chat", phase: "handler" } });
+  } catch (error: any) {
+    Sentry.captureException(error, { tags: { route: ROUTE, phase: "handler" } });
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: req.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: null,
+      timestamp: new Date().toISOString(),
+      step: 'handler',
+    }));
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
