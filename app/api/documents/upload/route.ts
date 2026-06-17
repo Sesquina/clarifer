@@ -9,7 +9,7 @@
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import pdfParse from "pdf-parse";
+import { extractText } from "unpdf";
 import { createClient } from "@/lib/supabase/server";
 import { validateFile } from "@/lib/documents/validate";
 import { uploadToStorage } from "@/lib/documents/storage";
@@ -103,9 +103,9 @@ export async function POST(request: Request) {
   // tokens immediately without re-downloading the file (migration 20260617000001).
   if (file.type === 'application/pdf') {
     try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const pdfData = await pdfParse(buffer);
-      const extractedText = pdfData.text.slice(0, 50000);
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const { text: pages } = await extractText(buffer);
+      const extractedText = pages.join('\n').slice(0, 50000);
       await supabase
         .from("documents")
         .update({ extracted_text: extractedText })
