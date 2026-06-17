@@ -99,7 +99,7 @@ export async function POST(request: Request) {
               const response = await anthropic.messages.create({
                 model: "claude-sonnet-4-6",
                 max_tokens: 300,
-                system: [{ type: "text", text: "Write a warm, plain-language family update from a caregiver's perspective in under 150 words. Keep it conversational, hopeful where honest, and end with an invitation for family to reach out with questions.", cache_control: { type: "ephemeral" } }],
+                system: [{ type: "text", text: "Write a warm, plain-language family update from a caregiver's perspective in under 150 words. Keep it conversational, hopeful where honest, and end with an invitation for family to reach out with questions. Plain text only. No markdown. No bullet points. No headers. Forbidden: # * ** _ ` - at line start.", cache_control: { type: "ephemeral" } }],
                 messages: [{ role: "user", content: userMessage }],
                 stream: true,
               });
