@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -30,8 +31,8 @@ function forensicColumns(request: Request) {
   };
 }
 
-async function authorize(supabase: Awaited<ReturnType<typeof createClient>>, patientId: string) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function authorize(request: Request, supabase: Awaited<ReturnType<typeof createClient>>, patientId: string) {
+  const user = await getUserFromRequest(request);
   if (!user) return { ok: false as const, status: 401, message: "Unauthorized" };
   const { data: userRecord } = await supabase
     .from("users")
@@ -67,7 +68,7 @@ export async function GET(
 
   const { id: patientId } = await params;
   const supabase = await createClient();
-  const auth = await authorize(supabase, patientId);
+  const auth = await authorize(request, supabase, patientId);
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
   const { data, error } = await supabase
@@ -105,7 +106,7 @@ export async function POST(
 
   const { id: patientId } = await params;
   const supabase = await createClient();
-  const auth = await authorize(supabase, patientId);
+  const auth = await authorize(request, supabase, patientId);
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;

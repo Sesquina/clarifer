@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { getUserFromRequest } from '@/lib/auth/get-user';
 import { analyzeLimiter } from "@/lib/ratelimit";
 import { checkOrigin } from "@/lib/cors";
 import { extractText } from "@/lib/documents/extract";
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
   console.log("[analyze-document] ANTHROPIC_API_KEY present:", !!process.env.ANTHROPIC_API_KEY);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
 
   if (!user) {
     console.warn(JSON.stringify({

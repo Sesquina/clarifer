@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkOrigin } from "@/lib/cors";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
@@ -21,8 +22,8 @@ const ROLES = ["caregiver", "admin"];
 
 type TemplateInsert = Database["public"]["Tables"]["care_team_message_templates"]["Insert"];
 
-async function loadOrg(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+async function loadOrg(request: Request, supabase: Awaited<ReturnType<typeof createClient>>) {
+  const user = await getUserFromRequest(request);
   if (!user) return { user: null, orgId: null, role: null };
   const { data: userRecord } = await supabase
     .from("users")
@@ -59,7 +60,7 @@ export async function GET(
 
   const { id: memberId } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadOrg(supabase);
+  const { user, orgId, role } = await loadOrg(request, supabase);
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -98,7 +99,7 @@ export async function POST(
 
   const { id: memberId } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadOrg(supabase);
+  const { user, orgId, role } = await loadOrg(request, supabase);
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
