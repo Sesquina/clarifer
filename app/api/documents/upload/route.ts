@@ -9,6 +9,7 @@
  */
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
+import pdfParse from "pdf-parse";
 import { createClient } from "@/lib/supabase/server";
 import { validateFile } from "@/lib/documents/validate";
 import { uploadToStorage } from "@/lib/documents/storage";
@@ -72,9 +73,10 @@ export async function POST(request: Request) {
   let filePath: string;
   try {
     filePath = await uploadToStorage(file, organizationId, patientId);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; code?: string; stack?: string };
     Sentry.captureException(error, { tags: { route: ROUTE, phase: "storage" } });
-    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: error?.message ?? String(error), code: error?.code ?? null, stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null, userId: user.id, timestamp: new Date().toISOString(), step: 'upload_to_storage' }));
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: err?.message ?? String(error), code: err?.code ?? null, stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null, userId: user.id, timestamp: new Date().toISOString(), step: 'upload_to_storage' }));
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 
@@ -93,11 +95,28 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !document) {
-    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: insertError?.message ?? 'insert returned no data', code: (insertError as any)?.code ?? null, stack: null, userId: user.id, timestamp: new Date().toISOString(), step: 'insert_document_metadata' }));
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: insertError?.message ?? 'insert returned no data', code: (insertError as { code?: string })?.code ?? null, stack: null, userId: user.id, timestamp: new Date().toISOString(), step: 'insert_document_metadata' }));
     return NextResponse.json({ error: "Database insert failed" }, { status: 500 });
   }
 
-  // 4. audit_log write -- every patient data insert must be logged with all required fields
+  // Extract text from PDFs at upload time so the summarize route can stream
+  // tokens immediately without re-downloading the file (migration 20260617000001).
+  if (file.type === 'application/pdf') {
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const pdfData = await pdfParse(buffer);
+      const extractedText = pdfData.text.slice(0, 50000);
+      await supabase
+        .from("documents")
+        .update({ extracted_text: extractedText })
+        .eq("id", document.id);
+    } catch (extractErr) {
+      // Non-fatal: log and continue. Summarize route falls back to file download.
+      console.error(JSON.stringify({ route: ROUTE, step: 'pdf_extract', error: String(extractErr), timestamp: new Date().toISOString() }));
+    }
+  }
+
+  // audit_log write -- every patient data insert must be logged with all required fields
   await supabase.from("audit_log").insert({
     user_id: user.id,
     patient_id: patientId,
