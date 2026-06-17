@@ -7,6 +7,7 @@
  */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getUserFromRequest } from '@/lib/auth/get-user';
 import { checkOrigin } from "@/lib/cors";
 import type { Json } from "@/lib/supabase/types";
 
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
 
   // 1. Authenticate
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
 
   if (!user) {
     return NextResponse.json(

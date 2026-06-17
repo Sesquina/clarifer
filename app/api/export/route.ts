@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUserFromRequest } from '@/lib/auth/get-user';
 import { NextResponse } from "next/server";
 import { checkOrigin } from "@/lib/cors";
 
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

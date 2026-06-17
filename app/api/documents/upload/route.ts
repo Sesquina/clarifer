@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { validateFile } from "@/lib/documents/validate";
 import { uploadToStorage } from "@/lib/documents/storage";
 import { checkOrigin } from "@/lib/cors";
+import { getUserFromRequest } from "@/lib/auth/get-user";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getUserFromRequest(request);
   if (!user) {
     console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
