@@ -390,6 +390,16 @@ export async function createClient(): Promise<ClarifSupabase> {
 
   const storage = makeStorage()
 
+  // When DATABASE_URL is not set (Vercel deployment), fall back to Supabase SDK
+  // for query builder operations so the app can reach the Supabase database via
+  // its HTTP API. PgBouncer is only reachable from localhost on the Hetzner server.
+  const supabaseSdk = !process.env.DATABASE_URL
+    ? createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+        process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+      )
+    : null
+
   return {
     auth: {
       async getUser() {
@@ -421,6 +431,10 @@ export async function createClient(): Promise<ClarifSupabase> {
     },
 
     from(table: string) {
+      if (supabaseSdk) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return supabaseSdk.from(table) as unknown as QueryBuilderLike
+      }
       return new QueryBuilder(pool, table)
     },
 
