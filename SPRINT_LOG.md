@@ -1,4 +1,18 @@
 ---
+[2026-06-17] SESSION: feat/fast-document-analysis
+Branch: feat/fast-document-analysis
+Status: COMPLETE
+What was built: (1) Streaming summarize route — first tokens reach client in ~2-3s instead of 20-30s wait; cache hit streams stored summary instantly; fast path uses extracted_text + anthropic.messages.stream(); fallback downloads file and runs structured analyzer. (2) Explicit JWKS caching in lib/auth/verify-token.ts — 1-hour TTL, module-level cache, eliminates per-request Keycloak fetches. (3) PDF text extraction at upload time — unpdf extracts text, stored in extracted_text column, enables streaming on next summarize call.
+Files changed: app/api/summarize/route.ts, lib/auth/verify-token.ts, app/api/documents/upload/route.ts, supabase/migrations/20260617000001_add_extracted_text.sql, package.json (unpdf already present, @types/pdf-parse added)
+TypeScript errors: 0
+Test result: 346 passing, 7 pre-existing failures (apps/mobile tsconfig deleted — unrelated to this branch)
+
+MIGRATION REQUIRED: supabase/migrations/20260617000001_add_extracted_text.sql
+  ALTER TABLE public.documents ADD COLUMN IF NOT EXISTS extracted_text TEXT;
+  Run in Supabase SQL editor before deploying feat/fast-document-analysis.
+  The upload route writes this column; the summarize route reads it. Both fall back gracefully if the column is absent.
+
+---
 [2026-06-16] AUDIT SESSION: read-only codebase audit — 10 items checked
 
 DISCOVERED ISSUE [audit-2026-06-16-1]:
