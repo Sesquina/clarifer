@@ -10,6 +10,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+const ROUTE = 'api/patients/create';
+
 const ALLOWED_ROLES = ["caregiver", "provider"];
 
 export async function POST(request: Request) {
@@ -19,6 +21,13 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: 'none',
+      timestamp: new Date().toISOString(),
+    }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -32,9 +41,16 @@ export async function POST(request: Request) {
     // Self-heal: the handle_new_user trigger may not have run (migration not applied
     // or user predates the trigger). Provision org and users row with service-role
     // client so this request can succeed without blocking the user.
-    console.error(
-      `[patients/create] self-heal triggered for user ${user.id} at ${new Date().toISOString()}`
-    );
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: 'users row missing organization_id; attempting self-heal',
+      code: null,
+      stack: null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'self_heal_triggered',
+    }));
     try {
       const admin = createAdminClient();
       const { data: newOrg, error: orgError } = await admin
@@ -56,15 +72,38 @@ export async function POST(request: Request) {
         .eq("id", user.id)
         .single();
       userRecord = healed;
-    } catch (err) {
-      console.error(`[patients/create] self-heal failed for user ${user.id}:`, err);
+    } catch (err: any) {
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: err?.message ?? String(err),
+        code: err?.code ?? null,
+        stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'self_heal_failed',
+      }));
     }
   }
 
   if (!userRecord?.organization_id) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+    console.warn(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      event: 'unauthorized',
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -92,7 +131,17 @@ export async function POST(request: Request) {
   };
   try {
     body = await request.json();
-  } catch {
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'parse_request_body',
+    }));
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
@@ -202,6 +251,16 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !inserted) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: insertError?.message ?? 'insert returned no data',
+      code: (insertError as any)?.code ?? null,
+      stack: null,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      step: 'insert_patient',
+    }));
     return NextResponse.json(
       { error: "We could not save this patient. Please try again." },
       { status: 500 }

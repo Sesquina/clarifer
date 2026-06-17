@@ -15,6 +15,8 @@ import type { Database } from "@/lib/supabase/types";
 
 export const runtime = "nodejs";
 
+const ROUTE = 'api/care-team';
+
 const READ_ROLES = ["caregiver", "patient", "provider", "admin"];
 const WRITE_ROLES = ["caregiver", "admin"];
 
@@ -32,138 +34,234 @@ export async function GET(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: 'none',
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("role, organization_id")
+      .eq("id", user.id)
+      .single();
+    if (!userRecord?.organization_id) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!READ_ROLES.includes(userRecord.role ?? "")) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const orgId = userRecord.organization_id;
+
+    const { searchParams } = new URL(request.url);
+    const patientId = searchParams.get("patient_id");
+    if (!patientId) {
+      return NextResponse.json({ error: "patient_id required" }, { status: 400 });
+    }
+
+    const { data: patient } = await supabase
+      .from("patients")
+      .select("organization_id")
+      .eq("id", patientId)
+      .single();
+    if (!patient || patient.organization_id !== orgId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from("care_team")
+      .select("*")
+      .eq("patient_id", patientId)
+      .eq("organization_id", orgId)
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: error.message,
+        code: (error as any)?.code ?? null,
+        stack: null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'query_care_team',
+      }));
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    await supabase
+      .from("audit_log")
+      .insert({
+        user_id: user.id,
+        organization_id: orgId,
+        action: "SELECT",
+        resource_type: "care_team",
+        patient_id: patientId,
+        ...forensicColumns(request),
+      })
+      .then(() => undefined, () => undefined);
+
+    return NextResponse.json({ members: data ?? [] });
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: null,
+      timestamp: new Date().toISOString(),
+      step: 'get_handler',
+    }));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-  if (!READ_ROLES.includes(userRecord.role ?? "")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const orgId = userRecord.organization_id;
-
-  const { searchParams } = new URL(request.url);
-  const patientId = searchParams.get("patient_id");
-  if (!patientId) {
-    return NextResponse.json({ error: "patient_id required" }, { status: 400 });
-  }
-
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("organization_id")
-    .eq("id", patientId)
-    .single();
-  if (!patient || patient.organization_id !== orgId) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  const { data, error } = await supabase
-    .from("care_team")
-    .select("*")
-    .eq("patient_id", patientId)
-    .eq("organization_id", orgId)
-    .order("is_primary", { ascending: false })
-    .order("created_at", { ascending: true });
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  await supabase
-    .from("audit_log")
-    .insert({
-      user_id: user.id,
-      organization_id: orgId,
-      action: "SELECT",
-      resource_type: "care_team",
-      patient_id: patientId,
-      ...forensicColumns(request),
-    })
-    .then(() => undefined, () => undefined);
-
-  return NextResponse.json({ members: data ?? [] });
 }
 
 export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!WRITE_ROLES.includes(userRecord.role ?? "")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const orgId = userRecord.organization_id;
+    if (!user) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: 'none',
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const body = (await request.json().catch(() => null)) as Partial<CareTeamInsert> | null;
-  if (!body || typeof body.name !== "string" || !body.name.trim()) {
-    return NextResponse.json({ error: "name required" }, { status: 400 });
-  }
-  if (!body.patient_id || typeof body.patient_id !== "string") {
-    return NextResponse.json({ error: "patient_id required" }, { status: 400 });
-  }
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("role, organization_id")
+      .eq("id", user.id)
+      .single();
+    if (!userRecord?.organization_id) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!WRITE_ROLES.includes(userRecord.role ?? "")) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const orgId = userRecord.organization_id;
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("organization_id")
-    .eq("id", body.patient_id)
-    .single();
-  if (!patient || patient.organization_id !== orgId) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    const body = (await request.json().catch(() => null)) as Partial<CareTeamInsert> | null;
+    if (!body || typeof body.name !== "string" || !body.name.trim()) {
+      return NextResponse.json({ error: "name required" }, { status: 400 });
+    }
+    if (!body.patient_id || typeof body.patient_id !== "string") {
+      return NextResponse.json({ error: "patient_id required" }, { status: 400 });
+    }
 
-  const insertRow: CareTeamInsert = {
-    patient_id: body.patient_id,
-    organization_id: orgId,
-    name: body.name.trim(),
-    role: typeof body.role === "string" ? body.role : null,
-    specialty: typeof body.specialty === "string" ? body.specialty : null,
-    phone: typeof body.phone === "string" ? body.phone : null,
-    email: typeof body.email === "string" ? body.email : null,
-    fax: typeof body.fax === "string" ? body.fax : null,
-    address: typeof body.address === "string" ? body.address : null,
-    npi: typeof body.npi === "string" ? body.npi : null,
-    notes: typeof body.notes === "string" ? body.notes : null,
-    is_primary: typeof body.is_primary === "boolean" ? body.is_primary : false,
-  };
+    const { data: patient } = await supabase
+      .from("patients")
+      .select("organization_id")
+      .eq("id", body.patient_id)
+      .single();
+    if (!patient || patient.organization_id !== orgId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  const { data, error } = await supabase
-    .from("care_team")
-    .insert(insertRow)
-    .select()
-    .single();
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  await supabase
-    .from("audit_log")
-    .insert({
-      user_id: user.id,
-      organization_id: orgId,
-      action: "INSERT",
-      resource_type: "care_team",
-      resource_id: data.id,
+    const insertRow: CareTeamInsert = {
       patient_id: body.patient_id,
-      ...forensicColumns(request),
-    })
-    .then(() => undefined, () => undefined);
+      organization_id: orgId,
+      name: body.name.trim(),
+      role: typeof body.role === "string" ? body.role : null,
+      specialty: typeof body.specialty === "string" ? body.specialty : null,
+      phone: typeof body.phone === "string" ? body.phone : null,
+      email: typeof body.email === "string" ? body.email : null,
+      fax: typeof body.fax === "string" ? body.fax : null,
+      address: typeof body.address === "string" ? body.address : null,
+      npi: typeof body.npi === "string" ? body.npi : null,
+      notes: typeof body.notes === "string" ? body.notes : null,
+      is_primary: typeof body.is_primary === "boolean" ? body.is_primary : false,
+    };
 
-  return NextResponse.json({ member: data }, { status: 201 });
+    const { data, error } = await supabase
+      .from("care_team")
+      .insert(insertRow)
+      .select()
+      .single();
+    if (error) {
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: error.message,
+        code: (error as any)?.code ?? null,
+        stack: null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'insert_care_team_member',
+      }));
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    await supabase
+      .from("audit_log")
+      .insert({
+        user_id: user.id,
+        organization_id: orgId,
+        action: "INSERT",
+        resource_type: "care_team",
+        resource_id: data.id,
+        patient_id: body.patient_id,
+        ...forensicColumns(request),
+      })
+      .then(() => undefined, () => undefined);
+
+    return NextResponse.json({ member: data }, { status: 201 });
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: null,
+      timestamp: new Date().toISOString(),
+      step: 'post_handler',
+    }));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

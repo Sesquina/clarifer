@@ -13,6 +13,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
 
+const ROUTE = 'api/medications/create';
+
 const ALLOWED_ROLES = ["caregiver", "provider"];
 
 export async function POST(request: Request) {
@@ -22,7 +24,10 @@ export async function POST(request: Request) {
   // 1. Auth check
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   // 2. Role check + org_id
   const { data: userRecord } = await supabase
@@ -31,9 +36,11 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
   if (!userRecord?.organization_id) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -92,6 +99,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !med) {
+    console.error(JSON.stringify({ route: ROUTE, method: request.method, error: insertError?.message ?? 'insert returned no data', code: (insertError as any)?.code ?? null, stack: null, userId: user.id, timestamp: new Date().toISOString(), step: 'insert_medication' }));
     return NextResponse.json(
       { error: "We could not save this medication. Please try again." },
       { status: 500 }

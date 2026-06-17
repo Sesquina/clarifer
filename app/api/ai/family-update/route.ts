@@ -14,6 +14,8 @@ import { checkOrigin } from "@/lib/cors";
 
 export const maxDuration = 60;
 
+const ROUTE = 'api/ai/family-update';
+
 const ALLOWED_ROLES = ["caregiver"];
 
 function buildSystemPrompt(language: string): string {
@@ -46,149 +48,187 @@ export async function POST(request: Request) {
   const corsError = checkOrigin(request);
   if (corsError) return corsError;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized", code: "UNAUTHORIZED", status: 401 },
-      { status: 401 }
-    );
-  }
-
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
-    return NextResponse.json(
-      { error: "Forbidden", code: "FORBIDDEN", status: 403 },
-      { status: 403 }
-    );
-  }
-
-  const organizationId = userRecord.organization_id;
-
-  let rateLimitPassed = true;
   try {
-    const { success } = await familyUpdateStreamLimiter.limit(user.id);
-    rateLimitPassed = success;
-  } catch {
-    rateLimitPassed = true;
-  }
-  if (!rateLimitPassed) {
-    return NextResponse.json(
-      { error: "Too many requests. Please wait before trying again.", code: "RATE_LIMITED", status: 429 },
-      { status: 429 }
-    );
-  }
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  let patientId: string;
-  let requestedLanguage: string | undefined;
-  try {
-    const body = await request.json();
-    patientId = body.patientId;
-    requestedLanguage = body.language;
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid request body", code: "BAD_REQUEST", status: 400 },
-      { status: 400 }
-    );
-  }
+    if (!user) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: 'none',
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json(
+        { error: "Unauthorized", code: "UNAUTHORIZED", status: 401 },
+        { status: 401 }
+      );
+    }
 
-  if (!patientId) {
-    return NextResponse.json(
-      { error: "patientId is required", code: "BAD_REQUEST", status: 400 },
-      { status: 400 }
-    );
-  }
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("role, organization_id")
+      .eq("id", user.id)
+      .single();
 
-  const { data: patient } = await supabase
-    .from("patients")
-    .select("primary_language")
-    .eq("id", patientId)
-    .eq("organization_id", organizationId)
-    .single();
+    if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+      console.warn(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        event: 'unauthorized',
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      }));
+      return NextResponse.json(
+        { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+        { status: 403 }
+      );
+    }
 
-  if (!patient) {
-    return NextResponse.json(
-      { error: "Patient not found", code: "NOT_FOUND", status: 404 },
-      { status: 404 }
-    );
-  }
+    const organizationId = userRecord.organization_id;
 
-  const language = requestedLanguage ?? patient.primary_language ?? "en";
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    let rateLimitPassed = true;
+    try {
+      const { success } = await familyUpdateStreamLimiter.limit(user.id);
+      rateLimitPassed = success;
+    } catch {
+      rateLimitPassed = true;
+    }
+    if (!rateLimitPassed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait before trying again.", code: "RATE_LIMITED", status: 429 },
+        { status: 429 }
+      );
+    }
 
-  const [symptomResult, medicationResult, documentResult] = await Promise.all([
-    supabase
-      .from("symptom_logs")
-      .select("overall_severity, ai_summary, created_at")
-      .eq("patient_id", patientId)
+    let patientId: string;
+    let requestedLanguage: string | undefined;
+    try {
+      const body = await request.json();
+      patientId = body.patientId;
+      requestedLanguage = body.language;
+    } catch (error: any) {
+      console.error(JSON.stringify({
+        route: ROUTE,
+        method: request.method,
+        error: error?.message ?? String(error),
+        code: error?.code ?? null,
+        stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        step: 'parse_request_body',
+      }));
+      return NextResponse.json(
+        { error: "Invalid request body", code: "BAD_REQUEST", status: 400 },
+        { status: 400 }
+      );
+    }
+
+    if (!patientId) {
+      return NextResponse.json(
+        { error: "patientId is required", code: "BAD_REQUEST", status: 400 },
+        { status: 400 }
+      );
+    }
+
+    const { data: patient } = await supabase
+      .from("patients")
+      .select("primary_language")
+      .eq("id", patientId)
       .eq("organization_id", organizationId)
-      .gte("created_at", sevenDaysAgo)
-      .order("created_at", { ascending: false })
-      .limit(7),
-    supabase
-      .from("medications")
-      .select("name, dose, frequency")
-      .eq("patient_id", patientId)
-      .eq("organization_id", organizationId)
-      .eq("is_active", true),
-    supabase
-      .from("documents")
-      .select("title, document_category, uploaded_at")
-      .eq("patient_id", patientId)
-      .eq("organization_id", organizationId)
-      .order("uploaded_at", { ascending: false })
-      .limit(3),
-  ]);
+      .single();
 
-  const symptomSummary = symptomResult.data && symptomResult.data.length > 0
-    ? symptomResult.data
-        .map((s: any) => s.ai_summary ?? `Severity ${s.overall_severity}/10`)
-        .join("; ")
-    : "No symptoms logged in the past 7 days";
+    if (!patient) {
+      return NextResponse.json(
+        { error: "Patient not found", code: "NOT_FOUND", status: 404 },
+        { status: 404 }
+      );
+    }
 
-  const medicationList = medicationResult.data && medicationResult.data.length > 0
-    ? medicationResult.data
-        .map((m: any) => [m.name, m.dose, m.frequency].filter(Boolean).join(" "))
-        .join(", ")
-    : "No active medications listed";
+    const language = requestedLanguage ?? patient.primary_language ?? "en";
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const documentHighlights = documentResult.data && documentResult.data.length > 0
-    ? documentResult.data
-        .map((d: any) => `${d.title ?? "Untitled"} (${d.document_category ?? "document"})`)
-        .join("; ")
-    : "No recent documents";
+    const [symptomResult, medicationResult, documentResult] = await Promise.all([
+      supabase
+        .from("symptom_logs")
+        .select("overall_severity, ai_summary, created_at")
+        .eq("patient_id", patientId)
+        .eq("organization_id", organizationId)
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(7),
+      supabase
+        .from("medications")
+        .select("name, dose, frequency")
+        .eq("patient_id", patientId)
+        .eq("organization_id", organizationId)
+        .eq("is_active", true),
+      supabase
+        .from("documents")
+        .select("title, document_category, uploaded_at")
+        .eq("patient_id", patientId)
+        .eq("organization_id", organizationId)
+        .order("uploaded_at", { ascending: false })
+        .limit(3),
+    ]);
 
-  const userMessage = `Patient context (last 7 days):
+    const symptomSummary = symptomResult.data && symptomResult.data.length > 0
+      ? symptomResult.data
+          .map((s: any) => s.ai_summary ?? `Severity ${s.overall_severity}/10`)
+          .join("; ")
+      : "No symptoms logged in the past 7 days";
+
+    const medicationList = medicationResult.data && medicationResult.data.length > 0
+      ? medicationResult.data
+          .map((m: any) => [m.name, m.dose, m.frequency].filter(Boolean).join(" "))
+          .join(", ")
+      : "No active medications listed";
+
+    const documentHighlights = documentResult.data && documentResult.data.length > 0
+      ? documentResult.data
+          .map((d: any) => `${d.title ?? "Untitled"} (${d.document_category ?? "document"})`)
+          .join("; ")
+      : "No recent documents";
+
+    const userMessage = `Patient context (last 7 days):
 Symptoms: ${symptomSummary}
 Active medications: ${medicationList}
 Recent documents: ${documentHighlights}
 
 Please write the family update now.`;
 
-  const result = streamText({
-    model: anthropic("claude-sonnet-4-6"),
-    system: buildSystemPrompt(language),
-    messages: [{ role: "user", content: userMessage }],
-    onFinish: async () => {
-      await supabase.from("audit_log").insert({
-        user_id: user.id,
-        patient_id: patientId,
-        action: "ai_family_update",
-        resource_type: "patients",
-        resource_id: patientId,
-        organization_id: organizationId,
-        ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
-        user_agent: request.headers.get("user-agent"),
-        status: "success",
-      });
-    },
-  });
+    const result = streamText({
+      model: anthropic("claude-sonnet-4-6"),
+      system: buildSystemPrompt(language),
+      messages: [{ role: "user", content: userMessage }],
+      onFinish: async () => {
+        await supabase.from("audit_log").insert({
+          user_id: user.id,
+          patient_id: patientId,
+          action: "ai_family_update",
+          resource_type: "patients",
+          resource_id: patientId,
+          organization_id: organizationId,
+          ip_address: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip"),
+          user_agent: request.headers.get("user-agent"),
+          status: "success",
+        });
+      },
+    });
 
-  return result.toTextStreamResponse();
+    return result.toTextStreamResponse();
+  } catch (error: any) {
+    console.error(JSON.stringify({
+      route: ROUTE,
+      method: request.method,
+      error: error?.message ?? String(error),
+      code: error?.code ?? null,
+      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      userId: null,
+      timestamp: new Date().toISOString(),
+      step: 'handler',
+    }));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
