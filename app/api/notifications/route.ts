@@ -86,6 +86,6 @@ export async function GET(request: Request) {
     })
     .then(() => undefined, () => undefined);
 
-  const unread = (data ?? []).filter((n) => !n.read).length;
+  const unread = (data ?? []).filter((n: any) => !n.read).length;
   return NextResponse.json({ notifications: data ?? [], unread });
 }

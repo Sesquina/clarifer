@@ -148,19 +148,19 @@ export async function POST(request: Request) {
 
   const symptomSummary = symptomResult.data && symptomResult.data.length > 0
     ? symptomResult.data
-        .map((s) => s.ai_summary ?? `Severity ${s.overall_severity}/10`)
+        .map((s: any) => s.ai_summary ?? `Severity ${s.overall_severity}/10`)
         .join("; ")
     : "No symptoms logged in the past 7 days";
 
   const medicationList = medicationResult.data && medicationResult.data.length > 0
     ? medicationResult.data
-        .map((m) => [m.name, m.dose, m.frequency].filter(Boolean).join(" "))
+        .map((m: any) => [m.name, m.dose, m.frequency].filter(Boolean).join(" "))
         .join(", ")
     : "No active medications listed";
 
   const documentHighlights = documentResult.data && documentResult.data.length > 0
     ? documentResult.data
-        .map((d) => `${d.title ?? "Untitled"} (${d.document_category ?? "document"})`)
+        .map((d: any) => `${d.title ?? "Untitled"} (${d.document_category ?? "document"})`)
         .join("; ")
     : "No recent documents";
 

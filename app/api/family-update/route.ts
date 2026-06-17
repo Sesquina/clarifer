@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       || (recentSymptom?.symptoms ? JSON.stringify(recentSymptom.symptoms) : "None logged recently");
 
     const medList = medications && medications.length > 0
-      ? medications.map((m) => [m.name, m.dose, m.frequency].filter(Boolean).join(" ")).join(", ")
+      ? medications.map((m: any) => [m.name, m.dose, m.frequency].filter(Boolean).join(" ")).join(", ")
       : "None listed";
 
     const { name: patientName } = patient;

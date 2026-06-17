@@ -462,8 +462,115 @@ kcadm.sh add-roles -r clarifer \
 
 ---
 
-## What I4 Will Do
+---
 
-Session I4 integrates the app with Keycloak: replace Supabase Auth with
-Keycloak OIDC tokens, update Next.js middleware, and update the mobile
-Expo app to use the PKCE flow via clarifer-app client.
+## Session I4: Next.js API Migration (Keycloak JWT + pg Pool)
+
+**Date:** 2026-06-16
+**Branch:** feat/i4-api-migration
+**Engineer:** Claude (Anthropic), authorized by Samira Esquina
+
+---
+
+## Objective
+
+Replace Supabase Auth in the Next.js app with Keycloak JWT validation.
+Replace Supabase database client with a pg Pool backed by PgBouncer on the
+production server. Maintain zero TypeScript errors and zero test regressions.
+
+---
+
+## Files Created
+
+| File | Purpose |
+|------|---------|
+| `lib/db.ts` | pg Pool; connectionString from DATABASE_URL env var |
+| `lib/auth/verify-token.ts` | Verifies Keycloak RS256 JWTs via JWKS endpoint; returns ClarifUser |
+| `lib/auth/get-user.ts` | Extracts user from Authorization header or clarifer_token cookie |
+| `app/api/auth/demo-login/route.ts` | ROPC grant against Keycloak; sets clarifer_token HttpOnly cookie |
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `lib/supabase/server.ts` | Complete rewrite as compat shim: auth via Keycloak, queries via pg pool, storage still via Supabase |
+| `middleware.ts` | Replaced createServerClient/supabase.auth.getUser with jose JWKS JWT verification of clarifer_token cookie |
+| `lib/pdf/fetch-export-data.ts` | Changed SupabaseClient<Database> parameter type to ClarifSupabase |
+| `.env.example` | Added KEYCLOAK_URL, KEYCLOAK_REALM, KEYCLOAK_CLIENT_ID, DATABASE_URL |
+| 5 route/page files | Added explicit `: any` to callback parameters to satisfy noImplicitAny |
+
+---
+
+## Architecture Notes
+
+### Compatibility shim approach
+
+All 88 test files mock `@/lib/supabase/server` at the module level. Changing
+every API route to call `pool.query()` directly would require rewriting all
+88 test mocks. Instead, `lib/supabase/server.ts` now exposes the same
+`createClient()` interface but backed by pg pool + Keycloak internally.
+
+The QueryBuilder class supports: select, insert, update, delete, upsert,
+eq/neq/gte/lte/lt/gt/is/not/in, order (multiple), limit, single, maybeSingle,
+count mode (head: true), and thenable (direct await without terminal method).
+
+### Storage (unchanged)
+
+File storage still uses Supabase Storage. Files are already in Supabase S3
+buckets; migrating them is out of scope for I4. The compat shim proxies storage
+calls through a Supabase service-role client.
+
+### DECISION REQUIRED items (stubbed in I4)
+
+1. `supabase.auth.exchangeCodeForSession()` -- Used by `app/auth/callback`.
+   With Keycloak, OAuth callback uses PKCE + Keycloak JS adapter. Stub returns
+   an error for now. Replace in I5 when building the Keycloak login redirect flow.
+
+2. `supabase.auth.resetPasswordForEmail()` -- Supabase-specific. Keycloak
+   equivalent is the Forgot Password flow on the Keycloak login page, or an
+   admin REST API call. Stub returns success silently. Implement in I5.
+
+3. `DATABASE_URL` on production server -- `127.0.0.1:6432` only reachable when
+   the Next.js process runs on the same server as PgBouncer (87.99.152.26).
+   Vercel deployments must leave DATABASE_URL unset until I5 sets up process
+   management on the server (PM2 / systemd for `next start`).
+
+4. Mobile app -- `apps/mobile/` still uses Supabase Auth (supabase-client.ts).
+   Migrating Expo to Keycloak PKCE is a separate session.
+
+---
+
+## Environment Variables Added
+
+```
+KEYCLOAK_URL=https://auth.clarifer.com
+KEYCLOAK_REALM=clarifer
+KEYCLOAK_CLIENT_ID=clarifer-app
+DATABASE_URL=postgresql://clarifer_app:REDACTED@127.0.0.1:6432/clarifer
+```
+
+Add these to Vercel Production scope (except DATABASE_URL -- add only after I5).
+
+---
+
+## Verification Gates
+
+| Gate | Check | Result |
+|------|-------|--------|
+| 1 | `npx tsc --noEmit` returns 0 errors | PASS (0 errors) |
+| 2 | `npx vitest run` returns all passing | PASS (88 files / 375 tests) |
+| 3 | `POST /api/auth/demo-login` sets clarifer_token cookie | READY -- requires deployment to production server |
+| 4 | `GET /api/patients/[id]` with cookie returns patient data | READY -- requires deployment + DB seeding |
+| 5 | `/home` loads without redirect loop | READY -- requires deployment |
+
+Gates 3-5 depend on I5 (deploy Next.js to 87.99.152.26 + seed demo data in production DB).
+
+---
+
+## What I5 Will Do
+
+1. Deploy Next.js app on production server (PM2 / `next start` on port 3000)
+2. Configure Nginx to proxy clarifer.com -> localhost:3000
+3. Set DATABASE_URL in process environment
+4. Seed demo data: run seed-demo-data.ts against production PostgreSQL
+   with Keycloak user ID for demo@clarifer.com as the user ID
