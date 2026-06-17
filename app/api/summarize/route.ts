@@ -120,8 +120,6 @@ export async function POST(request: Request) {
       const recentLog = logResult.data;
 
       if (patient && keyFindings.length > 0) {
-        const { name: patientName } = patient;
-        const firstName = patientName?.split(' ')[0] ?? 'your loved one';
         const findingsText = keyFindings.map((f) => `${f.label}: ${f.value}`).join("; ");
         const symptomsText = recentLog
           ? `Recent symptoms: severity ${recentLog.overall_severity}/10. ${recentLog.ai_summary || JSON.stringify(recentLog.symptoms)}`
@@ -142,7 +140,7 @@ And this patient's condition:
 
 ${symptomsText}
 
-What symptoms might ${firstName} be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
+What symptoms might the patient be experiencing that are connected to these results? Write 2-3 sentences in plain language for a caregiver. Be warm and practical. Mention what to watch for and when to call the doctor. Do not use medical jargon without explaining it.`,
               }],
             }),
             new Promise<never>((_, reject) =>

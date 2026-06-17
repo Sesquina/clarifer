@@ -140,7 +140,7 @@ export async function POST(request: Request) {
   ]);
 
   const facts = {
-    patient_first_name: (patient.name ?? "").split(" ")[0] || "your loved one",
+    patient_first_name: "your loved one",
     days_covered: days,
     symptoms: symptoms.data ?? [],
     medications: medications.data ?? [],
