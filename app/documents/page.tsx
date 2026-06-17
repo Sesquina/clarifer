@@ -60,7 +60,7 @@ export default async function DocumentsPage() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {documents.map((doc) => (
+            {documents.map((doc: any) => (
               <Link key={doc.id} href={`/documents/${doc.id}`}>
                 <Card className="transition-colors hover:bg-accent">
                   <CardHeader className="pb-2">
