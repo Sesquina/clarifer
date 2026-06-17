@@ -1,4 +1,35 @@
 ---
+[2026-06-16] AUDIT SESSION: read-only codebase audit — 10 items checked
+
+DISCOVERED ISSUE [audit-2026-06-16-1]:
+  app/log/page.tsx:129 — patient query uses `.eq("created_by", user.id)` instead of organization_id.
+  Same bug pattern as the known P1 bug in home/page.tsx (CLARIFER_UI_HANDOFF.md item #6), but not yet fixed in this file.
+  All patient queries must use organization_id for multi-tenant correctness.
+
+DISCOVERED ISSUE [audit-2026-06-16-2]:
+  app/tools/medications/page.tsx:36 — patient query uses `.eq("created_by", user.id)` instead of organization_id.
+  Same multi-tenant bug pattern. Must be updated to use organization_id.
+
+DISCOVERED ISSUE [audit-2026-06-16-3]:
+  app/log/page.tsx (infection signs section, line ~436) — warning text reads:
+  "Call 911 or go to the emergency room immediately if two or more of these signs are present."
+  The spec (James Whitfield, CLARIFER_UI_HANDOFF.md SYMPTOM LOG ADD S6) requires:
+  "⚠  Call 911 or go to the emergency room immediately." on ANY check — no conditional.
+  The "if two or more" qualifier is a clinical safety specification deviation.
+
+DISCOVERED ISSUE [audit-2026-06-16-4]:
+  apps/mobile/app/(app)/log/add.tsx:24-32 — hex color strings used directly in a COLORS object
+  (e.g., "#2C5F4A", "#C4714A", "#F7F2EA"). CLARIFER_UI_HANDOFF.md and Rule 9 explicitly forbid
+  hex strings in mobile files; lib/design-tokens.ts must be used. This file also uses
+  SafeAreaView only at the bottom, missing it on top.
+
+DISCOVERED ISSUE [audit-2026-06-16-5]:
+  app/tools/medications/page.tsx — DPD enzyme deficiency alert is not rendered on this page.
+  Sprint 8 summary in CLAUDE.md states the DPD alert was built (auto-detects fluoropyrimidines;
+  two-checkbox resolution). No DPD, dpd_deficiency, or fluoropyrimidine reference exists in
+  this file. The feature may have been built elsewhere and not wired to the medications page.
+
+---
 [2026-06-07] SESSION: fix/pre-flutter-audit
 Branch: fix/pre-flutter-audit
 Date: June 7, 2026
@@ -3085,3 +3116,64 @@ WHAT WAS FIXED:
   .env.example — added rotation reminder comment to BREVO_API_KEY.
   tests/api/waitlist.test.ts — 2 new tests: 200 on Brevo success, 500 on
     Brevo 401 with console.error assertion.
+
+---
+[2026-06-16] SESSION: S20 / sprint-3-patient-hub (NOT STARTED -- BLOCKED)
+
+SESSION RECOVERY: Resumed autonomous session. Ran Step 0 diagnostic before any code.
+
+STEP 0 DIAGNOSTIC:
+  - Current branch: main  (task Rule 3 requires branch sprint-3-patient-hub; that branch is not checked out)
+  - Working tree: 236 modified files uncommitted + 8 git stashes (carryover diff, not authored this session)
+  - tsc --noEmit: 0 errors
+  - vitest: 14 failed / 361 passed (375 total) across 7 failing files:
+      tests/api/audit-log-coverage.test.ts, tests/api/audit-log-missing.test.ts,
+      tests/api/documents-upload.test.ts, tests/api/export/pdf.test.ts,
+      tests/api/provider/export.test.ts, tests/api/role-checks-complete.test.ts,
+      tests/components/export/export-button.test.tsx
+  - Last logged SPRINT_STATUS rows: S1-S16 (S13 redone, S14 SKIP). S17, S18, S19 not marked DONE.
+
+DECISION REQUIRED: S20 task cannot be executed as written without guessing. Four blockers:
+
+  1. PRODUCT-DOMAIN CONFLICT. CURRENT_SESSION.md / CLARIFER_SPRINT_PLAN.md define S20 as a
+     patient hub showing "insurance stack, coverage waterfall, authorization wallet, income
+     cliff alert." No insurance / coverage / authorization / income concept exists anywhere in
+     the codebase, the 28-table production schema, or the 38 migration files. The entire product
+     (per MASTER_SESSION_PROMPT.md and docs/CLAUDE.md) is a caregiver MEDICAL intelligence
+     platform. Two planning documents describe different products. Which is authoritative?
+
+  2. DESTRUCTIVE OVERWRITE. app/(app)/patients/[id]/page.tsx ALREADY EXISTS and is a complete
+     CCF oncology medical dashboard (SymptomChart, BiomarkerTracker, DPDAlert, NewlyConnected
+     checklist, SpecialistFinder, NutritionGuidance, PDF export, etc., built in Sprint 7/8).
+     Building the insurance hub "as written" would replace working, shipped functionality. I will
+     not overwrite a major existing feature I did not author on an ambiguous instruction.
+
+  3. NO DATA SOURCE. The task says use "GET /api/patients/[id]". That route exists but returns
+     medical data (documents, symptoms, medications, appointments, care_team). It has no insurance
+     fields. There is no schema for insurance_stack / coverage_waterfall / authorization_wallet /
+     income. Delivering this would require new tables + a migration that the task does not mention
+     or authorize, plus invented data shapes (guessing, which Rule 10 forbids).
+
+  4. BRANCH + SEQUENCE STATE. Repo is on main with a 236-file dirty working tree; the required
+     branch sprint-3-patient-hub is not present/checked out. SPRINT_STATUS shows S17/S18/S19 not
+     done, so S20 would jump ahead of its own plan's prerequisites. (Memory note on file:
+     CURRENT_SESSION.md is known to drift from real branch/SPRINT_LOG state.)
+
+NEEDED FROM SAMIRA (pick one path):
+  A) Confirm Clarifer is adding an insurance/financial navigation domain. If so: provide the
+     schema (tables + columns) for insurance/coverage/authorization/income, authorize the
+     migration, and confirm whether the insurance hub is a NEW route/tab or a REPLACEMENT of the
+     existing medical patients/[id] dashboard.
+  B) The insurance wording is stale/erroneous and S20 should instead consolidate the EXISTING
+     medical patient hub. Confirm and I will scope to that.
+  C) Re-point me at the correct CURRENT_SESSION task if the orchestrator drifted.
+
+Also: confirm the intended starting branch (currently main, dirty). Per Rule 3 I will not commit
+to main and will not start an isolated sprint-3-patient-hub branch on top of an unrelated 236-file
+diff without confirmation.
+
+DISCOVERED ISSUE (not fixed, per Rule 8): 14 vitest failures across 7 files are present in the
+current working tree (audit-log, documents-upload, export, role-checks, export-button). Logging
+for a future session; not in scope to fix here.
+
+NO CODE WRITTEN. NO FILES CHANGED beyond this SPRINT_LOG entry. Stopping for Samira's decision.
