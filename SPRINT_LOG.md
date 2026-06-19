@@ -1,4 +1,13 @@
 ---
+[2026-06-19] MIGRATION REQUIRED: supabase/migrations/20260619000001_demo_data_seed.sql
+Run in Supabase SQL Editor against production project lrhwgswbsctfqtvdjntr.
+Inserts demo data for Carlos Rivera (patient 5fc76836-e2f7-47b6-a394-ddccef619c95):
+  - 3 medications: Omeprazole 20mg daily, Lorazepam 0.5mg PRN, Ondansetron 8mg PRN
+  - 2 appointments: Oncology follow-up 2026-06-25 10:00 EDT, Palliative care 2026-06-25 14:00 EDT
+  - 1 care team member: Dr. Sarah Chen, Oncology, Primary, 212-555-0100
+  - 2 symptom log entries (moderate severity, June 17-18 2026)
+All inserts use ON CONFLICT (id) DO NOTHING -- safe to re-run.
+---
 [2026-06-17] SESSION: feat/fast-document-analysis
 Branch: feat/fast-document-analysis
 Status: COMPLETE
@@ -3191,3 +3200,132 @@ current working tree (audit-log, documents-upload, export, role-checks, export-b
 for a future session; not in scope to fix here.
 
 NO CODE WRITTEN. NO FILES CHANGED beyond this SPRINT_LOG entry. Stopping for Samira's decision.
+
+# ============================================================
+# S17 -- fix/mobile-touch-audit -- Rule 9 mobile-parity audit
+# 2026-06-18
+# ============================================================
+
+[2026-06-18] SESSION RECOVERY: Started S17 (Rule 9 audit -- every web page must have a
+corresponding mobile screen in apps/mobile/app/). Read MASTER_SESSION_PROMPT.md and docs/CLAUDE.md
+in full, listed the 10 rules, ran Step 0. The prior SPRINT_LOG entry ended "Stopping for Samira's
+decision" on an unrelated S20 task with the same drift symptoms; resuming on the S17 task named in
+CURRENT_SESSION.md.
+
+[2026-06-18] tsc output: npx tsc --noEmit -- 0 errors.
+
+[2026-06-18] npm audit / vitest: npx vitest run -- 15 failed | 338 passed (353), 8 failed test
+files. Duration 1283s. (See DISCOVERED ISSUE below -- these failures pre-date this session and were
+already logged by the prior session.)
+
+[2026-06-18] STEP 0 REPORT:
+- Current branch: fix/login-use-keycloak  (CURRENT_SESSION.md expected fix/mobile-touch-audit)
+- Last 10 commits: keycloak login fix, Flutter-app auth server routes, DB fallback for Vercel,
+  infra I6. Project has pivoted toward a Flutter mobile client + Next.js API backend.
+- Uncommitted changes: 447 files modified, carried across branch switches (working-tree drift).
+- TypeScript errors: 0
+- Tests: 338 passing / 353 total (15 failing, 8 files)
+- Migrations on disk: 39 (latest 20260617000001_add_extracted_text.sql)
+- Active sprint per CURRENT_SESSION.md: S17 fix/mobile-touch-audit
+- Open DECISION REQUIRED: see below (orchestrator/structure drift)
+- Open MIGRATION REQUIRED: none from this session
+
+[2026-06-18] S17 AUDIT RESULT -- Rule 9 (web/mobile parity):
+WEB PAGE ROUTES FOUND: 52 (app/**/page.tsx). Full list:
+  (app)/patients/[id]/appointments, (app)/patients/[id]/care-team,
+  (app)/patients/[id]/emergency-card, (app)/patients/[id]/family-update,
+  (app)/patients/[id], (app)/patients/[id]/trials, (app)/patients/new,
+  (app)/provider, (app)/provider/patients/[id], (auth)/forgot-password,
+  (platform)/dashboard, about, care-team, ccf-dashboard, ccf, chat, data,
+  demo/session, disclaimer, documents/[id], documents, documents/upload,
+  download, home, hq/agents, hq/board, hq/ccf, hq/content, hq/login, hq,
+  hq/roadmap, hq/sessions, hq/sprints, log, login, notifications,
+  onboarding/complete, onboarding, / (root), privacy-notice, privacy,
+  profile, promise, research, security, signup, terms, tools/medications,
+  tools, tools/trials, update-password, waitlist.
+MOBILE SCREENS FOUND: 0. The directories apps/mobile/app/ and apps/ DO NOT EXIST in this repo.
+No pubspec.yaml, no Expo/React Native app config, no mobile directory of any kind is present.
+GAP COUNT: all 52 web routes have no in-repo mobile counterpart -- but this is a STRUCTURAL gap,
+not 52 individual missing screens (see DISCOVERED ISSUE).
+
+[2026-06-18] DISCOVERED ISSUE (per Rule 8, not fixed): The mobile parity layer the audit targets
+does not exist in this repository. docs/CLAUDE.md and MASTER_SESSION_PROMPT.md describe an Expo
+SDK 51/55 React Native app at apps/mobile/, and prior sprint summaries claim mobile screens were
+built there (e.g. apps/mobile/app/(app)/provider/index.tsx). None of that exists on disk now.
+Recent git history shows the project pivoted to a Flutter mobile client consumed via server API
+routes ("feat: /api/auth/signup login logout server routes for Flutter app"; branch
+fix/login-use-keycloak). The Flutter client appears to live outside this repo. Therefore Rule 9
+("every web page needs a corresponding mobile screen in apps/mobile/app/") cannot be enforced or
+audited against this repository as written.
+
+[2026-06-18] DISCOVERED ISSUE (per Rule 8, not fixed): 15 vitest failures across 8 test files in
+the current dirty working tree (includes a wa.me/WhatsApp family-update assertion). These pre-date
+S17 -- the prior session logged ~14 failures in the same tree. Not in scope to fix in a read-only
+audit session.
+
+[2026-06-18] DECISION REQUIRED (orchestrator drift -- blocking clean completion of S17):
+  1. Branch drift: the working branch is fix/login-use-keycloak, not the fix/mobile-touch-audit
+     named in CURRENT_SESSION.md, and the tree carries 447 unrelated modified files. Per Rules 3
+     and 10 and the BLOCKED STATE protocol I will NOT switch branches or commit the audit into
+     this dirty/wrong-branch tree without confirmation. NO CODE WRITTEN; only this SPRINT_LOG
+     append.
+  2. Doc-vs-reality drift: is the mobile client now Flutter (separate repo), making Rule 9 and the
+     apps/mobile parity model obsolete for this repo? If so, Rule 9 and the docs need rewriting to
+     describe the actual web-backend + external-Flutter-client architecture, and S17 should be
+     re-scoped (e.g. audit that every web feature has a backing API the Flutter client can call).
+  3. If a mobile app IS expected in this repo, it is entirely missing and needs to be restored or
+     re-initialized before any parity audit is meaningful.
+NEEDED FROM SAMIRA: confirm (a) the intended mobile architecture (in-repo Expo vs external
+Flutter), (b) whether S17/Rule 9 should be re-scoped or retired, and (c) the correct branch and
+working-tree state for this session.
+
+NO CODE WRITTEN. NO FILES CHANGED beyond this SPRINT_LOG entry. Stopping for Samira's decision.
+
+---
+
+[2026-06-19] SPRINT: feat/symptom-log-redesign -- Symptom Log Two-Mode Rebuild
+
+WHAT WAS BUILT:
+  Mode 1 (Quick Capture):
+    - 1-5 scale with semantic labels (Great/Good/OK/Hard/Rough) and Figma colors
+    - Optional note textarea (72px, italic, off-white bg)
+    - "Save ->" + "Add more detail" buttons side-by-side, 160px each
+    - Save stays on page: "Saved" for 1.5s then resets form, no navigation away
+    - "This week" section: client-side AI insight card + 3 recent log rows with severity badges
+    - Empty state: "{fname} is lucky to have someone paying this much attention."
+  Mode 2 (Add More Detail):
+    - Auto-saves Mode 1 log first via POST, then switches mode
+    - 7-question form: scale confirmation (Q1), movement (Q2), appetite (Q3), sensation
+      chips (Q4), timing chips (Q5), infection signs chips (Q6), notes textarea (Q7)
+    - Saves via PATCH /api/log/[id] -- merges into responses JSONB
+    - "Done" button 140px left-aligned. Returns to Mode 1 after 1.5s.
+    - Appetite nudge on Q3 when 2+ consecutive LOW_APPETITE logs
+    - Infection warning: "Call 911 or go to the emergency room immediately."
+
+FILES CHANGED:
+  - app/log/page.tsx (full rebuild, both modes, utility functions exported for tests)
+  - app/api/log/[id]/route.ts (NEW PATCH endpoint, all 4 HIPAA checks)
+  - tests/api/log-patch.test.ts (NEW, 7 tests)
+  - tests/log/log-utils.test.ts (NEW, 9 tests for computeInsight and formatLogDate)
+
+TESTS ADDED: 16 total. Final count: 85 files, 370 tests, all passing.
+MIGRATION REQUIRED: None.
+
+DISCOVERED ISSUE [app/log/page.tsx -- hex colors]:
+  Scale colors #E1F5EE/#0F6E56/#085041/#FAEEDA/#BA7517/#633806/#E24B4A/#791F1F/#FCEBEB
+  have no CSS var equivalents. Used hex per explicit Figma spec -- violates "no hex in
+  components" rule. Tokens that match were used as vars (--primary, --pale-sage, etc.).
+  Fix: add design tokens for the full 5-step severity palette in a future sprint.
+
+DISCOVERED ISSUE [app/log/page.tsx -- log row navigation]:
+  Spec says log rows are tappable to /log/[id] detail view. That page.tsx does not exist.
+  RULE 2 enforced: rows are non-tappable. Create /app/log/[id]/page.tsx in future sprint.
+
+DECISIONS MADE (no stop needed):
+  - Reads use Supabase client directly (GET /api/patients list and GET /api/log list routes
+    do not exist; "no new routes" constraint; consistent with existing page pattern).
+  - AI trend computed client-side from recent logs (POST /api/symptom-summary is single-entry
+    clinical summary, not a trend analysis endpoint).
+  - RULE 9 not triggered (rebuild of existing page, not new page).
+
+PR: https://github.com/Sesquina/clarifer/pull/new/feat/symptom-log-redesign
