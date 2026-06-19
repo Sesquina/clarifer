@@ -6,7 +6,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserFromRequest } from '@/lib/auth/get-user';
-import pool from "@/lib/db";
 import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
@@ -32,14 +31,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // getUserFromRequest already queries the users table and returns organizationId + role.
-  // If organizationId is null, the user authenticated with Keycloak but has no DB row yet.
-  let organizationId = user.organizationId;
-  let userRole = user.role;
+  // Look up the users row via the supabase shim. The shim routes to Supabase SDK
+  // when DATABASE_URL is absent (Vercel) and to pg pool when DATABASE_URL is set
+  // (local dev / Hetzner), so this works in both environments.
+  let { data: userRecord } = await supabase
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", user.id)
+    .single();
 
-  if (!organizationId) {
-    // Self-heal: provision org and users row directly via pg pool.
-    // createAdminClient() (Supabase SDK) cannot reach the Hetzner PG tables.
+  if (!userRecord?.organization_id) {
+    // Self-heal: the handle_new_user trigger may not have run, or this is the user's
+    // first request before their users row was created. Provision org and users row
+    // via the supabase shim (works in Vercel via PostgREST; in local via pg pool).
+    // IMPORTANT: provide `id` explicitly — organizations.id has no server default.
     console.error(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -52,18 +57,25 @@ export async function POST(request: Request) {
     }));
     try {
       const newOrgId = crypto.randomUUID();
-      await pool.query(
-        'INSERT INTO organizations (id, name, created_at) VALUES ($1, $2, now()) ON CONFLICT DO NOTHING',
-        [newOrgId, 'Personal']
-      );
-      await pool.query(
-        `INSERT INTO users (id, email, role, organization_id, created_at)
-         VALUES ($1, $2, $3, $4, now())
-         ON CONFLICT (id) DO UPDATE SET organization_id = EXCLUDED.organization_id`,
-        [user.id, user.email ?? '', 'caregiver', newOrgId]
-      );
-      organizationId = newOrgId;
-      userRole = 'caregiver';
+      const { error: orgError } = await supabase
+        .from("organizations")
+        .insert({ id: newOrgId, name: "Personal" });
+      if (orgError) throw orgError;
+
+      const { error: userError } = await supabase
+        .from("users")
+        .upsert(
+          { id: user.id, email: user.email ?? "", role: "caregiver", organization_id: newOrgId },
+          { onConflict: "id" }
+        );
+      if (userError) throw userError;
+
+      const { data: healed } = await supabase
+        .from("users")
+        .select("role, organization_id")
+        .eq("id", user.id)
+        .single();
+      userRecord = healed;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       const stack = err instanceof Error ? err.stack?.split('\n').slice(0, 3).join(' | ') : null
@@ -80,7 +92,7 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!organizationId) {
+  if (!userRecord?.organization_id) {
     console.warn(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -90,7 +102,7 @@ export async function POST(request: Request) {
     }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!ALLOWED_ROLES.includes(userRole ?? "")) {
+  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
     console.warn(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -100,6 +112,8 @@ export async function POST(request: Request) {
     }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  const organizationId = userRecord.organization_id;
 
   let body: {
     // Standard fields
@@ -273,10 +287,10 @@ export async function POST(request: Request) {
     status: "success",
   });
 
-  // Ensure users row has organization_id + role set server-side (idempotent safety net).
+  // Ensure users row has organization_id + role set (idempotent safety net).
   await supabase
     .from("users")
-    .update({ organization_id: organizationId, role: userRole ?? "caregiver" })
+    .update({ organization_id: organizationId, role: userRecord.role ?? "caregiver" })
     .eq("id", user.id)
     .then(() => undefined, () => undefined);
 
