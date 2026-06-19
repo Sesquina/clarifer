@@ -1,7 +1,7 @@
 /**
  * app/signup/page.tsx
  * Email/password + Google OAuth signup page.
- * Tables: None (Supabase auth handles user creation via handle_new_user trigger)
+ * Tables: users, organizations (via POST /api/auth/signup → Keycloak + pg)
  * Auth: public — redirect to /home if already authenticated (middleware)
  * HIPAA: No PHI in this file
  */
@@ -9,28 +9,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import type { AuthError } from "@supabase/supabase-js";
 
 // ─── Error mapping ────────────────────────────────────────────────────────────
 
-export function friendlySignupError(error: AuthError | null): string {
-  if (!error) return "";
-  const msg = error.message?.toLowerCase() ?? "";
+export function friendlySignupError(msg: string | null): string {
+  if (!msg) return "";
+  const lower = msg.toLowerCase();
   if (
-    msg.includes("already registered") ||
-    msg.includes("already exists") ||
-    msg.includes("user already registered") ||
-    msg.includes("email already")
+    lower.includes("already registered") ||
+    lower.includes("already exists") ||
+    lower.includes("user already") ||
+    lower.includes("email already") ||
+    lower.includes("conflict")
   ) {
     return "An account with this email already exists. Sign in instead.";
   }
-  if (
-    error.status === 429 ||
-    msg.includes("rate limit") ||
-    msg.includes("too many")
-  ) {
+  if (lower.includes("rate limit") || lower.includes("too many")) {
     return "Too many attempts. Please wait a moment.";
   }
   return "Something went wrong. Please try again.";
@@ -73,8 +70,8 @@ export default function SignupPage() {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
 
+  const router = useRouter();
   const supabase = createClient();
 
   const canSubmit =
@@ -99,7 +96,7 @@ export default function SignupPage() {
         },
       });
       if (oauthError) {
-        setError(friendlySignupError(oauthError));
+        setError(friendlySignupError(oauthError.message));
         setGoogleLoading(false);
       }
     } catch {
@@ -123,87 +120,25 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name: fullName }),
       });
+      const data = await res.json().catch(() => ({})) as { error?: string };
 
-      if (authError) {
-        setError(friendlySignupError(authError));
+      if (!res.ok) {
+        setError(friendlySignupError(data.error ?? ''));
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        setEmailSent(true);
-        setLoading(false);
-        return;
-      }
-
-      setError("Something went wrong. Please try again.");
-      setLoading(false);
+      // Account created — redirect to login
+      router.push('/login');
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
-  }
-
-  // ── Success state ─────────────────────────────────────────────────────────
-
-  if (emailSent) {
-    return (
-      <div
-        className="flex min-h-screen items-center justify-center px-6"
-        style={{ backgroundColor: "var(--background)", ...BODY }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 400,
-            backgroundColor: "var(--card)",
-            borderRadius: 16,
-            padding: 40,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
-            textAlign: "center",
-          }}
-        >
-          <img
-            src="/logo-mark.png"
-            alt="Clarifer"
-            width={48}
-            height={48}
-            style={{ margin: "0 auto 20px", objectFit: "contain", display: "block" }}
-          />
-          <h1
-            style={{
-              ...HEADING,
-              fontSize: 24,
-              fontWeight: 700,
-              color: "var(--text)",
-              marginBottom: 12,
-            }}
-          >
-            Check your email
-          </h1>
-          <p style={{ ...BODY, fontSize: 14, color: "var(--muted)", lineHeight: 1.6, marginBottom: 28 }}>
-            We sent a link to <strong style={{ color: "var(--text)" }}>{email}</strong>. Click it to continue.
-          </p>
-          <Link
-            href="/login"
-            style={{
-              ...BODY,
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--primary)",
-              textDecoration: "none",
-            }}
-          >
-            Go to sign in &rarr;
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   // ── Form ──────────────────────────────────────────────────────────────────

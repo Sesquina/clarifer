@@ -3,8 +3,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import { Home, Activity, FileText, Wrench, MessageCircle } from "lucide-react";
 import SessionTimeout from "@/components/SessionTimeout";
 
@@ -29,55 +27,27 @@ const MOBILE_TABS = [
 ];
 
 export default function PlatformLayout({ children }: { children: ReactNode }) {
-  const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      if (!data.user) {
-        router.replace("/login");
-        return;
-      }
-      setUser(data.user);
-      setLoading(false);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-      if (!session?.user) {
-        router.replace("/login");
-      } else {
-        setUser(session.user);
-      }
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [supabase, router]);
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { email?: string } | null) => {
+        if (active && data?.email) setEmail(data.email);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => undefined);
     router.push("/login");
   }
 
-  if (loading || !user) {
-    return (
-      <div
-        className="flex items-center justify-center"
-        style={{ minHeight: "100vh", backgroundColor: "var(--background)" }}
-      >
-        <p style={{ ...BODY, fontSize: 14, color: "var(--muted)" }}>Loading...</p>
-      </div>
-    );
-  }
-
-  const email = user.email ?? "";
-  const initials = email.slice(0, 2).toUpperCase();
+  const initials = email ? email.slice(0, 2).toUpperCase() : "U";
   const truncatedEmail = email.length > 24 ? `${email.slice(0, 23)}...` : email;
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -162,7 +132,7 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
               ...BODY,
             }}
           >
-            {initials || "U"}
+            {initials}
           </div>
           <div className="flex flex-col" style={{ minWidth: 0 }}>
             <span
