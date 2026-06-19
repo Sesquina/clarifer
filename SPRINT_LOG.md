@@ -3329,3 +3329,8 @@ DECISIONS MADE (no stop needed):
   - RULE 9 not triggered (rebuild of existing page, not new page).
 
 PR: https://github.com/Sesquina/clarifer/pull/new/feat/symptom-log-redesign
+
+---
+[2026-06-19] DECISION REQUIRED: app/patients/[id]/family-update/page.tsx does not exist. Task (feat/home-screen-redesign) specifies router.push to this route for the Send family update button. RULE 2: cannot redirect to a page that does not exist. Family update button will keep existing modal behavior (handleFamilyUpdate) until this page is created. Samira: please confirm whether /patients/[id]/family-update/page.tsx should be created in this sprint or a later sprint.
+[2026-06-19] DISCOVERED ISSUE: appointments table uses column name 'datetime' not 'scheduled_at' as referenced in home-screen-redesign task spec. Using 'datetime' in all queries. (feat/home-screen-redesign)
+[2026-06-19] DISCOVERED ISSUE: Severity hex colors in home screen redesign (#E24B4A, #BA7517, #0F6E56, #FCEBEB, #FAEEDA, #E1F5EE, #A32D2D, #633806, #085041) are not in the CSS variable system. Used per explicit task spec. Needs design tokens sprint to resolve. (feat/home-screen-redesign)
