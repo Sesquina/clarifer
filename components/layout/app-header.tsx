@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface AppHeaderProps {
@@ -12,10 +11,9 @@ interface AppHeaderProps {
 
 export function AppHeader({ userName, userId }: AppHeaderProps) {
   const router = useRouter();
-  const supabase = createClient();
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => undefined);
     router.push("/login");
   }
 

@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserFromRequest } from '@/lib/auth/get-user';
-import { createAdminClient } from "@/lib/supabase/admin";
+import pool from "@/lib/db";
 import { checkOrigin } from "@/lib/cors";
 
 export const runtime = "nodejs";
@@ -32,16 +32,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
+  // getUserFromRequest already queries the users table and returns organizationId + role.
+  // If organizationId is null, the user authenticated with Keycloak but has no DB row yet.
+  let organizationId = user.organizationId;
+  let userRole = user.role;
 
-  if (!userRecord?.organization_id) {
-    // Self-heal: the handle_new_user trigger may not have run (migration not applied
-    // or user predates the trigger). Provision org and users row with service-role
-    // client so this request can succeed without blocking the user.
+  if (!organizationId) {
+    // Self-heal: provision org and users row directly via pg pool.
+    // createAdminClient() (Supabase SDK) cannot reach the Hetzner PG tables.
     console.error(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -53,33 +51,28 @@ export async function POST(request: Request) {
       step: 'self_heal_triggered',
     }));
     try {
-      const admin = createAdminClient();
-      const { data: newOrg, error: orgError } = await admin
-        .from("organizations")
-        .insert({ name: "Personal" })
-        .select("id")
-        .single();
-      if (orgError || !newOrg) throw orgError ?? new Error("org insert failed");
-      const { error: userError } = await admin
-        .from("users")
-        .upsert(
-          { id: user.id, email: user.email ?? "", organization_id: newOrg.id, role: "caregiver" },
-          { onConflict: "id" }
-        );
-      if (userError) throw userError;
-      const { data: healed } = await supabase
-        .from("users")
-        .select("role, organization_id")
-        .eq("id", user.id)
-        .single();
-      userRecord = healed;
-    } catch (err: any) {
+      const newOrgId = crypto.randomUUID();
+      await pool.query(
+        'INSERT INTO organizations (id, name, created_at) VALUES ($1, $2, now()) ON CONFLICT DO NOTHING',
+        [newOrgId, 'Personal']
+      );
+      await pool.query(
+        `INSERT INTO users (id, email, role, organization_id, created_at)
+         VALUES ($1, $2, $3, $4, now())
+         ON CONFLICT (id) DO UPDATE SET organization_id = EXCLUDED.organization_id`,
+        [user.id, user.email ?? '', 'caregiver', newOrgId]
+      );
+      organizationId = newOrgId;
+      userRole = 'caregiver';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      const stack = err instanceof Error ? err.stack?.split('\n').slice(0, 3).join(' | ') : null
       console.error(JSON.stringify({
         route: ROUTE,
         method: request.method,
-        error: err?.message ?? String(err),
-        code: err?.code ?? null,
-        stack: err?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+        error: msg,
+        code: null,
+        stack,
         userId: user.id,
         timestamp: new Date().toISOString(),
         step: 'self_heal_failed',
@@ -87,7 +80,7 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!userRecord?.organization_id) {
+  if (!organizationId) {
     console.warn(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -97,7 +90,7 @@ export async function POST(request: Request) {
     }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(userRole ?? "")) {
     console.warn(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -107,8 +100,6 @@ export async function POST(request: Request) {
     }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  const organizationId = userRecord.organization_id;
 
   let body: {
     // Standard fields
@@ -132,13 +123,15 @@ export async function POST(request: Request) {
   };
   try {
     body = await request.json();
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    const stack = error instanceof Error ? error.stack?.split('\n').slice(0, 3).join(' | ') : null
     console.error(JSON.stringify({
       route: ROUTE,
       method: request.method,
-      error: error?.message ?? String(error),
-      code: error?.code ?? null,
-      stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
+      error: msg,
+      code: null,
+      stack,
       userId: user.id,
       timestamp: new Date().toISOString(),
       step: 'parse_request_body',
@@ -256,7 +249,7 @@ export async function POST(request: Request) {
       route: ROUTE,
       method: request.method,
       error: insertError?.message ?? 'insert returned no data',
-      code: (insertError as any)?.code ?? null,
+      code: (insertError as { code?: string })?.code ?? null,
       stack: null,
       userId: user.id,
       timestamp: new Date().toISOString(),
@@ -280,13 +273,10 @@ export async function POST(request: Request) {
     status: "success",
   });
 
-  // Ensure users row has organization_id + role set server-side.
-  // This is the authoritative write: if the handle_new_user trigger hasn't run
-  // or the client-side fallback in onboarding failed silently, this guarantees
-  // routePostAuth() won't loop the user back to /onboarding on their next sign-in.
+  // Ensure users row has organization_id + role set server-side (idempotent safety net).
   await supabase
     .from("users")
-    .update({ organization_id: organizationId, role: userRecord.role ?? "caregiver" })
+    .update({ organization_id: organizationId, role: userRole ?? "caregiver" })
     .eq("id", user.id)
     .then(() => undefined, () => undefined);
 

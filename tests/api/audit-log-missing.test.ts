@@ -243,9 +243,17 @@ describe("DELETE /api/delete-account -- audit_log written before data deleted (S
     return {
       auth: {
         getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: TEST_CAREGIVER.id } },
+          data: { user: { id: TEST_CAREGIVER.id, email: TEST_CAREGIVER.email } },
         }),
       },
+      // getUserFromRequest Path 3 queries the users table via the shim
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { role: TEST_CAREGIVER.role, organization_id: TEST_CAREGIVER.organization_id },
+        }),
+      }),
     };
   }
 
