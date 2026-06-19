@@ -118,6 +118,22 @@ export function relativeTime(iso: string | null): string {
   return `${diffDays} days ago`;
 }
 
+export function formatLogDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+export function getSeverityStyle(severity: number): { border: string; bg: string; text: string } {
+  if (severity >= 7) return { border: "#E24B4A", bg: "#FCEBEB", text: "#A32D2D" };
+  if (severity >= 4) return { border: "#BA7517", bg: "#FAEEDA", text: "#633806" };
+  return { border: "#0F6E56", bg: "#E1F5EE", text: "#085041" };
+}
+
 // ─── Quick action grid config ─────────────────────────────────────────────────
 const QUICK_ACTIONS = [
   { label: "Log Symptoms", href: "/log",              bg: "var(--pale-sage)",  color: "var(--primary)", icon: Activity  },
@@ -429,6 +445,85 @@ export function HomeClient({
             >
               Send family update &#x2192;
             </button>
+
+            {/* ── RECENT SYMPTOMS SECTION ───────────────────────────────────── */}
+            <section aria-label="Recent symptoms">
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: "var(--muted)",
+                  letterSpacing: "0.8px",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                Recent symptoms
+              </p>
+
+              {logs.length === 0 ? (
+                <Link href="/log" style={{ textDecoration: "none", display: "block", minHeight: 48 }}>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                      fontSize: 13,
+                      color: "var(--muted)",
+                      padding: "16px 0",
+                    }}
+                  >
+                    {firstName} is lucky to have someone paying this much attention.
+                  </p>
+                </Link>
+              ) : (
+                logs.map((log) => {
+                  const sev = log.overall_severity ?? 0;
+                  const style = getSeverityStyle(sev);
+                  return (
+                    <div
+                      key={log.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        backgroundColor: "var(--card)",
+                        borderRadius: 10,
+                        border: "0.5px solid var(--border)",
+                        borderLeft: `3px solid ${style.border}`,
+                        padding: "10px 12px 10px 14px",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                          fontSize: 13,
+                          color: "var(--muted)",
+                        }}
+                      >
+                        {formatLogDate(log.created_at)}
+                      </span>
+                      <span
+                        style={{
+                          borderRadius: 20,
+                          padding: "2px 10px",
+                          backgroundColor: style.bg,
+                          color: style.text,
+                          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                          fontSize: 11,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {sev}/10
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </section>
+
+            {/* Bottom spacer inside left column for mobile (right col is desktop-only) */}
+            <div className="md:hidden" style={{ height: 96 }} />
 
           </div>
 
