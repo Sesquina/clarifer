@@ -174,7 +174,7 @@ PostgreSQL 16 installed and active. PgBouncer 1.22.0 installed.
 ```sql
 -- run as postgres superuser
 CREATE DATABASE clarifer;
-CREATE USER clarifer_app WITH ENCRYPTED PASSWORD 'ClarifDB2026!Prod';
+CREATE USER clarifer_app WITH ENCRYPTED PASSWORD 'REDACTED';
 GRANT ALL PRIVILEGES ON DATABASE clarifer TO clarifer_app;
 ALTER DATABASE clarifer OWNER TO clarifer_app;
 GRANT USAGE ON SCHEMA public TO clarifer_app;
@@ -339,7 +339,7 @@ services:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://127.0.0.1:5432/clarifer
       KC_DB_USERNAME: clarifer_app
-      KC_DB_PASSWORD: ClarifDB2026!Prod
+      KC_DB_PASSWORD: REDACTED
       KC_HOSTNAME: auth.clarifer.com
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
@@ -546,7 +546,7 @@ calls through a Supabase service-role client.
 KEYCLOAK_URL=https://auth.clarifer.com
 KEYCLOAK_REALM=clarifer
 KEYCLOAK_CLIENT_ID=clarifer-app
-DATABASE_URL=postgresql://clarifer_app:ClarifDB2026!Prod@127.0.0.1:6432/clarifer
+DATABASE_URL=postgresql://clarifer_app:REDACTED@127.0.0.1:6432/clarifer
 ```
 
 Add these to Vercel Production scope (except DATABASE_URL -- add only after I5).
@@ -744,104 +744,4 @@ is pointing to a different/older deployment.
 - C7: Care team directory screen
 - C9: Appointments screen
 - I1–I6: Provider portal
-
----
-
-## Session I6 (Completed): Full Stack Verification
-
-**Date:** 2026-06-18
-**Host:** clarifer-prod-1 (87.99.152.26) + Vercel (clarifer.com)
-**Engineer:** Claude (Anthropic), authorized by Samira Esquina
-
----
-
-### Changes Made to Complete I6
-
-#### 1. API Route Auth Migration (branch: fix/api-routes-keycloak-auth, merged to main)
-
-All 51 API routes migrated from `supabase.auth.getUser()` to `getUserFromRequest(request)`
-from `lib/auth/get-user.ts`. The cookie path delegates through `createClient().auth.getUser()`
-so existing test mocks (`vi.mock("@/lib/supabase/server")`) continue to work without changes.
-Result: 0 TypeScript errors, 353/353 tests pass.
-
-#### 2. PgBouncer External Connectivity
-
-PgBouncer was previously listening only on 127.0.0.1:6432. Changed to accept external
-connections so Vercel serverless functions can reach the Hetzner database directly.
-
-```bash
-# Updated /etc/pgbouncer/pgbouncer.ini
-sed -i 's/listen_addr = 127.0.0.1/listen_addr = 0.0.0.0/' /etc/pgbouncer/pgbouncer.ini
-systemctl restart pgbouncer
-# UFW rule
-ufw allow 6432/tcp comment 'PgBouncer for Vercel'
-```
-
-Verified: `ss -tlnp | grep 6432` shows `0.0.0.0:6432`. TCP connection from external host succeeds.
-
-#### 3. BYPASSRLS Grant (run by Samira)
-
-RLS policies on all tables use `auth.uid()` (a Supabase-specific function). On bare
-PostgreSQL this returns NULL, causing all rows to be filtered out for the `clarifer_app`
-role. Application code already applies explicit `organization_id` filters on every query.
-
-```sql
-ALTER ROLE clarifer_app BYPASSRLS;
-```
-
-#### 4. DATABASE_URL Added to Vercel (added by Samira)
-
-```
-DATABASE_URL = postgresql://clarifer_app:ClarifDB2026!Prod@87.99.152.26:6432/clarifer
-Environment: Production only
-```
-
-#### 5. Demo Seed Data (Hetzner PostgreSQL)
-
-```sql
-INSERT INTO organizations (id, name, created_at)
-VALUES ('fa731120-304a-48ba-889a-3be6431454f3', 'Clarifer Demo', now())
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO users (id, email, role, organization_id, created_at)
-VALUES ('b7fd1cf2-04ef-4ab1-a49e-f460a3796f70', 'demo@clarifer.com',
-        'caregiver', 'fa731120-304a-48ba-889a-3be6431454f3', now())
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO patients (id, name, organization_id, created_by, status, created_at)
-VALUES ('5fc76836-e2f7-47b6-a394-ddccef619c95', 'Carlos',
-        'fa731120-304a-48ba-889a-3be6431454f3',
-        'b7fd1cf2-04ef-4ab1-a49e-f460a3796f70', 'active', now())
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO medications (name, patient_id, organization_id, is_active, created_at)
-VALUES ('Demo Medication', '5fc76836-e2f7-47b6-a394-ddccef619c95',
-        'fa731120-304a-48ba-889a-3be6431454f3', true, now());
-```
-
----
-
-### Verification Gates: All Passed
-
-| Gate | Check | Result |
-|------|-------|--------|
-| 4 | `POST /api/auth/demo-login` returns `{"ok":true}` + clarifer_token cookie (len 1431) | PASS |
-| 4 | `GET /api/patients/5fc76836-e2f7-47b6-a394-ddccef619c95` with cookie returns HTTP 200 + `"name":"Carlos"` | PASS |
-| 5 | `curl https://minio.clarifer.com/minio/health/live` returns HTTP 200 | PASS |
-| 6 | `SELECT count(*) FROM users` on Hetzner | PASS (1) |
-| 6 | `SELECT count(*) FROM patients` on Hetzner | PASS (1) |
-| 6 | `SELECT count(*) FROM medications` on Hetzner | PASS (1) |
-
----
-
-### Current Server State (post-I6)
-
-- PgBouncer: listening on 0.0.0.0:6432, SCRAM-SHA-256 auth, transaction pool mode
-- UFW: ports 22, 80, 443, 6432 open
-- clarifer_app role: BYPASSRLS granted (application-level org scoping enforced in code)
-- Vercel: DATABASE_URL set (Production scope), points to Hetzner PgBouncer
-- Hetzner PostgreSQL: demo org, user, patient, and medication seeded
-- clarifer.com: Vercel deployment, Keycloak auth working end-to-end
-- auth.clarifer.com: Keycloak 26, realm clarifer, demo@clarifer.com active
-- minio.clarifer.com: MinIO RELEASE.2025-09-07, bucket clarifer-documents, HTTP 200
 
