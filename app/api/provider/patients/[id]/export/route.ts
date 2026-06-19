@@ -110,7 +110,7 @@ export async function POST(
     .toISOString()
     .slice(0, 10)}.pdf`;
 
-  return new Response(new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" }), {
+  return new Response(new Uint8Array(pdfBytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

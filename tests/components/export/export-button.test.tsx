@@ -11,6 +11,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { ExportPDFButton } from "@/components/export/ExportPDFButton";
 
+const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+
 beforeEach(() => {
   vi.restoreAllMocks();
   // jsdom does not provide URL.createObjectURL by default.
@@ -45,7 +47,7 @@ describe("ExportPDFButton (web)", () => {
     });
     // Resolve the pending fetch to clean up
     resolveFetch(
-      new Response(new Blob(["pdf"], { type: "application/pdf" }), {
+      new Response(PDF_BYTES, {
         status: 200,
         headers: { "Content-Type": "application/pdf" },
       })
@@ -68,7 +70,7 @@ describe("ExportPDFButton (web)", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(new Blob(["pdf"], { type: "application/pdf" }), {
+        new Response(PDF_BYTES, {
           status: 200,
           headers: {
             "Content-Type": "application/pdf",
