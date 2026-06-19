@@ -32,7 +32,7 @@ export default async function HomePage() {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const tomorrowEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString();
 
-  const [logsResult, apptsResult, todayLogResult, docsResult] = await Promise.all([
+  const [logsResult, apptsResult, todayLogResult, docsResult, nextApptResult] = await Promise.all([
     supabase
       .from("symptom_logs")
       .select("*")
@@ -58,6 +58,13 @@ export default async function HomePage() {
       .select("id")
       .eq("uploaded_by", user.id)
       .limit(1),
+    supabase
+      .from("appointments")
+      .select("id, title, datetime, provider_name")
+      .eq("patient_id", patient.id)
+      .gte("datetime", now.toISOString())
+      .order("datetime", { ascending: true })
+      .limit(1),
   ]);
 
   // Determine status line
@@ -65,6 +72,31 @@ export default async function HomePage() {
   const logs = logsResult.data || [];
   const loggedToday = (todayLogResult.data || []).length > 0;
   const documentsCount = (docsResult.data || []).length;
+
+  // Query B: alert if most recent log has overall_severity >= 7
+  type AlertLog = { overall_severity: number; responses: Record<string, unknown> | null; created_at: string | null };
+  const firstLog = (logs[0] ?? null) as (typeof logs[0] & { responses?: Record<string, unknown> | null }) | null;
+  const mostRecentAlert: AlertLog | null =
+    firstLog !== null && firstLog.overall_severity !== null && firstLog.overall_severity >= 7
+      ? {
+          overall_severity: firstLog.overall_severity,
+          responses: (firstLog.responses as Record<string, unknown> | null) ?? null,
+          created_at: firstLog.created_at,
+        }
+      : null;
+
+  // Query D: last updated = most recent log's created_at
+  const lastUpdated: string | null = logs.length > 0 ? (logs[0].created_at as string | null) : null;
+
+  // Query C: next appointment (any future, not limited to 2 days)
+  const nextApptRaw = (nextApptResult.data ?? [])[0] as {
+    id: string;
+    title: string | null;
+    datetime: string | null;
+    provider_name: string | null;
+  } | undefined;
+  const nextAppointment: { id: string; title: string | null; datetime: string | null; provider_name: string | null } | null =
+    nextApptRaw ?? null;
 
   const firstName = patient.name.split(" ")[0];
 
@@ -104,6 +136,9 @@ export default async function HomePage() {
       appointments={appointments}
       loggedToday={loggedToday}
       documentsCount={documentsCount}
+      nextAppointment={nextAppointment}
+      mostRecentAlert={mostRecentAlert}
+      lastUpdated={lastUpdated}
     />
   );
 }

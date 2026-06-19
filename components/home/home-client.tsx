@@ -74,6 +74,18 @@ interface HomeClientProps {
   }>;
   loggedToday: boolean;
   documentsCount: number;
+  nextAppointment: {
+    id: string;
+    title: string | null;
+    datetime: string | null;
+    provider_name: string | null;
+  } | null;
+  mostRecentAlert: {
+    overall_severity: number;
+    responses: Record<string, unknown> | null;
+    created_at: string | null;
+  } | null;
+  lastUpdated: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -104,6 +116,9 @@ export function HomeClient({
   appointments,
   loggedToday,
   documentsCount,
+  nextAppointment,
+  mostRecentAlert,
+  lastUpdated,
 }: HomeClientProps) {
   // ── State (unchanged from previous implementation) ─────────────────────────
   const [showApptModal, setShowApptModal] = useState(false);
