@@ -27,15 +27,15 @@ const FUNCTIONAL_OPTIONS = [
   "Slowing down a bit",
   "Limited but managing",
   "Needs help to stand or walk",
-  "Stayed in bed",
+  "Spent most of the day in bed",
 ];
 
 const APPETITE_OPTIONS = [
   "Eating normally",
   "Eating less than usual",
   "Small bites only",
-  "Barely eating",
-  "Not eating",
+  "Very little",
+  "Couldn't eat",
 ];
 
 const INFECTION_SIGNS = [
@@ -46,8 +46,8 @@ const INFECTION_SIGNS = [
   "Painful urination",
 ];
 
-const LOW_APPETITE = new Set(["Barely eating", "Not eating"]);
-const HIGH_RISK_FUNCTIONAL = new Set(["Needs help to stand or walk", "Stayed in bed"]);
+const LOW_APPETITE = new Set(["Very little", "Couldn't eat"]);
+const HIGH_RISK_FUNCTIONAL = new Set(["Needs help to stand or walk", "Spent most of the day in bed"]);
 
 function SectionCard({ title, required, children }: { title: string; required?: boolean; children: React.ReactNode }) {
   return (
@@ -71,7 +71,6 @@ function SectionCard({ title, required, children }: { title: string; required?: 
         }}
       >
         {title}
-        {required && <span style={{ color: "var(--accent)", marginLeft: 4 }}>*</span>}
       </p>
       {children}
     </div>
@@ -228,10 +227,20 @@ export default function LogPage() {
             ? `How is ${patientName.split(" ")[0]} doing today?`
             : "How are they doing today?"}
         </h1>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: 14,
+            color: "var(--muted)",
+            marginBottom: 20,
+          }}
+        >
+          Share what you noticed. Takes about 60 seconds.
+        </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {/* Section 1: Color scale */}
-          <SectionCard title="How would you describe the overall level?" required>
+          <SectionCard title="Overall, how was today?">
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {COLOR_CHIPS.map((chip) => (
                 <button
@@ -261,7 +270,7 @@ export default function LogPage() {
           </SectionCard>
 
           {/* Section 2: Sensation */}
-          <SectionCard title="What type of sensation? (optional)">
+          <SectionCard title="Anything specific you noticed? (optional)">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               {SENSATION_CHIPS.map((s) => {
                 const active = sensations.includes(s);
@@ -292,7 +301,7 @@ export default function LogPage() {
           </SectionCard>
 
           {/* Section 3: Timing */}
-          <SectionCard title="When does it happen? (optional)">
+          <SectionCard title="When did it tend to show up? (optional)">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {TIMING_CHIPS.map((t) => {
                 const active = timing.includes(t);
@@ -321,7 +330,7 @@ export default function LogPage() {
           </SectionCard>
 
           {/* Section 4: Functional status */}
-          <SectionCard title="How are they getting around today?" required>
+          <SectionCard title="How were they moving around?">
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {FUNCTIONAL_OPTIONS.map((opt) => {
                 const active = functionalStatus === opt;
@@ -361,7 +370,7 @@ export default function LogPage() {
           </SectionCard>
 
           {/* Section 5: Appetite */}
-          <SectionCard title="How is their appetite?" required>
+          <SectionCard title="How was eating today?">
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {APPETITE_OPTIONS.map((opt) => {
                 const active = appetite === opt;
@@ -395,13 +404,13 @@ export default function LogPage() {
               <Alert
                 bg="var(--pale-terra)"
                 textColor="var(--accent)"
-                message="This is the second log in a row with very low appetite. Poor nutrition can affect treatment tolerance. Consider mentioning this at the next visit."
+                message="This is the second day in a row with very little appetite. Worth mentioning to the care team."
               />
             )}
           </SectionCard>
 
           {/* Section 6: Infection signs */}
-          <SectionCard title="Any of these signs? (optional)">
+          <SectionCard title="Did you notice any of these? (optional)">
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {INFECTION_SIGNS.map((sign) => (
                 <label
@@ -437,17 +446,17 @@ export default function LogPage() {
               <Alert
                 bg="#FDECEA"
                 textColor="#8B1A1A"
-                message="Call 911 or go to the emergency room immediately if two or more of these signs are present."
+                message="Call 911 or go to the emergency room immediately."
               />
             )}
           </SectionCard>
 
           {/* Section 7: Notes */}
-          <SectionCard title="Anything else to note? (optional)">
+          <SectionCard title="Anything else worth sharing? (optional)">
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Triggers, medications taken, context..."
+              placeholder="Anything that seemed connected -- what they ate, how they slept, how they seemed..."
               style={{
                 width: "100%",
                 minHeight: 80,
@@ -491,10 +500,22 @@ export default function LogPage() {
           >
             {saving ? (
               <Loader2 style={{ width: 20, height: 20 }} className="animate-spin" />
+            ) : canSave ? (
+              "Save today's log"
             ) : (
-              "Save log"
+              "Fill in sections 1, 4, and 5 to save"
             )}
           </button>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontSize: 13,
+              color: "var(--muted)",
+              textAlign: "center",
+            }}
+          >
+            Sections 1, 4, and 5 are needed to save.
+          </p>
         </div>
       </div>
     </PageContainer>
