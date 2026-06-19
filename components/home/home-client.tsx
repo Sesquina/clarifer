@@ -522,144 +522,185 @@ export function HomeClient({
               )}
             </section>
 
-            {/* Bottom spacer inside left column for mobile (right col is desktop-only) */}
-            <div className="md:hidden" style={{ height: 96 }} />
 
           </div>
 
-          {/* ════ RIGHT COLUMN — desktop only, 200px ════════════════════════════ */}
+          {/* ════ RIGHT COLUMN — stacks below on mobile, 400px on desktop ════════ */}
           <div
-            className="hidden md:flex md:flex-col"
-            style={{ width: 200, gap: 16, flexShrink: 0 }}
+            className="flex flex-col mt-5 md:mt-0"
+            style={{ gap: 16 }}
           >
-            {/* Upcoming appointment card */}
-            <div
-              style={{
-                backgroundColor: "var(--card)",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                padding: 16,
-              }}
-            >
+            {/* ── UPCOMING APPOINTMENT ──────────────────────────────────────── */}
+            <div>
               <p
                 style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.09em",
-                  marginBottom: 10,
                   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: "var(--muted)",
+                  letterSpacing: "0.8px",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
                 }}
               >
-                Next appointment
+                Upcoming
               </p>
-              {appointments.length > 0 ? (
-                <div>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "var(--text)",
-                      fontFamily:
-                        "var(--font-dm-sans), 'DM Sans', sans-serif",
-                      marginBottom: 4,
-                    }}
-                  >
-                    {appointments[0].title ?? "Appointment"}
-                  </p>
-                  {appointments[0].datetime && (
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: 11,
-                        color: "var(--muted)",
-                      }}
-                    >
-                      <Calendar size={11} aria-hidden="true" />
-                      {fmtAppt(appointments[0].datetime)}
-                    </span>
-                  )}
-                  {appointments[0].location && (
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: 11,
-                        color: "var(--muted)",
-                        marginTop: 2,
-                      }}
-                    >
-                      <MapPin size={11} aria-hidden="true" />
-                      {appointments[0].location}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowApptModal(true)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    color: "var(--primary)",
-                    fontWeight: 500,
-                    padding: 0,
-                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                  }}
-                >
-                  + Add appointment
-                </button>
-              )}
-            </div>
-
-            {/* CCF card (desktop right column, cholangiocarcinoma only) */}
-            {isCholangiocarcinoma && <CcfCard compact />}
-
-            {/* Care team quick link */}
-            <Link
-              href={`/patients/${patient.id}/care-team`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                backgroundColor: "var(--card)",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                padding: "12px 14px",
-                textDecoration: "none",
-              }}
-            >
               <div
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  backgroundColor: "var(--pale-sage)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  backgroundColor: "var(--card)",
+                  borderRadius: 14,
+                  border: "0.5px solid var(--border)",
+                  padding: 16,
                 }}
               >
-                <Users size={14} color="var(--primary)" aria-hidden="true" />
+                {nextAppointment ? (
+                  <div>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--text)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {nextAppointment.title ?? nextAppointment.provider_name ?? "Appointment"}
+                    </p>
+                    {nextAppointment.datetime && (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                          fontSize: 13,
+                          color: "var(--muted)",
+                        }}
+                      >
+                        <Calendar size={13} aria-hidden="true" />
+                        {fmtAppt(nextAppointment.datetime)}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      minHeight: 48,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 14,
+                        color: "var(--muted)",
+                      }}
+                    >
+                      <Calendar size={16} color="var(--muted)" aria-hidden="true" />
+                      Nothing coming up
+                    </span>
+                    <Link
+                      href={`/patients/${patient.id}/appointments`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: 32,
+                        padding: "0 12px",
+                        backgroundColor: "var(--pale-sage)",
+                        color: "var(--primary)",
+                        borderRadius: 8,
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        textDecoration: "none",
+                        minWidth: 48,
+                      }}
+                    >
+                      + Add
+                    </Link>
+                  </div>
+                )}
               </div>
-              <span
+            </div>
+
+            {/* ── CCF CARD (cholangiocarcinoma only) ────────────────────────── */}
+            {isCholangiocarcinoma && (
+              <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--text)",
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  backgroundColor: "var(--card)",
+                  borderRadius: 14,
+                  border: "0.5px solid var(--border)",
+                  padding: 16,
                 }}
               >
-                Care team
-              </span>
-            </Link>
+                <span
+                  style={{
+                    display: "inline-block",
+                    backgroundColor: "var(--pale-sage)",
+                    color: "var(--primary)",
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 9,
+                    fontWeight: 500,
+                    borderRadius: 4,
+                    padding: "3px 8px",
+                    marginBottom: 10,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  From CCF
+                </span>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "var(--text)",
+                    marginBottom: 4,
+                  }}
+                >
+                  Don&apos;t know where to start?
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 13,
+                    color: "var(--muted)",
+                    marginBottom: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  CCF offers a free care kit, a 1:1 advocate meeting, and a resource roadmap.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.open("https://www.cholangiocarcinoma.org", "_blank", "noopener,noreferrer")}
+                  style={{
+                    height: 36,
+                    padding: "0 16px",
+                    backgroundColor: "var(--primary)",
+                    color: "var(--card)",
+                    border: "none",
+                    borderRadius: 8,
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    minWidth: 48,
+                  }}
+                >
+                  Connect with CCF
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
