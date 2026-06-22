@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Search, Pill, FileDown, Users, ExternalLink, Trash2, Bookmark } from "lucide-react";
 import Link from "next/link";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 interface SavedTrial {
   id: string;
@@ -21,12 +22,19 @@ const linkTools = [
 
 export default function ToolsPage() {
   const [savedTrials, setSavedTrials] = useState<SavedTrial[]>([]);
-  const [patientId, setPatientId] = useState<string | null>(null);
+  const { patientId, loading: patientLoading, error: patientError } = usePatient();
   const [exporting, setExporting] = useState(false);
 
-  // DECISION REQUIRED: No route exists to get the current user's patientId or
-  // saved trials without a browser Supabase client. savedTrials is empty;
-  // Export button is disabled until patientId is available.
+  useEffect(() => {
+    if (!patientId) return;
+    void fetch('/api/trials/saved?patient_id=' + patientId)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        setSavedTrials((data.trials ?? data) as SavedTrial[]);
+      })
+      .catch(() => {});
+  }, [patientId]);
 
   async function handleExport() {
     if (!patientId || exporting) return;
@@ -62,6 +70,13 @@ export default function ToolsPage() {
     if (res.ok) {
       setSavedTrials((prev) => prev.filter((t) => t.id !== id));
     }
+  }
+
+  if (patientLoading) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Loading...</div></PageContainer>;
+  }
+  if (patientError) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Could not load patient. Please refresh.</div></PageContainer>;
   }
 
   return (
