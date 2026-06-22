@@ -1,68 +1,48 @@
-import { NextResponse } from 'next/server'
+/**
+ * app/api/auth/login/route.ts
+ * Real user login via Keycloak ROPC grant.
+ * Sets clarifer_token cookie (HttpOnly, Secure, SameSite=Lax).
+ * HIPAA: no PHI. Logs auth events only.
+ */
+export const runtime = "nodejs";
+import { NextRequest, NextResponse } from "next/server";
+import { keycloakLogin } from "@/lib/auth/keycloak-client";
 
-export const runtime = 'nodejs'
-
-const ROUTE = 'api/auth/login'
-const KC_BASE = process.env.KEYCLOAK_URL ?? 'https://auth.clarifer.com'
-const KC_REALM = process.env.KEYCLOAK_REALM ?? 'clarifer'
-const KC_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID ?? 'clarifer-app'
-
-export async function POST(request: Request) {
-  let email: string | undefined
-  let password: string | undefined
-
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => null) as Record<string, unknown> | null
-    email = typeof body?.email === 'string' ? body.email.trim() : undefined
-    password = typeof body?.password === 'string' ? body.password : undefined
+    const body = await request.json();
+    const email = (body.email as string | undefined)?.trim().toLowerCase();
+    const password = body.password as string | undefined;
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required." },
+        { status: 400 }
+      );
+    }
+
+    const tokens = await keycloakLogin(email, password);
+    if (!tokens) {
+      return NextResponse.json(
+        { error: "Incorrect email or password." },
+        { status: 401 }
+      );
+    }
+
+    const response = NextResponse.json({ ok: true }, { status: 200 });
+    response.cookies.set("clarifer_token", tokens.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: tokens.expires_in,
+      path: "/",
+    });
+    console.log("[auth/login] success for:", email.slice(0, 3) + "***");
+    return response;
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
+    return NextResponse.json(
+      { error: "Login failed. Try again." },
+      { status: 500 }
+    );
   }
-
-  if (!email || !password) {
-    return NextResponse.json({ error: 'email and password are required.' }, { status: 400 })
-  }
-
-  let tokenRes: Response
-  try {
-    tokenRes = await fetch(
-      `${KC_BASE}/realms/${KC_REALM}/protocol/openid-connect/token`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'password',
-          client_id: KC_CLIENT_ID,
-          username: email,
-          password,
-          scope: 'openid',
-        }).toString(),
-      }
-    )
-  } catch (err: unknown) {
-    console.error(JSON.stringify({ route: ROUTE, event: 'keycloak_unreachable', error: String(err) }))
-    return NextResponse.json({ error: 'Service temporarily unavailable.' }, { status: 503 })
-  }
-
-  if (tokenRes.status === 401) {
-    return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 })
-  }
-
-  if (!tokenRes.ok) {
-    console.error(JSON.stringify({ route: ROUTE, event: 'keycloak_token_error', status: tokenRes.status }))
-    return NextResponse.json({ error: 'Sign in failed. Please try again.' }, { status: 502 })
-  }
-
-  const data = await tokenRes.json() as { access_token: string; expires_in?: number }
-  const accessToken = data.access_token
-
-  const response = NextResponse.json({ message: 'Signed in successfully.' })
-  response.cookies.set('clarifer_token', accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 1800,
-  })
-  return response
 }

@@ -1,4 +1,19 @@
 ---
+[2026-06-22] DECISION REQUIRED [feat/real-user-auth]: app/api/auth/signup/route.ts
+inserts `id: keycloakId` into users table (Keycloak sub UUID = users.id). The task
+spec used `keycloak_id: keycloakId` but no keycloak_id column exists in the schema.
+Current approach: users.id stores the Keycloak sub UUID, matching the existing pattern
+in the old signup route. If a separate keycloak_id column is needed (to decouple
+Supabase UUID from Keycloak UUID), a migration is required:
+  ALTER TABLE public.users ADD COLUMN keycloak_id TEXT UNIQUE;
+Question: should users.id remain = Keycloak sub UUID, or should we add keycloak_id as
+a separate column and let users.id be auto-generated?
+---
+[2026-06-22] DECISION REQUIRED [feat/real-user-auth]: KEYCLOAK_ADMIN_SECRET must be
+added to Vercel Production environment variables. The clarifer-admin client must be
+configured in Keycloak realm with Service Accounts Enabled and client_credentials grant.
+Without this, POST /api/auth/signup returns 503. Added to .env.example.
+---
 [2026-06-19] MIGRATION REQUIRED: supabase/migrations/20260619000001_demo_data_seed.sql
 Run in Supabase SQL Editor against production project lrhwgswbsctfqtvdjntr.
 Inserts demo data for Carlos Rivera (patient 5fc76836-e2f7-47b6-a394-ddccef619c95):
