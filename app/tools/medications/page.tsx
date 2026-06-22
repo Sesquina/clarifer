@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pill, Plus, ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 import type { Tables } from "@/lib/supabase/types";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 const MED_LIST = ["Morphine","Oxycodone","Hydrocodone","Fentanyl","Tramadol","Methadone","Buprenorphine","Ondansetron","Prochlorperazine","Metoclopramide","Dexamethasone","Prednisone","Methylprednisolone","Gemcitabine","Cisplatin","Carboplatin","Oxaliplatin","Fluorouracil","Capecitabine","Irinotecan","Pembrolizumab","Nivolumab","Atezolizumab","Bevacizumab","Cetuximab","Erlotinib","Imatinib","Ibrutinib","Palbociclib","Letrozole","Tamoxifen","Anastrozole","Leuprolide","Enzalutamide","Abiraterone","Lenalidomide","Bortezomib","Rituximab","Trastuzumab","Pertuzumab","Lorazepam","Alprazolam","Clonazepam","Zolpidem","Mirtazapine","Sertraline","Escitalopram","Duloxetine","Cymbalta","Gabapentin","Pregabalin","Amitriptyline","Baclofen","Cyclobenzaprine","Methocarbamol","Pantoprazole","Omeprazole","Lansoprazole","Famotidine","Lactulose","Senna","Polyethylene glycol","Docusate","Loperamide","Diphenhydramine","Hydroxyzine","Melatonin","Furosemide","Spironolactone","Lisinopril","Metoprolol","Atorvastatin","Enoxaparin","Warfarin","Apixaban","Rivaroxaban","Filgrastim","Epoetin alfa","Ferrous sulfate","Cyanocobalamin","Vitamin D","Calcium carbonate","Magnesium oxide","Zinc sulfate","Albumin","Darbepoetin","Zoledronic acid","Denosumab","Pamidronate"];
 
@@ -24,12 +25,8 @@ export default function MedicationsPage() {
   const [name, setName] = useState("");
   const [dose, setDose] = useState("");
   const [frequency, setFrequency] = useState("");
-  const [patientId, setPatientId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
-  // DECISION REQUIRED: No route exists to get the current user's patientId or
-  // list medications without a known patientId. medications list is empty;
-  // Add medication is disabled until patientId is available.
+  const { patientId } = usePatient();
 
   function handleNameChange(val: string) {
     setName(val);

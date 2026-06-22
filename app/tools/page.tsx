@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Search, Pill, FileDown, Users, ExternalLink, Trash2, Bookmark } from "lucide-react";
 import Link from "next/link";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 interface SavedTrial {
   id: string;
@@ -21,12 +22,8 @@ const linkTools = [
 
 export default function ToolsPage() {
   const [savedTrials, setSavedTrials] = useState<SavedTrial[]>([]);
-  const [patientId, setPatientId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-
-  // DECISION REQUIRED: No route exists to get the current user's patientId or
-  // saved trials without a browser Supabase client. savedTrials is empty;
-  // Export button is disabled until patientId is available.
+  const { patientId } = usePatient();
 
   async function handleExport() {
     if (!patientId || exporting) return;

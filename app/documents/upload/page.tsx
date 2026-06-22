@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { UploadCloud, ArrowLeft, FileText, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 type Status = "idle" | "reading" | "uploading" | "done" | "error";
 
@@ -12,12 +13,9 @@ export default function UploadPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const [patientId, setPatientId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-
-  // DECISION REQUIRED: No route exists to get the current user's patientId.
-  // patientId stays null; file selection does nothing until resolved.
+  const { patientId, loading: patientLoading } = usePatient();
 
   async function handleFile(file: File) {
     if (!patientId) return;
@@ -114,7 +112,7 @@ export default function UploadPage() {
 
         {/* Drop zone */}
         <div
-          onClick={() => status === "idle" && fileInputRef.current?.click()}
+          onClick={() => status === "idle" && !patientLoading && fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
           style={{
@@ -122,7 +120,7 @@ export default function UploadPage() {
             borderRadius: 16,
             padding: "48px 24px",
             textAlign: "center",
-            cursor: status === "idle" ? "pointer" : "default",
+            cursor: status === "idle" && !patientLoading ? "pointer" : "default",
             backgroundColor: status === "idle" ? "var(--card)" : "var(--background)",
             transition: "background-color 0.2s",
           }}
