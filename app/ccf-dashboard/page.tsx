@@ -58,7 +58,7 @@ async function fetchCCFData(): Promise<CCFDashboardData> {
     supabase
       .from("trial_saves")
       .select("id", { count: "exact", head: true })
-      .gte("created_at", monthStart),
+      .gte("saved_at", monthStart),
   ]);
 
   const activeCaregivers =
