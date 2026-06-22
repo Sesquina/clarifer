@@ -40,18 +40,10 @@ export async function GET(
 
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!ALL_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALL_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -59,7 +51,7 @@ export async function GET(
     .from("appointments")
     .select("*")
     .eq("id", id)
-    .eq("organization_id", userRecord.organization_id)
+    .eq("organization_id", user.organization_id)
     .single();
   if (!appt) {
     return NextResponse.json({ error: "We could not find that appointment." }, { status: 404 });
@@ -71,7 +63,7 @@ export async function GET(
     action: "SELECT",
     resource_type: "appointments",
     resource_id: id,
-    organization_id: userRecord.organization_id,
+    organization_id: user.organization_id,
     ...forensicColumns(request),
   });
 
@@ -87,18 +79,10 @@ export async function PATCH(
 
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!WRITE_ROLES.includes(userRecord.role ?? "")) {
+  if (!WRITE_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -131,7 +115,7 @@ export async function PATCH(
     .from("appointments")
     .select("id, patient_id")
     .eq("id", id)
-    .eq("organization_id", userRecord.organization_id)
+    .eq("organization_id", user.organization_id)
     .single();
   if (!existing) {
     return NextResponse.json({ error: "We could not find that appointment." }, { status: 404 });
@@ -142,7 +126,7 @@ export async function PATCH(
       .from("appointments")
       .update(update)
       .eq("id", id)
-      .eq("organization_id", userRecord.organization_id);
+      .eq("organization_id", user.organization_id);
     if (error) {
       return NextResponse.json(
         { error: "We could not update this appointment. Please try again." },
@@ -157,7 +141,7 @@ export async function PATCH(
     action: "UPDATE",
     resource_type: "appointments",
     resource_id: id,
-    organization_id: userRecord.organization_id,
+    organization_id: user.organization_id,
     ...forensicColumns(request),
   });
 
@@ -180,21 +164,13 @@ export async function DELETE(
 
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!DELETE_ROLES.includes(userRecord.role ?? "")) {
+  if (!DELETE_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   const { data: existing } = await supabase
     .from("appointments")
