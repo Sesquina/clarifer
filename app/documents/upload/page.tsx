@@ -1,3 +1,10 @@
+/**
+ * app/documents/upload/page.tsx
+ * Document upload page: drag-and-drop or file picker, uploads via /api/upload.
+ * Tables: documents (write via API)
+ * Auth: caregiver
+ * HIPAA: PHI write routed through /api/upload (POST). No PHI in client logs.
+ */
 "use client";
 
 import { useState, useRef } from "react";
@@ -5,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { UploadCloud, ArrowLeft, FileText, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 type Status = "idle" | "reading" | "uploading" | "done" | "error";
 
@@ -12,12 +20,16 @@ export default function UploadPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const [patientId, setPatientId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { patientId, loading: patientLoading, error: patientError } = usePatient();
 
-  // DECISION REQUIRED: No route exists to get the current user's patientId.
-  // patientId stays null; file selection does nothing until resolved.
+  if (patientLoading) {
+    return <div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Loading...</div>;
+  }
+  if (patientError) {
+    return <div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Could not load patient. Please refresh.</div>;
+  }
 
   async function handleFile(file: File) {
     if (!patientId) return;

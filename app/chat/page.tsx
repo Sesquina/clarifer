@@ -1,8 +1,16 @@
+/**
+ * app/chat/page.tsx
+ * AI chat page: streaming chat with Claude, document upload and analysis in-thread.
+ * Tables: chat_messages (write via /api/chat), documents (write via /api/upload)
+ * Auth: caregiver
+ * HIPAA: All PHI writes routed server-side. No PHI in client logs.
+ */
 "use client";
 
 import { useState, useCallback } from "react";
 import { ChatHistory } from "@/components/chat/chat-history";
 import { ChatInput, type FilePayload } from "@/components/chat/chat-input";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 interface Message {
   id: string;
@@ -15,11 +23,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [patientId, setPatientId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // DECISION REQUIRED: No GET /api/chat-messages or /api/patients/me route exists.
-  // patientId and chat history cannot be loaded; chat input stays disabled.
+  const { patientId, loading: patientLoading, error: patientError } = usePatient();
 
   const handleSend = useCallback(async (content: string) => {
     if (!patientId) return;
@@ -43,7 +47,7 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
-          patientId,
+          patient_id: patientId,
         }),
       });
 
@@ -90,7 +94,7 @@ export default function ChatPage() {
   }, [patientId, messages]);
 
   const handleFileUpload = useCallback(async (payload: FilePayload) => {
-    if (!patientId || !userId) return;
+    if (!patientId) return;
 
     const { fileName: origName, fileType: origType, fileSize, fileData, error: fileError } = payload;
 
@@ -199,7 +203,14 @@ export default function ChatPage() {
         prev.map((m) => m.id === docMsgId ? { ...m, content: `Upload failed: ${msg}` } : m)
       );
     }
-  }, [patientId, userId]);
+  }, [patientId]);
+
+  if (patientLoading) {
+    return <div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Loading...</div>;
+  }
+  if (patientError) {
+    return <div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Could not load patient. Please refresh.</div>;
+  }
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 7.5rem)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
