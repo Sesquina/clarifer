@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { DeleteDocumentButton } from "@/components/delete-document-button";
 import { AnalysisTrigger } from "@/components/documents/AnalysisTrigger";
+import { stripMarkdown } from "@/lib/family-update/strip-markdown";
 
 export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,7 +35,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
     return paragraphs;
   }
 
-  const summaryParagraphs = doc.summary ? formatSummary(doc.summary) : [];
+  const summaryParagraphs = doc.summary ? formatSummary(stripMarkdown(doc.summary)) : [];
 
   return (
     <PageContainer>

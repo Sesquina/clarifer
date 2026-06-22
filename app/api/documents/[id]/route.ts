@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserFromRequest } from '@/lib/auth/get-user';
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { checkOrigin } from "@/lib/cors";
-import { generateSignedUrl } from "@/lib/documents/storage";
+import { generateSignedUrl, deleteFromStorage } from "@/lib/documents/storage";
 
 export const runtime = "nodejs";
 
@@ -180,17 +179,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const serviceClient = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     if (doc.file_url) {
-      const url = doc.file_url as string;
-      const match = url.match(/\/documents\/(.+?)(?:\?|$)/);
-      if (match) {
-        const storagePath = decodeURIComponent(match[1]);
-        await serviceClient.storage.from("documents").remove([storagePath]);
+      try {
+        await deleteFromStorage(doc.file_url as string);
+      } catch {
+        // Non-fatal: storage deletion failure should not block metadata removal
       }
     }
 
