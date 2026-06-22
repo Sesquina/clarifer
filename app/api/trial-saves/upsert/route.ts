@@ -22,24 +22,15 @@ export async function POST(request: Request) {
 
   // 1. Auth check
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // 2. Role check + org_id
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   let body: {
     patient_id?: string;

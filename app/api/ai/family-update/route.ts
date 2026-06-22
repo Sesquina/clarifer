@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createClient();
-    const user = await getUserFromRequest(request);
+    const user = await getUserFromRequest();
 
     if (!user) {
       console.warn(JSON.stringify({
@@ -63,13 +63,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("role, organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+    if (!ALLOWED_ROLES.includes(user.role)) {
       console.warn(JSON.stringify({
         route: ROUTE,
         method: request.method,
@@ -83,7 +77,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const organizationId = userRecord.organization_id;
+    const organizationId = user.organization_id;
 
     let rateLimitPassed = true;
     try {
