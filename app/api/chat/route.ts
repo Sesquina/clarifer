@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "warm" });
     }
 
-    const { messages, patientId } = body;
+    // Accept both camelCase (patientId) and snake_case (patient_id) — the web
+    // chat page sends patient_id; keep backward compat for any callers using patientId.
+    const { messages, patientId: patientIdCamel, patient_id: patientIdSnake } = body;
+    const patientId = patientIdCamel ?? patientIdSnake;
 
     console.log("[chat] request received");
     const supabase = await createClient();

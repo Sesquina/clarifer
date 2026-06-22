@@ -1,4 +1,12 @@
 ---
+[2026-06-22] DISCOVERED ISSUE [fix/chat-auth]:
+  app/chat/page.tsx:51 — sends patient_id (snake_case) but app/api/chat/route.ts:30
+  destructures patientId (camelCase), so patientId is always undefined and every
+  chat request returns 400 "Missing required fields". Fixed in route.ts to accept both.
+  Root cause of supabase_legacy fallthrough is still unconfirmed: verifyDemoToken
+  now logs the error on failure so the next Vercel log will show whether
+  DEMO_SESSION_SECRET is missing or mismatched in the production environment.
+---
 [2026-06-22] MIGRATION REQUIRED [feat/emergency-card-public]:
   File: supabase/migrations/20260622000001_add_emergency_token.sql
   Run in Supabase SQL Editor (project lrhwgswbsctfqtvdjntr) before testing:

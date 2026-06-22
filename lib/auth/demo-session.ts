@@ -73,7 +73,8 @@ export function verifyDemoToken(
     if (parsed.exp < Math.floor(Date.now() / 1000)) return null;
 
     return { sub: parsed.sub, org: parsed.org };
-  } catch {
+  } catch (e) {
+    console.error("[auth] verifyDemoToken error:", e instanceof Error ? e.message : String(e));
     return null;
   }
 }
