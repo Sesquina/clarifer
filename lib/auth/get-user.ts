@@ -7,6 +7,7 @@
  */
 import { cookies } from "next/headers";
 import { verifyDemoToken, DEMO_COOKIE } from "./demo-session";
+import { verifyToken } from "./verify-token";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AuthUser {
@@ -14,7 +15,7 @@ export interface AuthUser {
   organization_id: string;
   role: string;
   is_demo: boolean;
-  auth_method: "demo" | "supabase_legacy";
+  auth_method: "demo" | "keycloak" | "supabase_legacy";
   email?: string | null;
 }
 
@@ -48,9 +49,42 @@ export async function getUserFromRequest(
     // cookie() access can fail outside request context; fall through
   }
 
-  // CASE 2: Supabase Auth legacy fallback
+  // CASE 2: Keycloak JWT cookie (clarifer_token)
+  // Handles users who authenticated via Keycloak (web and Flutter).
+  // Looks up users.id and organization_id by email so the supabase UUID is
+  // returned, not the Keycloak sub (they differ).
+  try {
+    const cookieStore = await cookies();
+    const kcToken = cookieStore.get("clarifer_token")?.value;
+    if (kcToken) {
+      const verified = await verifyToken(kcToken);
+      if (verified) {
+        const supabase = await createClient();
+        const { data: userRecord } = await supabase
+          .from("users")
+          .select("id, role, organization_id")
+          .eq("email", verified.email ?? "")
+          .single();
+        if (userRecord?.organization_id) {
+          console.log("[auth] keycloak:", userRecord.id.slice(0, 8));
+          return {
+            id: userRecord.id,
+            organization_id: userRecord.organization_id,
+            role: userRecord.role ?? verified.role ?? "caregiver",
+            is_demo: false,
+            email: verified.email,
+            auth_method: "keycloak",
+          };
+        }
+      }
+    }
+  } catch {
+    // fall through to supabase_legacy
+  }
+
+  // CASE 3: Supabase Auth legacy fallback
   // Handles users who authenticated before the Keycloak migration.
-  // Remove this block when Supabase project is cancelled.
+  // Remove when Supabase Auth is decommissioned.
   try {
     const supabase = await createClient();
     const {

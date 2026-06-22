@@ -135,12 +135,22 @@ export async function middleware(request: NextRequest) {
       (route !== "/" && pathname.startsWith(route + "/"))
   );
 
+  // Demo session -- clarifer_demo_session is an HMAC-signed cookie set by
+  // /api/auth/demo-login. Full HMAC verification happens in getUserFromRequest
+  // on every API call; here we only check existence so demo users aren't
+  // redirected to /login when their Keycloak JWT expires mid-session.
+  // We cannot import verifyDemoToken here (uses createHmac -- Node.js only).
+  const hasDemoSession = !!request.cookies
+    .get("clarifer_demo_session")
+    ?.value?.includes(".");
+
   // Verify Keycloak JWT from cookie or Authorization header.
   const token =
     request.cookies.get(SESSION_COOKIE)?.value ??
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
 
-  const authenticated = token ? await isValidToken(token) : false;
+  const authenticated =
+    hasDemoSession || (token ? await isValidToken(token) : false);
 
   if (!authenticated && !isPublicRoute) {
     const url = request.nextUrl.clone();
