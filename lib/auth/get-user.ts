@@ -33,6 +33,7 @@ export async function getUserFromRequest(
     const demoToken = cookieStore.get(DEMO_COOKIE)?.value;
     if (demoToken) {
       const payload = verifyDemoToken(demoToken);
+      console.log("[auth] demo cookie present:", !!demoToken, "verified:", !!payload);
       if (payload) {
         console.log("[auth] demo", payload.sub.slice(0, 8));
         return {
