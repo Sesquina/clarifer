@@ -18,6 +18,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 // ─── Five-level severity scale ────────────────────────────────────────────────
 // Hex values per Figma node symptom-log/quick-capture. No CSS vars exist for
@@ -100,11 +101,6 @@ export function computeInsight(logs: RecentLog[]): string | null {
 
 function scaleEntry(sev: number) {
   return SCALE.find((s) => s.value === sev) ?? SCALE[2];
-}
-
-function firstName(fullName: string | null): string {
-  if (!fullName) return "";
-  return fullName.split(" ")[0];
 }
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
@@ -235,20 +231,14 @@ export default function LogPage() {
   const [detailSaveConfirmed, setDetailSaveConfirmed] = useState(false);
 
   // Patient + history data
-  const [patientId, setPatientId] = useState<string | null>(null);
-  const [patientFullName, setPatientFullName] = useState<string | null>(null);
+  const { patientId, firstName: fname } = usePatient();
   const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
   const [lastAppetite, setLastAppetite] = useState<string | null>(null);
 
   const router = useRouter();
 
-  // DECISION REQUIRED: Patient context (ID, name, recent symptom logs) was fetched
-  // via Supabase browser client. No GET /api/patients/me route exists.
-  // patientId, patientFullName, and recentLogs remain empty until resolved.
-
   function refreshLogs() {
-    // DECISION REQUIRED: refreshLogs() used Supabase browser client.
-    // Logs will not refresh after saving until GET /api/patients/me is available.
+    // TODO: load recent logs via GET /api/log/list once that route exists.
   }
 
   function toggleMulti(arr: string[], setArr: (v: string[]) => void, val: string) {
@@ -340,7 +330,6 @@ export default function LogPage() {
   }
 
   const canQuickSave = scale !== null && !saving;
-  const fname = firstName(patientFullName);
   const insight = computeInsight(recentLogs);
 
   const showAppetiteNudge =

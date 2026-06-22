@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { ChatHistory } from "@/components/chat/chat-history";
 import { ChatInput, type FilePayload } from "@/components/chat/chat-input";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 interface Message {
   id: string;
@@ -15,11 +16,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [patientId, setPatientId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // DECISION REQUIRED: No GET /api/chat-messages or /api/patients/me route exists.
-  // patientId and chat history cannot be loaded; chat input stays disabled.
+  const { patientId } = usePatient();
 
   const handleSend = useCallback(async (content: string) => {
     if (!patientId) return;
@@ -90,7 +87,7 @@ export default function ChatPage() {
   }, [patientId, messages]);
 
   const handleFileUpload = useCallback(async (payload: FilePayload) => {
-    if (!patientId || !userId) return;
+    if (!patientId) return;
 
     const { fileName: origName, fileType: origType, fileSize, fileData, error: fileError } = payload;
 
@@ -199,7 +196,7 @@ export default function ChatPage() {
         prev.map((m) => m.id === docMsgId ? { ...m, content: `Upload failed: ${msg}` } : m)
       );
     }
-  }, [patientId, userId]);
+  }, [patientId]);
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 7.5rem)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>

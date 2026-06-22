@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Plus, X, Phone, Mail, Users, Trash2 } from "lucide-react";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 const ROLES = ["Doctor", "Nurse", "Social Worker", "Family", "Other"];
 
@@ -17,7 +18,6 @@ interface Member {
 
 export default function CareTeamPage() {
   const [members, setMembers] = useState<Member[]>([]);
-  const [patientId, setPatientId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -25,10 +25,15 @@ export default function CareTeamPage() {
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const { patientId } = usePatient();
 
-  // DECISION REQUIRED: GET /api/care-team requires patient_id as query param.
-  // No route exists to get the current user's patientId without a browser Supabase client.
-  // members list is empty; Add member is disabled until patientId is available.
+  useEffect(() => {
+    if (!patientId) return;
+    fetch(`/api/care-team?patient_id=${patientId}`)
+      .then(r => r.ok ? r.json() : { members: [] })
+      .then(data => setMembers(data.members ?? []))
+      .catch(() => {});
+  }, [patientId]);
 
   async function handleAdd() {
     if (!patientId || !name.trim()) return;
