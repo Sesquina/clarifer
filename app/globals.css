@@ -29,6 +29,28 @@
   --pale-sage: #F0F5F2;
   --pale-terra: #FDF3EE;
   --white: #FFFFFF;
+
+  /* Severity scale -- symptom log and home screen */
+  /* Maps to overall_severity integer 1-5 in the database */
+  --severity-1: #1A7F4B;
+  --severity-1-bg: #E8F5EE;
+  --severity-1-text: #1A7F4B;
+
+  --severity-2: #4CAF72;
+  --severity-2-bg: #EDF7F1;
+  --severity-2-text: #166534;
+
+  --severity-3: #F5C518;
+  --severity-3-bg: #FEF9E7;
+  --severity-3-text: #713F12;
+
+  --severity-4: #E8811A;
+  --severity-4-bg: #FDF0E3;
+  --severity-4-text: #7C2D12;
+
+  --severity-5: #DC3545;
+  --severity-5-bg: #FDE8EA;
+  --severity-5-text: #7F1D1D;
 }
 
 @theme inline {

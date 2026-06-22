@@ -31,19 +31,10 @@ function forensicColumns(request: Request) {
   };
 }
 
-async function loadUserAndOrg(request: Request, supabase: Awaited<ReturnType<typeof createClient>>) {
-  const user = await getUserFromRequest(request);
+async function loadUserAndOrg() {
+  const user = await getUserFromRequest();
   if (!user) return { user: null, orgId: null, role: null };
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  return {
-    user,
-    orgId: userRecord?.organization_id ?? null,
-    role: userRecord?.role ?? null,
-  };
+  return { user, orgId: user.organization_id, role: user.role };
 }
 
 export async function GET(
@@ -55,7 +46,7 @@ export async function GET(
 
   const { id } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadUserAndOrg(request, supabase);
+  const { user, orgId, role } = await loadUserAndOrg();
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!READ_ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -94,7 +85,7 @@ export async function PATCH(
 
   const { id } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadUserAndOrg(request, supabase);
+  const { user, orgId, role } = await loadUserAndOrg();
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!WRITE_ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -184,7 +175,7 @@ export async function DELETE(
 
   const { id } = await params;
   const supabase = await createClient();
-  const { user, orgId, role } = await loadUserAndOrg(request, supabase);
+  const { user, orgId, role } = await loadUserAndOrg();
   if (!user || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!WRITE_ROLES.includes(role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

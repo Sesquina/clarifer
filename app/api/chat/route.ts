@@ -29,10 +29,12 @@ export async function POST(req: NextRequest) {
 
     const { messages, patientId } = body;
 
+    console.log("[chat] request received");
     const supabase = await createClient();
-    const user = await getUserFromRequest(req);
+    const authUser = await getUserFromRequest();
+    console.log("[chat] auth:", authUser?.auth_method ?? "null");
 
-    if (!user) {
+    if (!authUser) {
       console.warn(JSON.stringify({
         route: ROUTE,
         method: req.method,
@@ -43,38 +45,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("role, organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userRecord?.organization_id) {
+    if (authUser.role !== "caregiver") {
       console.warn(JSON.stringify({
         route: ROUTE,
         method: req.method,
         event: 'unauthorized',
-        userId: user.id,
-        timestamp: new Date().toISOString(),
-      }));
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (userRecord.role !== "caregiver") {
-      console.warn(JSON.stringify({
-        route: ROUTE,
-        method: req.method,
-        event: 'unauthorized',
-        userId: user.id,
+        userId: authUser.id,
         timestamp: new Date().toISOString(),
       }));
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const organizationId = userRecord.organization_id;
+    const organizationId = authUser.organization_id;
 
     let rateLimitPassed = true;
     try {
-      const { success } = await chatLimiter.limit(user.id);
+      const { success } = await chatLimiter.limit(authUser.id);
       rateLimitPassed = success;
     } catch {
       rateLimitPassed = true;
@@ -115,7 +101,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     await supabase.from("audit_log").insert({
-      user_id: user.id,
+      user_id: authUser.id,
       patient_id: patientId,
       action: "SELECT",
       resource_type: "chat",
@@ -241,7 +227,7 @@ ${patient.condition_templates?.ai_context || ""}`
             error: error?.message ?? String(error),
             code: error?.code ?? null,
             stack: error?.stack?.split('\n').slice(0, 3).join(' | ') ?? null,
-            userId: user.id,
+            userId: authUser.id,
             timestamp: new Date().toISOString(),
             step: 'ai_stream',
           }));

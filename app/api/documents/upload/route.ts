@@ -27,24 +27,18 @@ export async function POST(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) {
     console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userRecord?.organization_id || !ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const organizationId = userRecord.organization_id;
+  const organizationId = user.organization_id;
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   const patientId = formData.get("patientId") as string | null;

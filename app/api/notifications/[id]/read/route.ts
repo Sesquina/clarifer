@@ -35,21 +35,13 @@ export async function PATCH(
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!WRITE_ROLES.includes(userRecord.role ?? "")) {
+  if (!WRITE_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   // Cross-tenant / wrong-user guard: only update rows owned by the
   // caller. Return 404 if no row matches -- do not leak existence.

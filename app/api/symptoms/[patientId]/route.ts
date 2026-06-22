@@ -32,22 +32,14 @@ export async function GET(
   const days = ALLOWED_WINDOWS.includes(daysRaw) ? daysRaw : 30;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const organizationId = userRecord.organization_id;
+  const organizationId = user.organization_id;
   const windowStart = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: logs } = await supabase

@@ -13,22 +13,13 @@ const ALLOWED_ROLES = ["caregiver", "provider", "admin"];
 const ALLOWED_STATUSES = ["positive", "negative", "not_tested", "pending", "inconclusive"];
 
 async function authorize(request: Request) {
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  const supabase = await createClient();
-
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   }
-  return { supabase, user, organizationId: userRecord.organization_id };
+  const supabase = await createClient();
+  return { supabase, user, organizationId: user.organization_id };
 }
 
 export async function PATCH(

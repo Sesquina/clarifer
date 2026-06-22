@@ -45,21 +45,13 @@ export async function POST(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const patientId =
@@ -77,7 +69,7 @@ export async function POST(request: Request) {
     patientId,
     orgId,
     callerId: user.id,
-    callerRole: userRecord.role ?? "caregiver",
+    callerRole: user.role,
     dateRangeDays,
   });
   if (!data) {

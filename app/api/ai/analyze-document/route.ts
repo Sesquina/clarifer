@@ -31,7 +31,8 @@ export async function POST(request: Request) {
   console.log("[analyze-document] ANTHROPIC_API_KEY present:", !!process.env.ANTHROPIC_API_KEY);
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
+  console.log("[analyze-document] auth:", user?.auth_method ?? "null");
 
   if (!user) {
     console.warn(JSON.stringify({
@@ -44,13 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
   }
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     console.warn(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -61,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden", code: "FORBIDDEN" }, { status: 403 });
   }
 
-  const organizationId = userRecord.organization_id;
+  const organizationId = user.organization_id;
 
   let rateLimitPassed = true;
   try {

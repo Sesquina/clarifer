@@ -75,11 +75,11 @@ describe("POST /api/documents/upload", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 when user has no organization", async () => {
+  it("returns 401 when user has no organization", async () => {
     createClient.mockResolvedValue(makeMockSupabase({ id: "user-1" }, { role: "caregiver", organization_id: null }));
     const { POST } = await import("@/app/api/documents/upload/route");
     const res = await POST(makeRequest(makeMockFile(), TEST_PATIENT_CARLOS.id));
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(401);
   });
 
   it("returns 400 when no file provided", async () => {

@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
@@ -15,26 +17,17 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createClient();
-    const user = await getUserFromRequest(request);
+    const user = await getUserFromRequest();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("role, organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userRecord?.organization_id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (userRecord.role !== "caregiver") {
+    if (user.role !== "caregiver") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const organizationId = userRecord.organization_id;
+    const organizationId = user.organization_id;
 
     const { success } = await familyUpdateLimiter.limit(user.id);
     if (!success) {

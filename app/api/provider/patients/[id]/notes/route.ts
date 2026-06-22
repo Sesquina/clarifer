@@ -31,18 +31,10 @@ function forensicColumns(request: Request) {
   };
 }
 
-async function authorize(request: Request, supabase: Awaited<ReturnType<typeof createClient>>, patientId: string) {
-  const user = await getUserFromRequest(request);
+async function authorize(_request: Request, supabase: Awaited<ReturnType<typeof createClient>>, patientId: string) {
+  const user = await getUserFromRequest();
   if (!user) return { ok: false as const, status: 401, message: "Unauthorized" };
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    return { ok: false as const, status: 401, message: "Unauthorized" };
-  }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     return { ok: false as const, status: 403, message: "Forbidden" };
   }
   // Provider must have access to this patient via care_relationships.
@@ -51,12 +43,12 @@ async function authorize(request: Request, supabase: Awaited<ReturnType<typeof c
     .select("patient_id")
     .eq("user_id", user.id)
     .eq("patient_id", patientId)
-    .eq("organization_id", userRecord.organization_id)
+    .eq("organization_id", user.organization_id)
     .maybeSingle();
   if (!relationship) {
     return { ok: false as const, status: 404, message: "Not found" };
   }
-  return { ok: true as const, user, orgId: userRecord.organization_id };
+  return { ok: true as const, user, orgId: user.organization_id };
 }
 
 export async function GET(

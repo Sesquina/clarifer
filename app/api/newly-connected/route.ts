@@ -19,19 +19,16 @@ export async function GET(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users").select("role, organization_id").eq("id", user.id).single();
-  if (!userRecord?.organization_id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!ALLOWED_ROLES.includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const url = new URL(request.url);
   const patientId = url.searchParams.get("patient_id");
   if (!patientId) return NextResponse.json({ error: "Missing patient_id" }, { status: 400 });
 
-  const organizationId = userRecord.organization_id;
+  const organizationId = user.organization_id;
 
   const { data: patient } = await supabase
     .from("patients").select("id").eq("id", patientId).eq("organization_id", organizationId).maybeSingle();
@@ -80,13 +77,10 @@ export async function PATCH(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: userRecord } = await supabase
-    .from("users").select("role, organization_id").eq("id", user.id).single();
-  if (!userRecord?.organization_id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!ALLOWED_ROLES.includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   let body: { patient_id?: string; items?: NewlyConnectedItem[] };
   try {
@@ -98,7 +92,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Missing patient_id or items" }, { status: 400 });
   }
 
-  const organizationId = userRecord.organization_id;
+  const organizationId = user.organization_id;
   const allDone = body.items.every((i) => i.checked);
 
   const { error } = await supabase

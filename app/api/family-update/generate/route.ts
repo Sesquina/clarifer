@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) {
     console.warn(JSON.stringify({
       route: ROUTE,
@@ -44,12 +44,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord || !ALLOWED_ROLES.includes(userRecord.role ?? "") || !userRecord.organization_id) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     console.warn(JSON.stringify({
       route: ROUTE,
       method: request.method,
@@ -62,7 +57,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   // Rate limit: max 3 family-update generations per minute per user
   if (!checkFamilyUpdateLimit(user.id)) {

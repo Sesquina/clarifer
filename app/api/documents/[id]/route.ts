@@ -22,7 +22,7 @@ export async function GET(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const user = await getUserFromRequest(request);
+    const user = await getUserFromRequest();
 
     if (!user) {
       console.warn(JSON.stringify({
@@ -35,23 +35,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("role, organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userRecord?.organization_id) {
-      console.warn(JSON.stringify({
-        route: ROUTE,
-        method: request.method,
-        event: 'unauthorized',
-        userId: user.id,
-        timestamp: new Date().toISOString(),
-      }));
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!GET_ROLES.includes(userRecord.role ?? "")) {
+    if (!GET_ROLES.includes(user.role)) {
       console.warn(JSON.stringify({
         route: ROUTE,
         method: request.method,
@@ -62,7 +46,7 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const organizationId = userRecord.organization_id;
+    const organizationId = user.organization_id;
 
     const { data: document } = await supabase
       .from("documents")
@@ -148,7 +132,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const user = await getUserFromRequest(request);
+    const user = await getUserFromRequest();
 
     if (!user) {
       console.warn(JSON.stringify({
@@ -161,23 +145,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("role, organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userRecord?.organization_id) {
-      console.warn(JSON.stringify({
-        route: ROUTE,
-        method: request.method,
-        event: 'unauthorized',
-        userId: user.id,
-        timestamp: new Date().toISOString(),
-      }));
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!DELETE_ROLES.includes(userRecord.role ?? "")) {
+    if (!DELETE_ROLES.includes(user.role)) {
       console.warn(JSON.stringify({
         route: ROUTE,
         method: request.method,
@@ -188,7 +156,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const organizationId = userRecord.organization_id;
+    const organizationId = user.organization_id;
 
     const { data: doc } = await supabase
       .from("documents")
