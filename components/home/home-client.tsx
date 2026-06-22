@@ -11,7 +11,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -169,6 +169,16 @@ export function HomeClient({
   const [apptNotes, setApptNotes] = useState("");
   const [apptSaving, setApptSaving] = useState(false);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    fetch("/api/notifications", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { unread?: number } | null) => {
+        if (data?.unread != null) setUnreadCount(data.unread);
+      })
+      .catch(() => {});
+  }, []);
+
   const firstName = patient.name.split(" ")[0];
   const isCholangiocarcinoma = patient.diagnosis
     ?.toLowerCase()
@@ -280,6 +290,30 @@ export function HomeClient({
           {/* ════ LEFT / MAIN COLUMN ═══════════════════════════════════════════ */}
           <div style={{ display: "flex", flexDirection: "column" }}>
 
+            {/* ── HEADER ROW: bell + avatar ─────────────────────────────────── */}
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 4, marginBottom: 8 }}>
+              <Link
+                href="/notifications"
+                aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+                style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", width: 44, height: 44 }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span style={{ position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: "50%", background: "var(--accent)" }} />
+                )}
+              </Link>
+              <Link
+                href="/profile"
+                aria-label="Your profile"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: "50%", background: "var(--primary)", color: "var(--card)", fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, textDecoration: "none" }}
+              >
+                {firstName ? firstName[0].toUpperCase() : "?"}
+              </Link>
+            </div>
+
             {/* ── HERO SECTION ──────────────────────────────────────────────── */}
             <div style={{ marginBottom: 16 }}>
               <p
@@ -362,6 +396,35 @@ export function HomeClient({
                 </p>
               </div>
             )}
+
+            {/* ── SYMPTOM LOG QUICK-ACTION ──────────────────────────────────── */}
+            <Link href="/log" style={{ display: "block", textDecoration: "none" }}>
+              <div
+                style={{
+                  background: "var(--pale-sage)",
+                  borderRadius: 12,
+                  border: "1px solid rgba(44, 95, 74, 0.25)",
+                  padding: "14px 16px",
+                  marginBottom: 10,
+                  cursor: "pointer",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <p style={{ fontFamily: "var(--font-playfair), 'Playfair Display', serif", fontSize: 16, fontWeight: 500, color: "var(--text)", margin: 0 }}>
+                    How is {firstName ?? "they"} doing today?
+                  </p>
+                  <p style={{ fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif", fontSize: 12, color: "var(--muted)", margin: "3px 0 0" }}>
+                    Tap to log
+                  </p>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+            </Link>
 
             {/* ── QUICK ACTION GRID ─────────────────────────────────────────── */}
             <div
