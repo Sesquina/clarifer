@@ -1,4 +1,11 @@
 ---
+[2026-06-22] MIGRATION REQUIRED [feat/emergency-card-public]:
+  File: supabase/migrations/20260622000001_add_emergency_token.sql
+  Run in Supabase SQL Editor (project lrhwgswbsctfqtvdjntr) before testing:
+    ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_token TEXT DEFAULT gen_random_uuid()::text UNIQUE;
+    UPDATE patients SET emergency_token = gen_random_uuid()::text WHERE emergency_token IS NULL;
+  Adds emergency_token column to patients table for shareable public emergency card links.
+---
 [2026-06-22] SESSION: feat/patients-me-route
 Branch: feat/patients-me-route
 Status: COMPLETE
