@@ -53,10 +53,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // users.id = keycloakId so getUserFromRequest CASE 2 can resolve by email.
-    // The users table has no keycloak_id column; id stores the Keycloak sub UUID.
     const { error: userError } = await supabase.from("users").insert({
-      id: keycloakId,
+      keycloak_id: keycloakId,
       email,
       role: "caregiver",
       organization_id: org.id,
