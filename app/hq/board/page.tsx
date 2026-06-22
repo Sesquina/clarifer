@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { TeamTask, TaskLane, TaskPriority, AccessLevel } from "@/lib/internal/types";
 import { accessLevelFor } from "@/lib/internal/types";
-import { createClient } from "@/lib/supabase/client";
 
 const BODY: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
@@ -36,16 +35,12 @@ function initials(name: string | null): string {
 export default function BoardPage() {
   const [tasks, setTasks] = useState<TeamTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [level, setLevel] = useState<AccessLevel>("growth");
+  const [level, setLevel] = useState<AccessLevel>("full");
   const [addingLane, setAddingLane] = useState<TaskLane | null>(null);
-  const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setLevel(accessLevelFor(data.user?.email) ?? "growth");
-    });
     loadTasks();
-  }, [supabase]);
+  }, []);
 
   async function loadTasks() {
     setLoading(true);

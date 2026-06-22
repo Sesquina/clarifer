@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 const BODY: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
@@ -16,8 +14,6 @@ export default function UpdatePasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,17 +28,8 @@ export default function UpdatePasswordPage() {
       return;
     }
 
-    setLoading(true);
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) {
-        setError("Could not update your password. Please request a new reset link.");
-        return;
-      }
-      router.push("/home");
-    } finally {
-      setLoading(false);
-    }
+    setError("Password update is temporarily unavailable. Please contact support.");
+    setLoading(false);
   }
 
   return (

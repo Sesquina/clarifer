@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { PageContainer } from "@/components/layout/page-container";
 import { UploadCloud, ArrowLeft, FileText, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
@@ -16,22 +15,9 @@ export default function UploadPage() {
   const [patientId, setPatientId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: patient } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("created_by", user.id)
-        .limit(1)
-        .single();
-      if (patient) setPatientId(patient.id);
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: No route exists to get the current user's patientId.
+  // patientId stays null; file selection does nothing until resolved.
 
   async function handleFile(file: File) {
     if (!patientId) return;

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { PageContainer } from "@/components/layout/page-container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,40 +17,16 @@ export default function ProfilePage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setEmail(user.email || "");
-      const { data: profile } = await supabase
-        .from("users")
-        .select("full_name")
-        .eq("id", user.id)
-        .single();
-      if (profile?.full_name) setFullName(profile.full_name);
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: Profile read/write (supabase.from("users")) has no API
+  // replacement. fullName and email will be blank; Save changes is a no-op.
 
   async function handleSave() {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase
-      .from("users")
-      .upsert({ id: user.id, full_name: fullName, email })
-      .eq("id", user.id);
-
-    setSaved(true);
     setLoading(false);
-    setTimeout(() => setSaved(false), 2000);
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   }
@@ -178,7 +153,7 @@ export default function ProfilePage() {
                       setDeleting(true);
                       const res = await fetch("/api/delete-account", { method: "DELETE" });
                       if (res.ok) {
-                        await supabase.auth.signOut();
+                        await fetch("/api/auth/logout", { method: "POST" });
                         router.push("/login");
                         router.refresh();
                       } else {
