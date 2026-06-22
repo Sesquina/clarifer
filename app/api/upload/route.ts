@@ -31,26 +31,17 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createClient();
-    const user = await getUserFromRequest(request);
+    const user = await getUserFromRequest();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userRecord } = await supabase
-      .from("users")
-      .select("role, organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userRecord?.organization_id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!["caregiver", "provider"].includes(userRecord.role ?? "")) {
+    if (!["caregiver", "provider"].includes(user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const organizationId = userRecord.organization_id;
+    const organizationId = user.organization_id;
 
     const { success } = await uploadLimiter.limit(user.id);
     if (!success) {

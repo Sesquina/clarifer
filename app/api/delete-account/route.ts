@@ -35,7 +35,7 @@ export async function DELETE(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,14 +51,8 @@ export async function DELETE(request: Request) {
     .eq("created_by", user.id);
   const patientIds = (patients || []).map((p: { id: string }) => p.id);
 
-  // Capture org_id BEFORE any deletions -- the users row is deleted in the loop
-  // below and cannot be re-fetched after that point.
-  const { data: userRecord } = await admin
-    .from("users")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-  const orgId: string | null = userRecord?.organization_id ?? null;
+  // Capture org_id from AuthUser (available before any deletions).
+  const orgId: string | null = user.organization_id ?? null;
 
   // Audit log BEFORE deleting account data (HIPAA requirement: the record of
   // the deletion must be preserved even if the deletion itself partially fails).
@@ -156,7 +150,7 @@ export async function GET(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -165,16 +159,10 @@ export async function GET(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = getAdmin() as any;
 
-  // Role check + org_id capture — required before audit log
-  const { data: userRecord } = await admin
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord || !SELF_SERVICE_ROLES.includes(userRecord.role ?? "")) {
+  if (!SELF_SERVICE_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const orgId: string | null = userRecord.organization_id ?? null;
+  const orgId: string | null = user.organization_id ?? null;
 
   // Audit log: record data export with real org_id
   await admin.from("audit_log").insert({
