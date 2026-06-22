@@ -13,9 +13,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
-  const { token } = params;
+  const { token } = await params;
   if (!token || token.length < 8) {
     return NextResponse.json({ error: "Invalid link" }, { status: 400 });
   }
