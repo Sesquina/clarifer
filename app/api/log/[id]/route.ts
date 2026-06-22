@@ -24,7 +24,7 @@ export async function PATCH(
 
   // 1. Auth check
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) {
     console.warn(
       JSON.stringify({
@@ -39,25 +39,7 @@ export async function PATCH(
   }
 
   // 2. Role check + org_id
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userRecord?.organization_id) {
-    console.warn(
-      JSON.stringify({
-        route: ROUTE,
-        method: request.method,
-        event: "unauthorized",
-        userId: user.id,
-        timestamp: new Date().toISOString(),
-      })
-    );
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!ALLOWED_ROLES.includes(userRecord.role ?? "")) {
+  if (!ALLOWED_ROLES.includes(user.role)) {
     console.warn(
       JSON.stringify({
         route: ROUTE,
@@ -69,7 +51,7 @@ export async function PATCH(
     );
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   const { id: logId } = await params;
 
