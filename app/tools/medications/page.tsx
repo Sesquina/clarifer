@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
+import { usePatient } from "@/lib/hooks/use-patient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Pill, Plus, ArrowLeft, X } from "lucide-react";
@@ -24,12 +25,8 @@ export default function MedicationsPage() {
   const [name, setName] = useState("");
   const [dose, setDose] = useState("");
   const [frequency, setFrequency] = useState("");
-  const [patientId, setPatientId] = useState<string | null>(null);
+  const { patientId, loading: patientLoading, error: patientError } = usePatient();
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
-  // DECISION REQUIRED: No route exists to get the current user's patientId or
-  // list medications without a known patientId. medications list is empty;
-  // Add medication is disabled until patientId is available.
 
   function handleNameChange(val: string) {
     setName(val);
@@ -77,6 +74,13 @@ export default function MedicationsPage() {
     fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text)",
     backgroundColor: "var(--card)", width: "100%", boxSizing: "border-box", outline: "none",
   };
+
+  if (patientLoading) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Loading...</div></PageContainer>;
+  }
+  if (patientError) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Could not load patient. Please refresh.</div></PageContainer>;
+  }
 
   return (
     <PageContainer>

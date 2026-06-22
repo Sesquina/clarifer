@@ -15,9 +15,10 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
+import { usePatient } from "@/lib/hooks/use-patient";
 
 // ─── Five-level severity scale ────────────────────────────────────────────────
 // Hex values per Figma node symptom-log/quick-capture. No CSS vars exist for
@@ -102,10 +103,6 @@ function scaleEntry(sev: number) {
   return SCALE.find((s) => s.value === sev) ?? SCALE[2];
 }
 
-function firstName(fullName: string | null): string {
-  if (!fullName) return "";
-  return fullName.split(" ")[0];
-}
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
@@ -235,21 +232,30 @@ export default function LogPage() {
   const [detailSaveConfirmed, setDetailSaveConfirmed] = useState(false);
 
   // Patient + history data
-  const [patientId, setPatientId] = useState<string | null>(null);
-  const [patientFullName, setPatientFullName] = useState<string | null>(null);
+  const { patientId, firstName: fname, loading: patientLoading, error: patientError } = usePatient();
   const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
   const [lastAppetite, setLastAppetite] = useState<string | null>(null);
 
   const router = useRouter();
 
-  // DECISION REQUIRED: Patient context (ID, name, recent symptom logs) was fetched
-  // via Supabase browser client. No GET /api/patients/me route exists.
-  // patientId, patientFullName, and recentLogs remain empty until resolved.
+  const refreshLogs = useCallback(() => {
+    if (!patientId) return;
+    void fetch('/api/symptoms?patient_id=' + patientId + '&limit=20')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        const logs: RecentLog[] = (data.logs ?? data) as RecentLog[];
+        setRecentLogs(logs);
+        const latest = logs[0];
+        const latestRes = latest?.responses as Record<string, unknown> | null;
+        if (typeof latestRes?.appetite === 'string') {
+          setLastAppetite(latestRes.appetite as string);
+        }
+      })
+      .catch(() => {});
+  }, [patientId]);
 
-  function refreshLogs() {
-    // DECISION REQUIRED: refreshLogs() used Supabase browser client.
-    // Logs will not refresh after saving until GET /api/patients/me is available.
-  }
+  useEffect(() => { refreshLogs(); }, [refreshLogs]);
 
   function toggleMulti(arr: string[], setArr: (v: string[]) => void, val: string) {
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -340,7 +346,6 @@ export default function LogPage() {
   }
 
   const canQuickSave = scale !== null && !saving;
-  const fname = firstName(patientFullName);
   const insight = computeInsight(recentLogs);
 
   const showAppetiteNudge =
@@ -348,6 +353,13 @@ export default function LogPage() {
     LOW_APPETITE.has(appetite) &&
     lastAppetite !== null &&
     LOW_APPETITE.has(lastAppetite);
+
+  if (patientLoading) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Loading...</div></PageContainer>;
+  }
+  if (patientError) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Could not load patient. Please refresh.</div></PageContainer>;
+  }
 
   // ── MODE 1: QUICK CAPTURE ──────────────────────────────────────────────────
   if (mode === "quick") {

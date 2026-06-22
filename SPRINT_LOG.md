@@ -1,4 +1,14 @@
 ---
+[2026-06-22] SESSION: feat/patients-me-route
+Branch: feat/patients-me-route
+Status: COMPLETE
+
+DISCOVERED ISSUE [feat/patients-me-route-1]:
+  app/update-password/page.tsx — error message said "Please contact support." with no contact address.
+  Fixed to: "Password update is temporarily unavailable. Contact support@clarifer.com"
+  No Keycloak route exists for password reset yet. A future session must build
+  POST /api/auth/change-password using the Keycloak Admin API.
+---
 [2026-06-22] DECISION REQUIRED [feat/real-user-auth]: app/api/auth/signup/route.ts
 inserts `id: keycloakId` into users table (Keycloak sub UUID = users.id). The task
 spec used `keycloak_id: keycloakId` but no keycloak_id column exists in the schema.

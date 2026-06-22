@@ -28,7 +28,7 @@ export default function UpdatePasswordPage() {
       return;
     }
 
-    setError("Password update is temporarily unavailable. Please contact support.");
+    setError("Password update is temporarily unavailable. Contact support@clarifer.com");
     setLoading(false);
   }
 
