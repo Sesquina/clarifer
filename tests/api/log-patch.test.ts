@@ -11,7 +11,9 @@ vi.mock("@/lib/auth/get-user", () => ({
     id: TEST_CAREGIVER.id,
     email: TEST_CAREGIVER.email,
     role: TEST_CAREGIVER.role,
-    organizationId: TEST_CAREGIVER.organization_id,
+    organization_id: TEST_CAREGIVER.organization_id,
+    is_demo: false,
+    auth_method: "supabase_legacy",
   }),
 }));
 
@@ -139,7 +141,9 @@ describe("PATCH /api/log/[id]", () => {
   });
 
   it("3. returns 401 when user has no organization_id", async () => {
-    createClient.mockResolvedValue(makeSupabase({ organizationId: null }));
+    const { getUserFromRequest } = await import("@/lib/auth/get-user");
+    (getUserFromRequest as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+    createClient.mockResolvedValue(makeSupabase({}));
     const { PATCH } = await import("@/app/api/log/[id]/route");
     const req = new Request(`http://localhost/api/log/${TEST_LOG_ID}`, {
       method: "PATCH",
@@ -230,7 +234,16 @@ describe("PATCH /api/log/[id]", () => {
   });
 
   it("7. returns 403 when user role is not allowed", async () => {
-    createClient.mockResolvedValue(makeSupabase({ role: "admin" }));
+    const { getUserFromRequest } = await import("@/lib/auth/get-user");
+    (getUserFromRequest as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      id: TEST_CAREGIVER.id,
+      email: TEST_CAREGIVER.email,
+      role: "admin",
+      organization_id: TEST_CAREGIVER.organization_id,
+      is_demo: false,
+      auth_method: "supabase_legacy" as const,
+    });
+    createClient.mockResolvedValue(makeSupabase({}));
     const { PATCH } = await import("@/app/api/log/[id]/route");
     const req = new Request(`http://localhost/api/log/${TEST_LOG_ID}`, {
       method: "PATCH",
