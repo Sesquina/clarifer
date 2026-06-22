@@ -33,7 +33,7 @@ export async function GET(
   const { data: patient } = await supabase
     .from("patients")
     .select(
-      "id, name, dob, sex, custom_diagnosis, primary_language, blood_type, allergies, emergency_contact_name, emergency_contact_phone, emergency_notes, dpd_deficiency_screened, dpd_deficiency_status"
+      "id, name, dob, sex, custom_diagnosis, primary_language, blood_type, allergies, emergency_contact_name, emergency_contact_phone, emergency_notes, dpd_deficiency_screened, dpd_deficiency_status, emergency_token"
     )
     .eq("id", id)
     .eq("organization_id", organizationId)
@@ -69,11 +69,16 @@ export async function GET(
     status: "success",
   });
 
+  const shareUrl = patient.emergency_token
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/emergency/${patient.emergency_token}`
+    : null;
+
   const body = {
     patient,
     medications: meds ?? [],
     biomarkers: biomarkers ?? [],
     generated_at: new Date().toISOString(),
+    shareUrl,
   };
 
   return NextResponse.json(body, {

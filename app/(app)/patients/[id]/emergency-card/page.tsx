@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 interface EmergencyPatient {
@@ -21,6 +21,41 @@ interface EmergencyCardData {
   medications: Array<{ name: string; dose: string | null; unit: string | null; route: string | null; frequency: string | null }>;
   biomarkers: Array<{ biomarker_type: string; status: string; value: string | null }>;
   generated_at: string;
+  shareUrl: string | null;
+}
+
+function CopyButton({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        padding: "8px 14px",
+        borderRadius: 8,
+        border: "none",
+        background: copied ? "var(--primary)" : "var(--pale-sage)",
+        color: copied ? "var(--card)" : "var(--primary)",
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        fontFamily: "var(--font-dm-sans)",
+        minHeight: 36,
+      }}
+    >
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
 }
 
 const CACHE_KEY = (id: string) => `clarifer:emergency-card:${id}`;
@@ -101,6 +136,43 @@ export default function EmergencyCardPage() {
           Showing cached emergency card. Data last refreshed {new Date(data.generated_at).toLocaleString()}.
         </p>
       )}
+      {data.shareUrl && (
+        <div
+          style={{
+            background: "var(--pale-sage)",
+            borderRadius: 10,
+            padding: "12px 14px",
+            marginBottom: 16,
+          }}
+        >
+          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", margin: 0 }}>
+            Share this emergency card
+          </p>
+          <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, marginBottom: 8 }}>
+            Anyone with this link can view it — no login needed.
+          </p>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              type="text"
+              value={data.shareUrl}
+              readOnly
+              style={{
+                flex: 1,
+                border: "0.5px solid var(--border)",
+                borderRadius: 8,
+                padding: "8px 12px",
+                fontSize: 12,
+                background: "white",
+                color: "var(--text)",
+                fontFamily: "var(--font-dm-sans)",
+                minWidth: 0,
+              }}
+            />
+            <CopyButton url={data.shareUrl} />
+          </div>
+        </div>
+      )}
+
       <article
         className="overflow-hidden rounded-2xl border"
         style={{ background: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" }}
