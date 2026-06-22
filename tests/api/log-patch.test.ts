@@ -223,7 +223,7 @@ describe("PATCH /api/log/[id]", () => {
     });
     await PATCH(req, { params: Promise.resolve({ id: TEST_LOG_ID }) });
     expect(capturedUpdate).not.toBeNull();
-    const responses = (capturedUpdate as { responses: Record<string, unknown> }).responses;
+    const responses = (capturedUpdate as unknown as { responses: Record<string, unknown> }).responses;
     expect(responses.notes).toBe("original note");
     expect(responses.functional_status).toBe("Active as usual");
     expect(responses.appetite).toBe("Eating normally");

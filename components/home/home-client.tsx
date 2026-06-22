@@ -74,6 +74,18 @@ interface HomeClientProps {
   }>;
   loggedToday: boolean;
   documentsCount: number;
+  nextAppointment: {
+    id: string;
+    title: string | null;
+    datetime: string | null;
+    provider_name: string | null;
+  } | null;
+  mostRecentAlert: {
+    overall_severity: number;
+    responses: Record<string, unknown> | null;
+    created_at: string | null;
+  } | null;
+  lastUpdated: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -96,6 +108,40 @@ function fmtDate(dateStr: string | null): string {
   });
 }
 
+export function relativeTime(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return `${diffDays} days ago`;
+}
+
+export function formatLogDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+export function getSeverityStyle(severity: number): { border: string; bg: string; text: string } {
+  if (severity >= 7) return { border: "#E24B4A", bg: "#FCEBEB", text: "#A32D2D" };
+  if (severity >= 4) return { border: "#BA7517", bg: "#FAEEDA", text: "#633806" };
+  return { border: "#0F6E56", bg: "#E1F5EE", text: "#085041" };
+}
+
+// ─── Quick action grid config ─────────────────────────────────────────────────
+const QUICK_ACTIONS = [
+  { label: "Log Symptoms", href: "/log",              bg: "var(--pale-sage)",  color: "var(--primary)", icon: Activity  },
+  { label: "Ask Clarifer", href: "/chat",             bg: "var(--pale-terra)", color: "var(--accent)",  icon: Sparkles  },
+  { label: "Upload Doc",   href: "/documents/upload", bg: "var(--pale-sage)",  color: "var(--primary)", icon: FileText  },
+  { label: "Find Trials",  href: "/tools/trials",     bg: "var(--pale-terra)", color: "var(--accent)",  icon: Wrench    },
+] as const;
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export function HomeClient({
   patient,
@@ -104,6 +150,9 @@ export function HomeClient({
   appointments,
   loggedToday,
   documentsCount,
+  nextAppointment,
+  mostRecentAlert,
+  lastUpdated,
 }: HomeClientProps) {
   // ── State (unchanged from previous implementation) ─────────────────────────
   const [showApptModal, setShowApptModal] = useState(false);
@@ -198,93 +247,6 @@ export function HomeClient({
     window.location.reload();
   }
 
-  // ── Priority card: most actionable item from existing data ─────────────────
-  const priorityItem: {
-    icon: React.ElementType;
-    title: string;
-    subtitle: string;
-    href?: string;
-  } = (() => {
-    if (appointments.length > 0) {
-      const a = appointments[0];
-      return {
-        icon: Calendar,
-        title: a.title ?? "Appointment",
-        subtitle: fmtAppt(a.datetime),
-        href: `/patients/${patient.id}/appointments`,
-      };
-    }
-    if (logs.length > 0) {
-      const l = logs[0];
-      return {
-        icon: Activity,
-        title: l.overall_severity !== null
-          ? `Severity ${l.overall_severity}/10`
-          : "Recent symptom log",
-        subtitle: l.created_at ? fmtDate(l.created_at) : "Recent entry",
-        href: "/log",
-      };
-    }
-    return {
-      icon: FileText,
-      title: "Upload your first document",
-      subtitle: "Labs, imaging, or clinical notes",
-      href: "/documents/upload",
-    };
-  })();
-
-  // ── Four care-timeline items from existing fetched data ────────────────────
-  const timelineItems: Array<{
-    icon: React.ElementType;
-    title: string;
-    subtitle: string;
-    href: string;
-  }> = [
-    {
-      icon: Activity,
-      title: loggedToday
-        ? "Symptoms logged today"
-        : logs.length > 0
-          ? `Last logged ${fmtDate(logs[0].created_at)}`
-          : "Log today's symptoms",
-      subtitle: loggedToday
-        ? "All up to date"
-        : logs.length === 0
-          ? "Nothing logged yet"
-          : "Tap to add an entry",
-      href: "/log",
-    },
-    {
-      icon: Calendar,
-      title:
-        appointments.length > 0
-          ? appointments[0].title ?? "Upcoming appointment"
-          : "No upcoming appointments",
-      subtitle:
-        appointments.length > 0
-          ? fmtAppt(appointments[0].datetime)
-          : "Add an appointment",
-      href: `/patients/${patient.id}/appointments`,
-    },
-    {
-      icon: FileText,
-      title:
-        documentsCount > 0
-          ? `${documentsCount} document${documentsCount > 1 ? "s" : ""} uploaded`
-          : "Upload a document",
-      subtitle:
-        documentsCount > 0
-          ? "View your documents"
-          : "Labs, imaging, clinical notes",
-      href: documentsCount > 0 ? "/documents" : "/documents/upload",
-    },
-    {
-      icon: Users,
-      title: "Send a family update",
-      subtitle: "Keep your circle informed",
-      href: "#family-update",
-    },
-  ];
 
   // ── Shared input style for modals ──────────────────────────────────────────
   const inputStyle: React.CSSProperties = {
@@ -310,450 +272,435 @@ export function HomeClient({
       <div
         style={{ display: "flex", flexDirection: "column", flex: 1 }}
       >
-        {/* ── DESKTOP: Breadcrumb sub-header ──────────────────────────────────── */}
+        {/* ── RESPONSIVE GRID LAYOUT ──────────────────────────────────────────── */}
         <div
-          className="hidden md:flex"
-          style={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "10px 24px",
-            borderBottom: "1px solid var(--border)",
-            backgroundColor: "var(--background)",
-            position: "sticky",
-            top: 56,
-            zIndex: 20,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 14,
-              color: "var(--muted)",
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            }}
-          >
-            Caring for{" "}
-            <span style={{ color: "var(--text)", fontWeight: 600 }}>
-              · {firstName}
-            </span>
-          </span>
-          <Link
-            href="/chat"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              height: 36,
-              padding: "0 14px",
-              borderRadius: 10,
-              backgroundColor: "var(--pale-sage)",
-              color: "var(--primary)",
-              fontSize: 13,
-              fontWeight: 600,
-              textDecoration: "none",
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            }}
-          >
-            <Sparkles size={14} aria-hidden="true" />
-            Ask Clarifer
-          </Link>
-        </div>
-
-        {/* ── TWO-COLUMN LAYOUT (single on mobile) ────────────────────────────── */}
-        <div
-          className="md:flex md:gap-6"
-          style={{ padding: "24px 16px" }}
+          className="px-5 pt-6 md:px-10 md:grid md:gap-10 w-full"
+          style={{ gridTemplateColumns: "1fr 400px", maxWidth: 1200, margin: "0 auto" }}
         >
           {/* ════ LEFT / MAIN COLUMN ═══════════════════════════════════════════ */}
-          <div
-            className="flex-1"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 20,
-              minWidth: 0,
-            }}
-          >
-            {/* Patient hero */}
-            <div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+
+            {/* ── HERO SECTION ──────────────────────────────────────────────── */}
+            <div style={{ marginBottom: 16 }}>
               <p
                 style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  marginBottom: 4,
                   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: "var(--muted)",
+                  letterSpacing: "0.8px",
+                  textTransform: "uppercase",
+                  marginBottom: 4,
                 }}
               >
                 Caring for
               </p>
               <p
                 style={{
-                  fontFamily:
-                    "var(--font-playfair), 'Playfair Display', serif",
-                  fontSize: 38,
+                  fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+                  fontSize: 28,
                   fontWeight: 700,
                   color: "var(--text)",
                   lineHeight: 1.1,
-                  marginBottom: 8,
+                  marginBottom: 6,
                 }}
               >
                 {firstName}
               </p>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "var(--muted)",
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                }}
-              >
-                {statusLine}
-              </p>
-            </div>
-
-            {/* Section divider */}
-            <div style={{ height: 1, backgroundColor: "var(--border)" }} />
-
-            {/* Priority card */}
-            <div
-              style={{
-                backgroundColor: "var(--card)",
-                borderRadius: 16,
-                padding: 18,
-                border: "1px solid var(--border)",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.09em",
-                  marginBottom: 12,
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                }}
-              >
-                Priority
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                }}
-              >
-                <div
+              {lastUpdated && (
+                <p
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    backgroundColor: "var(--pale-sage)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 12,
+                    color: "var(--muted)",
                   }}
                 >
-                  <priorityItem.icon
-                    size={18}
-                    color="var(--primary)"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <p
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: "var(--text)",
-                      fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                    }}
-                  >
-                    {priorityItem.title}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--muted)",
-                      marginTop: 2,
-                      fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                    }}
-                  >
-                    {priorityItem.subtitle}
-                  </p>
-                </div>
-              </div>
+                  Last updated {relativeTime(lastUpdated)}
+                </p>
+              )}
             </div>
 
-            {/* Send family update — primary action button */}
+            {/* ── ALERT BAR (only when most recent log is severity >= 7) ────── */}
+            {mostRecentAlert && (
+              <div
+                style={{
+                  position: "relative",
+                  backgroundColor: "#FCEBEB",
+                  border: "1px solid #E24B4A",
+                  borderRadius: 10,
+                  padding: "10px 12px 10px 16px",
+                  marginBottom: 12,
+                  overflow: "hidden",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    backgroundColor: "#E24B4A",
+                  }}
+                />
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "#A32D2D",
+                  }}
+                >
+                  {(() => {
+                    const raw = mostRecentAlert.responses?.symptoms;
+                    const symptomName =
+                      Array.isArray(raw) && raw.length > 0
+                        ? String(raw[0])
+                        : "Symptom";
+                    return `${symptomName} was ${mostRecentAlert.overall_severity}/10 yesterday. Worth a look before the next visit.`;
+                  })()}
+                </p>
+              </div>
+            )}
+
+            {/* ── QUICK ACTION GRID ─────────────────────────────────────────── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              {QUICK_ACTIONS.map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  style={{ textDecoration: "none" }}
+                >
+                  <div
+                    className="md:shadow-sm"
+                    style={{
+                      backgroundColor: action.bg,
+                      borderRadius: 14,
+                      padding: 12,
+                      minHeight: 80,
+                      display: "flex",
+                      flexDirection: "column",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        backgroundColor: "var(--card)",
+                        borderRadius: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: "auto",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <action.icon
+                        size={18}
+                        color={action.color}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: action.color,
+                        marginTop: 8,
+                      }}
+                    >
+                      {action.label}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* ── SEND FAMILY UPDATE BUTTON ─────────────────────────────────── */}
             <button
               type="button"
               onClick={handleFamilyUpdate}
               style={{
                 width: "100%",
                 height: 52,
-                borderRadius: 14,
+                borderRadius: 12,
                 backgroundColor: "var(--primary)",
                 color: "var(--card)",
                 border: "none",
                 fontSize: 15,
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: "pointer",
                 fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                marginBottom: 20,
               }}
             >
-              Send family update →
+              Send family update &#x2192;
             </button>
 
-            {/* CARE TIMELINE section */}
-            <section aria-label="Care timeline">
+            {/* ── RECENT SYMPTOMS SECTION ───────────────────────────────────── */}
+            <section aria-label="Recent symptoms">
               <p
                 style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  marginBottom: 14,
                   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                }}
-              >
-                Care timeline
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 14,
-                }}
-              >
-                {timelineItems.map((item, idx) => {
-                  const isUpdate = item.href === "#family-update";
-                  const inner = (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          backgroundColor: "var(--pale-sage)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <item.icon
-                          size={16}
-                          color="var(--primary)"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: "var(--text)",
-                            fontFamily:
-                              "var(--font-dm-sans), 'DM Sans', sans-serif",
-                          }}
-                        >
-                          {item.title}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: 12,
-                            color: "var(--muted)",
-                            marginTop: 1,
-                            fontFamily:
-                              "var(--font-dm-sans), 'DM Sans', sans-serif",
-                          }}
-                        >
-                          {item.subtitle}
-                        </p>
-                      </div>
-                    </div>
-                  );
-
-                  return isUpdate ? (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={handleFamilyUpdate}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        textAlign: "left",
-                        width: "100%",
-                      }}
-                    >
-                      {inner}
-                    </button>
-                  ) : (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      style={{ textDecoration: "none", display: "block" }}
-                    >
-                      {inner}
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* CCF card — mobile only (desktop version in right column) */}
-            {isCholangiocarcinoma && (
-              <div className="md:hidden">
-                <CcfCard />
-              </div>
-            )}
-          </div>
-
-          {/* ════ RIGHT COLUMN — desktop only, 200px ════════════════════════════ */}
-          <div
-            className="hidden md:flex md:flex-col"
-            style={{ width: 200, gap: 16, flexShrink: 0 }}
-          >
-            {/* Upcoming appointment card */}
-            <div
-              style={{
-                backgroundColor: "var(--card)",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                padding: 16,
-              }}
-            >
-              <p
-                style={{
                   fontSize: 10,
-                  fontWeight: 700,
+                  fontWeight: 500,
                   color: "var(--muted)",
+                  letterSpacing: "0.8px",
                   textTransform: "uppercase",
-                  letterSpacing: "0.09em",
-                  marginBottom: 10,
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  marginBottom: 8,
                 }}
               >
-                Next appointment
+                Recent symptoms
               </p>
-              {appointments.length > 0 ? (
-                <div>
+
+              {logs.length === 0 ? (
+                <Link href="/log" style={{ textDecoration: "none", display: "block", minHeight: 48 }}>
                   <p
                     style={{
+                      fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
                       fontSize: 13,
-                      fontWeight: 600,
-                      color: "var(--text)",
-                      fontFamily:
-                        "var(--font-dm-sans), 'DM Sans', sans-serif",
-                      marginBottom: 4,
+                      color: "var(--muted)",
+                      padding: "16px 0",
                     }}
                   >
-                    {appointments[0].title ?? "Appointment"}
+                    {firstName} is lucky to have someone paying this much attention.
                   </p>
-                  {appointments[0].datetime && (
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: 11,
-                        color: "var(--muted)",
-                      }}
-                    >
-                      <Calendar size={11} aria-hidden="true" />
-                      {fmtAppt(appointments[0].datetime)}
-                    </span>
-                  )}
-                  {appointments[0].location && (
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: 11,
-                        color: "var(--muted)",
-                        marginTop: 2,
-                      }}
-                    >
-                      <MapPin size={11} aria-hidden="true" />
-                      {appointments[0].location}
-                    </span>
-                  )}
-                </div>
+                </Link>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowApptModal(true)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    color: "var(--primary)",
-                    fontWeight: 500,
-                    padding: 0,
-                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                  }}
-                >
-                  + Add appointment
-                </button>
+                logs.map((log) => {
+                  const sev = log.overall_severity ?? 0;
+                  const style = getSeverityStyle(sev);
+                  return (
+                    <div
+                      key={log.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        backgroundColor: "var(--card)",
+                        borderRadius: 10,
+                        border: "0.5px solid var(--border)",
+                        borderLeft: `3px solid ${style.border}`,
+                        padding: "10px 12px 10px 14px",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                          fontSize: 13,
+                          color: "var(--muted)",
+                        }}
+                      >
+                        {formatLogDate(log.created_at)}
+                      </span>
+                      <span
+                        style={{
+                          borderRadius: 20,
+                          padding: "2px 10px",
+                          backgroundColor: style.bg,
+                          color: style.text,
+                          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                          fontSize: 11,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {sev}/10
+                      </span>
+                    </div>
+                  );
+                })
               )}
-            </div>
+            </section>
 
-            {/* CCF card (desktop right column, cholangiocarcinoma only) */}
-            {isCholangiocarcinoma && <CcfCard compact />}
 
-            {/* Care team quick link */}
-            <Link
-              href={`/patients/${patient.id}/care-team`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                backgroundColor: "var(--card)",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                padding: "12px 14px",
-                textDecoration: "none",
-              }}
-            >
+          </div>
+
+          {/* ════ RIGHT COLUMN — stacks below on mobile, 400px on desktop ════════ */}
+          <div
+            className="flex flex-col mt-5 md:mt-0"
+            style={{ gap: 16 }}
+          >
+            {/* ── UPCOMING APPOINTMENT ──────────────────────────────────────── */}
+            <div>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: "var(--muted)",
+                  letterSpacing: "0.8px",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                Upcoming
+              </p>
               <div
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 7,
-                  backgroundColor: "var(--pale-sage)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  backgroundColor: "var(--card)",
+                  borderRadius: 14,
+                  border: "0.5px solid var(--border)",
+                  padding: 16,
                 }}
               >
-                <Users size={14} color="var(--primary)" aria-hidden="true" />
+                {nextAppointment ? (
+                  <div>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--text)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {nextAppointment.title ?? nextAppointment.provider_name ?? "Appointment"}
+                    </p>
+                    {nextAppointment.datetime && (
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                          fontSize: 13,
+                          color: "var(--muted)",
+                        }}
+                      >
+                        <Calendar size={13} aria-hidden="true" />
+                        {fmtAppt(nextAppointment.datetime)}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      minHeight: 48,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 14,
+                        color: "var(--muted)",
+                      }}
+                    >
+                      <Calendar size={16} color="var(--muted)" aria-hidden="true" />
+                      Nothing coming up
+                    </span>
+                    <Link
+                      href={`/patients/${patient.id}/appointments`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: 32,
+                        padding: "0 12px",
+                        backgroundColor: "var(--pale-sage)",
+                        color: "var(--primary)",
+                        borderRadius: 8,
+                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        textDecoration: "none",
+                        minWidth: 48,
+                      }}
+                    >
+                      + Add
+                    </Link>
+                  </div>
+                )}
               </div>
-              <span
+            </div>
+
+            {/* ── CCF CARD (cholangiocarcinoma only) ────────────────────────── */}
+            {isCholangiocarcinoma && (
+              <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--text)",
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  backgroundColor: "var(--card)",
+                  borderRadius: 14,
+                  border: "0.5px solid var(--border)",
+                  padding: 16,
                 }}
               >
-                Care team
-              </span>
-            </Link>
+                <span
+                  style={{
+                    display: "inline-block",
+                    backgroundColor: "var(--pale-sage)",
+                    color: "var(--primary)",
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 9,
+                    fontWeight: 500,
+                    borderRadius: 4,
+                    padding: "3px 8px",
+                    marginBottom: 10,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  From CCF
+                </span>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "var(--text)",
+                    marginBottom: 4,
+                  }}
+                >
+                  Don&apos;t know where to start?
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 13,
+                    color: "var(--muted)",
+                    marginBottom: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  CCF offers a free care kit, a 1:1 advocate meeting, and a resource roadmap.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.open("https://www.cholangiocarcinoma.org", "_blank", "noopener,noreferrer")}
+                  style={{
+                    height: 36,
+                    padding: "0 16px",
+                    backgroundColor: "var(--primary)",
+                    color: "var(--card)",
+                    border: "none",
+                    borderRadius: 8,
+                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    minWidth: 48,
+                  }}
+                >
+                  Connect with CCF
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

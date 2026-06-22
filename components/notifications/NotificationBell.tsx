@@ -79,7 +79,7 @@ export function NotificationBell({ userId }: Props) {
         justifyContent: "center",
         width: 48,
         height: 48,
-        color: "var(--primary)",
+        color: "var(--muted)",
       }}
     >
       <Bell size={22} aria-hidden="true" />

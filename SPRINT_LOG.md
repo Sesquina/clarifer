@@ -3329,3 +3329,32 @@ DECISIONS MADE (no stop needed):
   - RULE 9 not triggered (rebuild of existing page, not new page).
 
 PR: https://github.com/Sesquina/clarifer/pull/new/feat/symptom-log-redesign
+
+---
+[2026-06-19] DECISION REQUIRED: app/patients/[id]/family-update/page.tsx does not exist. Task (feat/home-screen-redesign) specifies router.push to this route for the Send family update button. RULE 2: cannot redirect to a page that does not exist. Family update button will keep existing modal behavior (handleFamilyUpdate) until this page is created. Samira: please confirm whether /patients/[id]/family-update/page.tsx should be created in this sprint or a later sprint.
+[2026-06-19] DISCOVERED ISSUE: appointments table uses column name 'datetime' not 'scheduled_at' as referenced in home-screen-redesign task spec. Using 'datetime' in all queries. (feat/home-screen-redesign)
+[2026-06-19] DISCOVERED ISSUE: Severity hex colors in home screen redesign (#E24B4A, #BA7517, #0F6E56, #FCEBEB, #FAEEDA, #E1F5EE, #A32D2D, #633806, #085041) are not in the CSS variable system. Used per explicit task spec. Needs design tokens sprint to resolve. (feat/home-screen-redesign)
+
+---
+[2026-06-19] SPRINT COMPLETION SUMMARY: feat/home-screen-redesign
+
+WHAT WAS BUILT:
+- Commit 1 (f283f33): Header - profile avatar (initials circle, 28px, links to /profile) added to app-header.tsx; NotificationBell color updated from var(--primary) to var(--muted).
+- Commit 2 (7445898): Data queries - nextAppointment query (any future appt), mostRecentAlert derived from logs (severity >= 7), lastUpdated from logs[0].created_at. All passed as new props to HomeClient.
+- Commit 3 (e1175e4): Hero section (CARING FOR + patient name Playfair 28px + Last updated), alert bar (conditional on severity >= 7), quick action grid (4 cards: Log Symptoms/Ask Clarifer/Upload Doc/Find Trials), Send family update button (modal, per DECISION REQUIRED).
+- Commit 4 (89b98cd): Recent symptoms section with severity-color left border rows and empty state. Helpers: formatLogDate, getSeverityStyle.
+- Commit 5 (7fee08a): Right column redesign (upcoming appointment card with nextAppointment prop + empty state with + Add link, CCF card new design with FROM CCF pill + fit-content button). 11 new tests in tests/app/home-redesign.test.ts.
+
+FILES CHANGED:
+  components/layout/app-header.tsx
+  components/notifications/NotificationBell.tsx
+  app/home/page.tsx
+  components/home/home-client.tsx
+  tests/app/home-redesign.test.ts
+
+TESTS ADDED: 11 (tests/app/home-redesign.test.ts) -- relativeTime (4), formatLogDate (4), getSeverityStyle (3)
+FINAL TEST COUNT: 381/381 passing
+TYPESCRIPT: 0 errors
+
+DECISION REQUIRED (logged above): app/patients/[id]/family-update/page.tsx does not exist. Send family update button uses modal until page is created.
+DISCOVERED ISSUES (logged above): appointments column is datetime not scheduled_at; severity hex colors not in CSS var system (7 colors).

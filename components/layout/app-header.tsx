@@ -9,6 +9,13 @@ interface AppHeaderProps {
   userId?: string | null;
 }
 
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export function AppHeader({ userName, userId }: AppHeaderProps) {
   const router = useRouter();
 
@@ -36,36 +43,60 @@ export function AppHeader({ userName, userId }: AppHeaderProps) {
         <img src="/logo-with-text.png" alt="Clarifer" style={{ height: 32, width: "auto", objectFit: "contain" }} />
       </Link>
 
-      {userName && (
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {userId && <NotificationBell userId={userId} />}
-          <span style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: 14,
-            color: "var(--muted)",
-          }}>
-            {userName.split(' ')[0]}
-          </span>
-          <button
-            type="button"
-            onClick={handleSignOut}
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {userId && <NotificationBell userId={userId} />}
+        {userName && (
+          <Link
+            href="/profile"
+            aria-label="Your profile"
             style={{
-              height: 44,
-              padding: "0 12px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--primary)",
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: 14,
-              fontWeight: 500,
-              minWidth: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 48,
+              height: 48,
+              textDecoration: "none",
             }}
           >
-            Sign out
-          </button>
-        </div>
-      )}
+            <span
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                backgroundColor: "var(--pale-sage)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--primary)",
+                flexShrink: 0,
+              }}
+            >
+              {getInitials(userName)}
+            </span>
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          style={{
+            height: 44,
+            padding: "0 12px",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--muted)",
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: 13,
+            fontWeight: 500,
+            minWidth: 44,
+          }}
+        >
+          Sign out
+        </button>
+      </div>
     </header>
   );
 }
