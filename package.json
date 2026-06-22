@@ -29,6 +29,7 @@
     "jose": "^6.2.3",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.7.0",
+    "minio": "^8.0.7",
     "next": "^16.2.4",
     "nodemailer": "^8.0.10",
     "pdf-parse": "^2.4.5",
