@@ -31,26 +31,17 @@ export async function GET(request: Request) {
   if (corsError) return corsError;
 
   const supabase = await createClient();
-  const user = await getUserFromRequest(request);
+  const user = await getUserFromRequest();
   if (!user) {
     console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: 'none', timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: userRecord } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-  if (!userRecord?.organization_id) {
-    console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!READ_ROLES.includes(userRecord.role ?? "")) {
+  if (!READ_ROLES.includes(user.role)) {
     console.warn(JSON.stringify({ route: ROUTE, method: request.method, event: 'unauthorized', userId: user.id, timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const orgId = userRecord.organization_id;
+  const orgId = user.organization_id;
 
   const { searchParams } = new URL(request.url);
   const onlyCount = searchParams.get("count") === "1";
