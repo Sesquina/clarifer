@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Search, Pill, FileDown, Users, ExternalLink, Trash2, Bookmark } from "lucide-react";
 import Link from "next/link";
@@ -24,23 +23,10 @@ export default function ToolsPage() {
   const [savedTrials, setSavedTrials] = useState<SavedTrial[]>([]);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: userRecord } = await supabase.from("users").select("organization_id").eq("id", user.id).single();
-      const organizationId = userRecord?.organization_id;
-      if (!organizationId) return;
-      const { data: patient } = await supabase.from("patients").select("id").eq("organization_id", organizationId).limit(1).single();
-      if (!patient) return;
-      setPatientId(patient.id);
-      const { data } = await supabase.from("trial_saves").select("id, trial_id, trial_name, phase, status").eq("patient_id", patient.id).order("saved_at", { ascending: false });
-      if (data) setSavedTrials(data);
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: No route exists to get the current user's patientId or
+  // saved trials without a browser Supabase client. savedTrials is empty;
+  // Export button is disabled until patientId is available.
 
   async function handleExport() {
     if (!patientId || exporting) return;

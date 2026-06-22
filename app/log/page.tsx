@@ -15,9 +15,8 @@
  */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { PageContainer } from "@/components/layout/page-container";
 
 // ─── Five-level severity scale ────────────────────────────────────────────────
@@ -243,55 +242,13 @@ export default function LogPage() {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const supabase = createClient();
-    async function init() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: patient } = await supabase
-        .from("patients")
-        .select("id, name")
-        .eq("created_by", user.id)
-        .limit(1)
-        .single();
-
-      if (!patient) return;
-      setPatientId(patient.id);
-      setPatientFullName(patient.name ?? null);
-
-      const { data: logs } = await supabase
-        .from("symptom_logs")
-        .select("id, overall_severity, created_at, responses")
-        .eq("patient_id", patient.id)
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      if (logs) {
-        setRecentLogs(logs as RecentLog[]);
-        const lastR = logs[0]?.responses as Record<string, unknown> | null | undefined;
-        if (lastR && typeof lastR.appetite === "string") {
-          setLastAppetite(lastR.appetite);
-        }
-      }
-    }
-    init();
-  }, []);
+  // DECISION REQUIRED: Patient context (ID, name, recent symptom logs) was fetched
+  // via Supabase browser client. No GET /api/patients/me route exists.
+  // patientId, patientFullName, and recentLogs remain empty until resolved.
 
   function refreshLogs() {
-    if (!patientId) return;
-    const supabase = createClient();
-    supabase
-      .from("symptom_logs")
-      .select("id, overall_severity, created_at, responses")
-      .eq("patient_id", patientId)
-      .order("created_at", { ascending: false })
-      .limit(3)
-      .then(({ data }) => {
-        if (data) setRecentLogs(data as RecentLog[]);
-      });
+    // DECISION REQUIRED: refreshLogs() used Supabase browser client.
+    // Logs will not refresh after saving until GET /api/patients/me is available.
   }
 
   function toggleMulti(arr: string[], setArr: (v: string[]) => void, val: string) {

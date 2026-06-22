@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Plus, X, Phone, Mail, Users, Trash2 } from "lucide-react";
 
@@ -26,24 +25,10 @@ export default function CareTeamPage() {
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: userRecord } = await supabase.from("users").select("organization_id").eq("id", user.id).single();
-      const organizationId = userRecord?.organization_id;
-      if (!organizationId) return;
-      const { data: patient } = await supabase.from("patients").select("id").eq("organization_id", organizationId).limit(1).single();
-      if (!patient) return;
-      setPatientId(patient.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).from("care_team").select("*").eq("patient_id", patient.id).order("created_at", { ascending: true });
-      if (data) setMembers(data as Member[]);
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: GET /api/care-team requires patient_id as query param.
+  // No route exists to get the current user's patientId without a browser Supabase client.
+  // members list is empty; Add member is disabled until patientId is available.
 
   async function handleAdd() {
     if (!patientId || !name.trim()) return;

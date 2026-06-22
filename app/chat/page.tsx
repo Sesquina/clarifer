@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useCallback } from "react";
 import { ChatHistory } from "@/components/chat/chat-history";
 import { ChatInput, type FilePayload } from "@/components/chat/chat-input";
 
@@ -18,42 +17,9 @@ export default function ChatPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const { data: patient } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("created_by", user.id)
-        .limit(1)
-        .single();
-
-      if (!patient) return;
-      setPatientId(patient.id);
-
-      const { data: history } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .eq("patient_id", patient.id)
-        .order("created_at", { ascending: true })
-        .limit(50);
-
-      if (history) {
-        setMessages(history.map((m) => ({
-          id: m.id,
-          role: m.role as "user" | "assistant",
-          content: m.content,
-          created_at: m.created_at,
-        })));
-      }
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: No GET /api/chat-messages or /api/patients/me route exists.
+  // patientId and chat history cannot be loaded; chat input stays disabled.
 
   const handleSend = useCallback(async (content: string) => {
     if (!patientId) return;
@@ -233,7 +199,7 @@ export default function ChatPage() {
         prev.map((m) => m.id === docMsgId ? { ...m, content: `Upload failed: ${msg}` } : m)
       );
     }
-  }, [patientId, userId, supabase]);
+  }, [patientId, userId]);
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 7.5rem)", paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>

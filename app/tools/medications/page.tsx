@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,23 +26,10 @@ export default function MedicationsPage() {
   const [frequency, setFrequency] = useState("");
   const [patientId, setPatientId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: userRecord } = await supabase.from("users").select("organization_id").eq("id", user.id).single();
-      const organizationId = userRecord?.organization_id;
-      if (!organizationId) return;
-      const { data: patient } = await supabase.from("patients").select("id").eq("organization_id", organizationId).limit(1).single();
-      if (!patient) return;
-      setPatientId(patient.id);
-      const { data: meds } = await supabase.from("medications").select("*").eq("patient_id", patient.id).order("created_at", { ascending: false });
-      if (meds) setMedications(meds);
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: No route exists to get the current user's patientId or
+  // list medications without a known patientId. medications list is empty;
+  // Add medication is disabled until patientId is available.
 
   function handleNameChange(val: string) {
     setName(val);

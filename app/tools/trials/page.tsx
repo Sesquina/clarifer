@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, MapPin, ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, Mail } from "lucide-react";
@@ -74,56 +73,10 @@ export default function TrialsPage() {
   const [fgfr2Status, setFgfr2Status] = useState("");
   const [idh1Status, setIdh1Status] = useState("");
 
-  const supabase = createClient();
 
-  useEffect(() => {
-    async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: patient } = await supabase
-        .from("patients")
-        .select("id")
-        .eq("created_by", user.id)
-        .limit(1)
-        .single();
-      if (!patient) return;
-      setPatientId(patient.id);
-
-      const { data: saved } = await supabase
-        .from("trial_saves")
-        .select("trial_id")
-        .eq("patient_id", patient.id);
-
-      if (saved) {
-        setSavedIds(
-          new Set(
-            (saved as Array<{ trial_id: string | null }>)
-              .map((s) => s.trial_id)
-              .filter((id): id is string => id !== null)
-          )
-        );
-      }
-
-      try {
-        const { data: teamMembers } = await supabase
-          .from("care_team")
-          .select("email, role")
-          .eq("patient_id", patient.id);
-        if (teamMembers) {
-          const onco = (teamMembers as Array<{ role: string | null; email: string | null }>).find(
-            (m) => m.role?.toLowerCase().includes("oncolog")
-          );
-          if (onco?.email) setOncologistEmail(onco.email);
-        }
-      } catch {
-        // care_team table may not exist in all environments
-      }
-    }
-    load();
-  }, [supabase]);
+  // DECISION REQUIRED: No route exists to get the current user's patientId,
+  // saved trial IDs, or care team oncologist email without a browser Supabase client.
+  // patientId stays null; Search button is disabled. savedIds and oncologistEmail empty.
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
