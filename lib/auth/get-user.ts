@@ -51,8 +51,7 @@ export async function getUserFromRequest(
 
   // CASE 2: Keycloak JWT cookie (clarifer_token)
   // Handles users who authenticated via Keycloak (web and Flutter).
-  // Looks up users.id and organization_id by email so the supabase UUID is
-  // returned, not the Keycloak sub (they differ).
+  // Looks up by keycloak_id (indexed, stable) to get the internal users.id.
   try {
     const cookieStore = await cookies();
     const kcToken = cookieStore.get("clarifer_token")?.value;
@@ -63,7 +62,7 @@ export async function getUserFromRequest(
         const { data: userRecord } = await supabase
           .from("users")
           .select("id, role, organization_id")
-          .eq("email", verified.email ?? "")
+          .eq("keycloak_id", verified.id)
           .single();
         if (userRecord?.organization_id) {
           console.log("[auth] keycloak:", userRecord.id.slice(0, 8));
