@@ -120,21 +120,23 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name: fullName }),
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName: fullName }),
       });
-      const data = await res.json().catch(() => ({})) as { error?: string };
-
       if (!res.ok) {
-        setError(friendlySignupError(data.error ?? ''));
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setError(friendlySignupError(data.error ?? ""));
         setLoading(false);
         return;
       }
-
-      // Account created — redirect to login
-      router.push('/login');
+      const data = await res.json() as { mustLogin?: boolean };
+      if (data.mustLogin) {
+        router.push("/login");
+        return;
+      }
+      router.push("/onboarding");
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

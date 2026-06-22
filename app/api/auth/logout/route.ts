@@ -1,15 +1,14 @@
-import { NextResponse } from 'next/server'
+/**
+ * app/api/auth/logout/route.ts
+ * Clears all session cookies and redirects to /login.
+ * HIPAA: no PHI.
+ */
+export const runtime = "nodejs";
+import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = 'nodejs'
-
-export async function POST() {
-  const response = NextResponse.json({ message: 'Signed out.' })
-  response.cookies.set('clarifer_token', '', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 0,
-  })
-  return response
+export async function POST(_request: NextRequest) {
+  const response = NextResponse.json({ ok: true }, { status: 200 });
+  response.cookies.delete("clarifer_token");
+  response.cookies.delete("clarifer_demo_session");
+  return response;
 }
