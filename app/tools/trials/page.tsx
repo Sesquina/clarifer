@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageContainer } from "@/components/layout/page-container";
+import { usePatient } from "@/lib/hooks/use-patient";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, MapPin, ArrowLeft, Bookmark, BookmarkCheck, ExternalLink, Mail } from "lucide-react";
 import Link from "next/link";
@@ -63,7 +64,7 @@ export default function TrialsPage() {
   const [searched, setSearched] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [patientId, setPatientId] = useState<string | null>(null);
+  const { patientId, loading: patientLoading, error: patientError } = usePatient();
   const [oncologistEmail, setOncologistEmail] = useState<string | null>(null);
 
   // CCA biomarker filters
@@ -72,11 +73,6 @@ export default function TrialsPage() {
   const [treatmentHistory, setTreatmentHistory] = useState("");
   const [fgfr2Status, setFgfr2Status] = useState("");
   const [idh1Status, setIdh1Status] = useState("");
-
-
-  // DECISION REQUIRED: No route exists to get the current user's patientId,
-  // saved trial IDs, or care team oncologist email without a browser Supabase client.
-  // patientId stays null; Search button is disabled. savedIds and oncologistEmail empty.
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -202,6 +198,13 @@ export default function TrialsPage() {
     flexWrap: "wrap",
     gap: 6,
   };
+
+  if (patientLoading) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Loading...</div></PageContainer>;
+  }
+  if (patientError) {
+    return <PageContainer><div style={{ padding: '24px', color: 'var(--muted)', fontFamily: 'DM Sans' }}>Could not load patient. Please refresh.</div></PageContainer>;
+  }
 
   return (
     <PageContainer>
