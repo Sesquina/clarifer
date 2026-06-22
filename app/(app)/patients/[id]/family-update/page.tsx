@@ -112,7 +112,7 @@ export default function FamilyUpdatePage() {
             continue;
           }
           if (evt.kind === "meta") setMeta(evt);
-          else if (evt.kind === "text") setText((prev) => prev + stripMarkdown(evt.text));
+          else if (evt.kind === "text") setText((prev) => stripMarkdown(prev + evt.text));
           else if (evt.kind === "error") setError(evt.message || t.error);
         }
       }
